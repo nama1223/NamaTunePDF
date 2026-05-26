@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NamaTunePDF v2.0</title>
+<meta name="theme-color" content="#c07040">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon.svg">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf7f4;--bg2:#f2ede8;--bg3:#e8e0d8;--bg4:#ddd4c8;
+  --border:#cec4b8;--border2:#b8ac9e;
+  --text:#3a3028;--text2:#7a6a58;--text3:#a89880;
+  --accent:#c07040;--accent2:#a85c28;--accent-dim:#f0e0d0;
+  --green:#2e8b57;--green-dim:#d4ede0;
+  --amber:#b86a00;--amber-dim:#f5e4cc;
+  --red:#c0392b;--red-dim:#f5d5d0;
+  --radius:6px;--radius2:10px;
+}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px}
+
+/* タブバー */
+.tabbar{display:flex;align-items:stretch;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;height:44px;padding:0 12px;gap:0}
+.logo{font-size:14px;font-weight:700;color:var(--accent);display:flex;align-items:center;padding-right:14px;letter-spacing:.04em;white-space:nowrap}
+.logo span{color:var(--text2);font-weight:400}
+.tab{display:flex;align-items:center;gap:6px;padding:0 16px;cursor:pointer;font-size:13px;
+  color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tabbar-sep{width:1px;height:20px;background:var(--border);align-self:center;margin:0 6px}
+.tabbar-right{display:flex;align-items:center;gap:7px;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--text);cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s}
+.btn:hover{background:var(--bg4);border-color:var(--border2)}
+.btn:active{opacity:.8}
+.btn.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.btn.primary:hover{background:var(--accent);border-color:var(--accent)}
+.btn.green{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.btn.green:hover{background:#b8e0cc}
+.btn.danger{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.hdr-info{color:var(--text2);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+input[type=file]{display:none}
+
+/* タブコンテンツ */
+.tab-content{display:none;flex:1;overflow:hidden}
+.tab-content.active{display:flex;flex-direction:column}
+
+/* 傾き補正レイアウト */
+.correct-layout{display:flex;flex:1;overflow:hidden}
+
+/* 左コントロール */
+aside.ctrl{width:214px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+.panel{padding:9px 11px;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-title{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:7px}
+.panel-row-title{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.panel-row-title .page-nav{flex-shrink:0}
+.panel-inline-hint{font-size:10px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0}
+.page-nav{display:flex;align-items:center;gap:4px}
+.page-nav button{width:26px;height:26px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg3);color:var(--text);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.page-nav button:hover{background:var(--bg4)}
+.page-nav button:disabled{opacity:.3;cursor:default}
+.page-input{width:42px;height:26px;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text);text-align:center;font-size:12px}
+.page-input:focus{outline:none;border-color:var(--accent)}
+.angle-display{font-size:18px;font-weight:300;text-align:center;color:var(--accent);
+  margin:2px 0;font-variant-numeric:tabular-nums;line-height:1}
+.angle-display small{font-size:10px;color:var(--text2)}
+.angle-slider{width:100%;margin:5px 0;accent-color:var(--accent)}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px}
+.angle-btn{height:25px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg3);color:var(--text);cursor:pointer;font-size:11px;font-weight:500}
+.angle-btn:hover{background:var(--bg4);border-color:var(--border2)}
+.angle-btn:active{background:var(--accent-dim)}
+.rot90-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.rot-btn{height:28px;border:1px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:3px}
+.rot-btn:hover{background:var(--bg4);color:var(--text)}
+.rot-btn span{font-size:10px}
+.angle-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:2px 0}
+.angle-row .angle-display{margin:0;flex:1}
+.rot-side{width:30px;height:30px;font-size:16px;flex-shrink:0;padding:0}
+.apply-col{display:flex;flex-direction:column;gap:3px;margin-top:7px}
+.guide-add-row{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.guide-list{display:flex;flex-direction:column;gap:2px;max-height:76px;overflow-y:auto;margin:4px 0}
+.guide-item{display:flex;align-items:center;gap:5px;padding:2px 0}
+.guide-color{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.guide-pos{font-size:11px;color:var(--text2);flex:1;font-variant-numeric:tabular-nums}
+.guide-del{width:16px;height:16px;border:none;background:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0;line-height:1}
+.guide-del:hover{color:var(--red)}
+.zoom-ctrl{display:flex;align-items:center;gap:4px}
+.zoom-ctrl-compact{gap:2px}
+.zoom-ctrl-compact .btn-mini{padding:2px 5px;font-size:11px;min-width:0}
+.btn-mini{padding:2px 6px;font-size:11px}
+.zoom-val{font-size:11px;color:var(--text2);min-width:32px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* クロップ */
+.crop-aspect-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.aspect-btn{height:24px;padding:0 7px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg3);color:var(--text2);cursor:pointer;font-size:11px}
+.aspect-btn:hover{background:var(--bg4);color:var(--text)}
+.aspect-btn.active{background:var(--accent-dim);border-color:var(--accent2);color:var(--accent)}
+.crop-wh-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}
+.crop-num-input{height:24px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--text);text-align:center;font-size:11px;width:100%}
+.crop-num-input:focus{outline:none;border-color:var(--accent)}
+.crop-a4-note{font-size:10px;color:var(--amber);margin-top:3px;display:none}
+
+/* キャンバスエリア */
+.canvas-area{flex:1;position:relative;overflow:auto;background:var(--bg3);display:flex;align-items:flex-start;justify-content:flex-start}
+.canvas-inner{display:flex;align-items:center;justify-content:center;min-width:100%;min-height:100%;position:relative}
+.canvas-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.canvas-hint-icon{font-size:44px;opacity:.2;margin-bottom:8px}
+.canvas-hint p{color:var(--text3);font-size:13px;line-height:1.7}
+.drop-overlay{position:absolute;inset:0;background:rgba(74,143,212,.15);
+  border:2px dashed var(--accent);border-radius:var(--radius2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:var(--accent);pointer-events:none;opacity:0;transition:.2s}
+.drop-overlay.active{opacity:1}
+
+/* クロップオーバーレイ */
+#cropOverlay{position:absolute;inset:0;pointer-events:none;display:none;top:0;left:0}
+#cropOverlay.active{display:block;pointer-events:all;cursor:crosshair}
+.canvas-area.hand-mode{cursor:grab}
+.canvas-area.hand-mode:active{cursor:grabbing}
+
+/* 右サムネイル */
+aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.thumb-header{padding:6px 9px;font-size:10px;font-weight:600;color:var(--text3);
+  letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between}
+.thumb-list-c{flex:1;overflow-y:auto;padding:5px}
+.thumb-item-c{display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 5px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;
+  margin-bottom:3px;transition:all .1s;position:relative}
+.thumb-item-c:hover{background:var(--bg3)}
+.thumb-item-c.active{background:var(--accent-dim);border-color:var(--accent2)}
+.thumb-num-c{font-size:10px;color:var(--text3);align-self:flex-start}
+.thumb-wrap-c{position:relative;width:118px;height:88px;background:var(--bg3);border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.thumb-canvas-c{max-width:118px;max-height:88px;display:block}
+.thumb-dot-c{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--border)}
+.thumb-dot-c.done{background:var(--green)}
+.thumb-dot-c.edited{background:var(--amber)}
+.thumb-angle-c{font-size:10px;color:var(--text2);font-variant-numeric:tabular-nums;align-self:flex-start}
+
+/* 並べ替えタブ */
+.sort-layout{display:flex;flex:1;overflow:hidden;flex-direction:column}
+.sort-toolbar{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.sort-info{font-size:12px;color:var(--text2)}
+.sort-grid{flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-content:start;align-items:stretch;position:relative}
+.sort-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  cursor:grab;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform .12s,box-shadow .12s;user-select:none;position:relative;width:136px;flex-shrink:0}
+.sort-card:hover{border-color:var(--border2);background:var(--bg3)}
+.sort-card.dragging{opacity:.35;cursor:grabbing}
+#sortDropIndicator{position:absolute;width:3px;background:var(--accent2);border-radius:2px;pointer-events:none;display:none;z-index:10;box-shadow:0 0 6px var(--accent)}
+#sortDropIndicator.active{display:block}
+.sort-card-num{font-size:10px;color:var(--text3);align-self:flex-start;font-variant-numeric:tabular-nums}
+.sort-canvas-wrap{width:110px;height:82px;background:var(--bg3);border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sort-canvas-el{max-width:110px;max-height:82px;display:block;pointer-events:none}
+.sort-card-label{font-size:10px;color:var(--text2);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sort-del{position:absolute;top:3px;right:3px;width:16px;height:16px;border:none;
+  background:var(--red-dim);border-radius:50%;color:var(--red);cursor:pointer;
+  font-size:10px;display:none;align-items:center;justify-content:center;line-height:1}
+.sort-card:hover .sort-del{display:flex}
+.sort-card.selected{border-color:var(--accent2);background:var(--accent-dim);outline:2px solid var(--accent)}
+/* 区切り（縦棒） */
+.sort-divider{display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 3px;
+  cursor:grab;user-select:none;position:relative;width:36px;flex-shrink:0}
+.sort-divider:hover .sort-div-del{display:flex}
+.sort-div-line{width:3px;flex:1;min-height:20px;background:var(--amber);border-radius:2px}
+.sort-div-label{font-size:9px;color:var(--amber);background:var(--amber-dim);border:1px solid var(--amber);
+  border-radius:3px;padding:2px 3px;writing-mode:vertical-rl;text-orientation:mixed;
+  white-space:nowrap;min-height:40px;text-align:center;cursor:text;max-height:120px;overflow:hidden}
+.sort-div-del{width:16px;height:16px;border:none;background:var(--red-dim);border-radius:50%;
+  color:var(--red);cursor:pointer;font-size:10px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ポップアップ */
+.popup-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;display:none;align-items:center;justify-content:center;cursor:pointer}
+.popup-bg.open{display:flex}
+.popup-center{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:default}
+.popup-row{display:flex;align-items:stretch;gap:6px}
+#popupCanvas{display:block;background:#fff;flex-shrink:0}
+.popup-info{color:rgba(255,255,255,.78);font-size:12px;text-align:center;padding:2px 0}
+.popup-nav-side{width:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);
+  border-radius:var(--radius);font-size:20px;cursor:pointer;transition:background .15s}
+.popup-nav-side:hover{background:rgba(255,255,255,.26)}
+.popup-nav-side:disabled{opacity:.2;cursor:default}
+
+/* モーダル */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:.2s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);padding:20px;width:350px;max-width:92vw}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:12px}
+.modal-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12px}
+.modal-row label{color:var(--text2);min-width:90px}
+.modal select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px}
+.modal-note{font-size:11px;color:var(--text3);line-height:1.5;margin-top:8px;padding:8px;background:var(--bg3);border-radius:var(--radius)}
+.modal-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.fname-preview{font-size:11px;color:var(--accent);background:var(--accent-dim);border-radius:var(--radius);padding:5px 8px;margin-top:6px;word-break:break-all;min-height:20px}
+.preset-area{width:100%;height:80px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;padding:5px 7px;resize:vertical}
+.preset-area:focus{outline:none;border-color:var(--accent)}
+
+/* 進捗バー */
+#progressWrap{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:800;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#progressWrap.open{display:flex}
+.prog-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);padding:24px 32px;min-width:300px;text-align:center}
+.prog-title{font-size:13px;color:var(--text2);margin-bottom:12px}
+.prog-bar-outer{width:100%;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.prog-bar-inner{height:100%;background:var(--accent2);border-radius:4px;transition:width .15s;width:0%}
+.prog-pct{font-size:22px;font-weight:300;color:var(--accent);margin-top:8px;font-variant-numeric:tabular-nums}
+
+/* アンドゥバッジ */
+.undo-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;background:var(--accent2);color:#fff;border-radius:8px;font-size:10px;font-weight:700;padding:0 4px;margin-left:3px;line-height:1;visibility:hidden}
+.undo-badge.has-count{visibility:visible}
+
+/* 画質バッジ */
+.quality-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.quality-lossless{background:var(--green-dim);color:var(--green)}
+.quality-lossy{background:var(--amber-dim);color:var(--amber)}
+
+/* トースト */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(14px);
+  background:var(--bg4);border:1px solid var(--border2);border-radius:var(--radius2);
+  padding:7px 14px;font-size:13px;opacity:0;transition:all .22s;pointer-events:none;z-index:999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="tabbar">
+  <div class="logo">NamaTunePDF <span>v2.0</span></div>
+  <div class="tab active" id="tab-correct" onclick="switchTab('correct')">🎵 傾き補正</div>
+  <div class="tab" id="tab-sort" onclick="switchTab('sort')">🗂 並べ替え</div>
+  <div class="tabbar-sep"></div>
+  <div class="tabbar-right">
+    <div class="hdr-info" id="hdrInfo">ファイルを開いてください</div>
+    <button class="btn primary" onclick="document.getElementById('fileInput').click()">📂 開く</button>
+    <input type="file" id="fileInput" accept=".pdf,image/*" multiple>
+  </div>
+</div>
+
+<!-- 傾き補正タブ -->
+<div class="tab-content active" id="content-correct">
+<div class="correct-layout">
+<aside class="ctrl">
+  <div class="panel">
+    <div class="panel-row-title">
+      <div class="panel-title" style="margin:0">ページ</div>
+      <div class="page-nav">
+        <button onclick="gotoPage(curPage-1)" id="btnPrev">◀</button>
+        <input type="number" class="page-input" id="pageInput" min="1" value="1" onchange="gotoPage(parseInt(this.value)-1)">
+        <span id="pageTotalLabel" style="color:var(--text2);font-size:11px">/ —</span>
+        <button onclick="gotoPage(curPage+1)" id="btnNext">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">傾き補正</div>
+    <div class="angle-row">
+      <button class="rot-btn rot-side" onclick="rotate90(-1)" title="左90°">↺</button>
+      <div class="angle-display" id="angleDisplay">+0.00<small>°</small></div>
+      <button class="rot-btn rot-side" onclick="rotate90(+1)" title="右90°">↻</button>
+    </div>
+    <input type="range" class="angle-slider" id="angleSlider" min="-10" max="10" step="0.01" value="0" oninput="setAngle(parseFloat(this.value))">
+    <div class="grid3">
+      <button class="angle-btn" onclick="nudge(-1)">−1°</button>
+      <button class="angle-btn" onclick="setAngle(0)">0</button>
+      <button class="angle-btn" onclick="nudge(+1)">+1°</button>
+    </div>
+    <div class="grid2">
+      <button class="angle-btn" onclick="nudge(-0.1)">−0.1°</button>
+      <button class="angle-btn" onclick="nudge(+0.1)">+0.1°</button>
+    </div>
+    <div class="grid2">
+      <button class="angle-btn" onclick="nudge(-0.01)">−0.01°</button>
+      <button class="angle-btn" onclick="nudge(+0.01)">+0.01°</button>
+    </div>
+    <div class="apply-col">
+      <button class="btn primary" style="width:100%" onclick="applyToCurrentPage()">✓ このページに適用</button>
+      <button class="btn" style="width:100%" onclick="applyToAllPages()">⟳ 全ページに同じ角度</button>
+      <button class="btn danger" style="width:100%" onclick="resetCurrentPage()">✕ このページをリセット</button>
+    </div>
+  </div>
+
+  <div class="panel" id="cropPanel">
+    <div class="panel-title">クロップ</div>
+    <div style="display:flex;gap:4px;margin-bottom:5px">
+      <button class="btn" id="btnCropMode" onclick="toggleCropMode()" style="flex:1">✂ 範囲選択</button>
+      <button class="btn danger" id="btnCropClear" onclick="clearCrop()" style="flex:1" disabled>解除</button>
+    </div>
+    <div id="cropStatus" style="font-size:10px;color:var(--text3);margin-bottom:5px;min-height:14px">未設定（保存時は全面）</div>
+    <div id="cropDetails" style="display:none">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px">縦横比を固定：</div>
+      <div class="crop-aspect-row">
+        <button class="aspect-btn active" onclick="setAspect('free')" id="asp-free">自由</button>
+        <button class="aspect-btn" onclick="setAspect('silver')" id="asp-silver">用紙</button>
+        <button class="aspect-btn" onclick="setAspect('custom')" id="asp-custom">比率指定</button>
+        <input class="crop-num-input" type="number" id="cropAspW" value="1" min="0.1" step="0.1" placeholder="W" oninput="updateCustomAspect()" style="width:40px;display:none">
+        <input class="crop-num-input" type="number" id="cropAspH" value="1" min="0.1" step="0.1" placeholder="H" oninput="updateCustomAspect()" style="width:40px;display:none">
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:3px">選択範囲（px）：</div>
+      <div class="crop-wh-row">
+        <input class="crop-num-input" type="number" id="cropX" placeholder="X" oninput="cropInputChanged()">
+        <input class="crop-num-input" type="number" id="cropY" placeholder="Y" oninput="cropInputChanged()">
+      </div>
+      <div class="crop-wh-row" style="margin-top:3px">
+        <input class="crop-num-input" type="number" id="cropW" placeholder="W" oninput="cropInputChanged()">
+        <input class="crop-num-input" type="number" id="cropH" placeholder="H" oninput="cropInputChanged()">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-row-title">
+      <div class="panel-title" style="margin:0">補助線 <span class="panel-inline-hint">（線をドラッグで移動）</span></div>
+    </div>
+    <div class="guide-add-row">
+      <button class="btn" onclick="addGuide('h')">— 水平線</button>
+      <button class="btn" onclick="addGuide('v')">｜ 垂直線</button>
+    </div>
+    <div class="guide-list" id="guideList"></div>
+    <button class="btn" onclick="clearGuides()" style="width:100%;margin-top:2px">すべて消す</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-row-title">
+      <div class="panel-title" style="margin:0">表示</div>
+      <div class="zoom-ctrl zoom-ctrl-compact">
+        <button class="btn btn-mini" onclick="setZoom(zoom-0.1)">−</button>
+        <div class="zoom-val" id="zoomVal">100%</div>
+        <button class="btn btn-mini" onclick="setZoom(zoom+0.1)">+</button>
+        <button class="btn btn-mini" onclick="fitZoom()">合わせる</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">出力</div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <button class="btn primary" id="btnExportNormal" onclick="openExportModal()" disabled>💾 補正済みPDF</button>
+      <button class="btn" id="btnExportSplit" onclick="openSplitModal()" disabled>✂️ A3→A4分割保存</button>
+      <div id="qualityInfo" style="margin-top:4px"></div>
+    </div>
+  </div>
+</aside>
+
+<div class="canvas-area" id="canvasArea">
+  <div class="canvas-inner" id="canvasInner">
+    <div class="canvas-hint" id="canvasHint">
+      <div class="canvas-hint-icon">🎵</div>
+      <p>PDFまたは画像をここにドロップ<br>または右上の「開く」から選択</p>
+    </div>
+    <canvas id="mainCanvas"></canvas>
+    <canvas id="cropOverlay"></canvas>
+  </div>
+  <div class="drop-overlay" id="dropOverlay">ここにドロップ</div>
+</div>
+
+<aside class="thumbs">
+  <div class="thumb-header">
+    <span>ページ一覧</span>
+    <span id="thumbPageCount" style="font-size:10px;color:var(--text3)"></span>
+  </div>
+  <div class="thumb-list-c" id="thumbListC"></div>
+</aside>
+</div>
+</div>
+
+<!-- 並べ替えタブ -->
+<div class="tab-content" id="content-sort">
+<div class="sort-layout">
+  <div class="sort-toolbar">
+    <span class="sort-info" id="sortInfo">ページなし</span>
+    <button class="btn" onclick="sortSelectAll()">全選択</button>
+    <button class="btn danger" onclick="sortDeleteSelected()" id="btnSortDelete" disabled>削除</button>
+    <button class="btn" id="btnSortUndo" onclick="sortUndo()" disabled title="元に戻す (Ctrl+Z)">↩<span class="undo-badge" id="undoBadge"></span></button>
+    <button class="btn" id="btnSortRedo" onclick="sortRedo()" disabled title="やり直す (Ctrl+Y)">↪<span class="undo-badge" id="redoBadge"></span></button>
+    <div style="flex:1"></div>
+    <button class="btn" onclick="addDivider()">｜ 区切りを追加</button>
+    <button class="btn green" id="btnSortExport" onclick="exportSortedPDF()" disabled>💾 この順で保存</button>
+    <button class="btn" id="btnSortSplit" onclick="openSortSplitModal()" disabled>✂ 区切りで分割保存</button>
+    <button class="btn" id="btnReturnToCorrect" onclick="returnToCorrect()" disabled>↩ 補正タブに返す</button>
+  </div>
+  <div class="sort-grid" id="sortGrid"><div id="sortDropIndicator"></div></div>
+</div>
+</div>
+
+<!-- ポップアップ -->
+<div class="popup-bg" id="popupBg" onclick="if(event.target===this)closePopup()">
+  <div class="popup-center">
+    <div class="popup-row">
+      <button class="popup-nav-side" id="popupNavPrev" onclick="popupMove(-1)">&#x25C0;</button>
+      <canvas id="popupCanvas"></canvas>
+      <button class="popup-nav-side" id="popupNavNext" onclick="popupMove(+1)">&#x25B6;</button>
+    </div>
+    <div class="popup-info" id="popupInfo"></div>
+  </div>
+</div>
+
+<!-- 出力モーダル（補正済みPDF） -->
+<div class="modal-bg" id="exportModal">
+  <div class="modal" style="width:400px">
+    <h3>💾 補正済みPDFを保存</h3>
+    <div class="modal-row" style="align-items:flex-start">
+      <label style="padding-top:2px">無劣化</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+          <input type="checkbox" id="losslessMode" onchange="updateExportModalUI()">
+          <span>完全無劣化モード（元PDF構造を保持）</span>
+        </label>
+        <div id="losslessNote" style="font-size:10px;color:var(--text3);line-height:1.5"></div>
+      </div>
+    </div>
+    <div id="exportFmtBlock">
+      <div class="modal-row" id="exportFmtRow">
+        <label>形式</label>
+        <select id="outFormat" onchange="onOutFormatChange()" style="flex:1">
+          <option value="jpeg">JPEG（サイズ小）</option>
+          <option value="png">PNG（完全可逆）</option>
+        </select>
+      </div>
+      <div class="modal-row" id="jpegQualityRow">
+        <label>品質</label>
+        <input type="range" id="jpegQuality" min="50" max="100" value="92" step="1" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('jpegQualityVal').textContent=this.value+'%'">
+        <span id="jpegQualityVal" style="font-size:12px;color:var(--text);min-width:36px;text-align:right">92%</span>
+      </div>
+    </div>
+    <div class="modal-note" id="exportModeNote">変換のないページは元データのまま埋め込み（完全無劣化）。変換ありページにのみ上記設定が適用されます。</div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeExportModal()">キャンセル</button>
+      <button class="btn primary" onclick="doExportPDF()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- A3分割モーダル -->
+<div class="modal-bg" id="splitModal">
+  <div class="modal">
+    <h3>✂️ A3→A4 左右分割で保存</h3>
+    <div class="modal-row">
+      <label>ページ順</label>
+      <select id="splitDir"><option value="lr">左→右（左綴じ）</option><option value="rl">右→左（右綴じ）</option></select>
+    </div>
+    <div class="modal-row">
+      <label>出力後の動作</label>
+      <select id="splitAfter"><option value="download">ダウンロードのみ</option><option value="sort">並べ替えタブに渡す</option></select>
+    </div>
+    <div class="modal-row">
+      <label>解像度</label>
+      <select id="splitResMode" style="flex:1">
+        <option value="hires">高品質（推奨）</option>
+        <option value="original">元の解像度に合わせる</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <label>形式</label>
+      <select id="splitFormat" onchange="onSplitFormatChange()" style="flex:1">
+        <option value="jpeg">JPEG（サイズ小）</option>
+        <option value="png">PNG（完全可逆）</option>
+      </select>
+    </div>
+    <div class="modal-row" id="splitQualityRow">
+      <label>品質</label>
+      <input type="range" id="splitQuality" min="50" max="100" value="92" step="1" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('splitQualityVal').textContent=this.value+'%'">
+      <span id="splitQualityVal" style="font-size:12px;color:var(--text);min-width:36px;text-align:right">92%</span>
+    </div>
+    <div class="modal-note">各ページを左右に2分割し、それぞれ別ページとして出力します。傾き補正も反映されます。</div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeSplitModal()">キャンセル</button>
+      <button class="btn primary" onclick="doSplitExport()">実行</button>
+    </div>
+  </div>
+</div>
+
+<!-- 並べ替え分割保存モーダル -->
+<div class="modal-bg" id="sortSplitModal">
+  <div class="modal" style="width:420px">
+    <h3>✂ 区切りで分割保存</h3>
+    <div class="modal-row">
+      <label>共通ファイル名</label>
+      <input type="text" id="ssFileName" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" value="NamaTunePDF_{name}" oninput="updateFnamePreview()">
+    </div>
+    <div class="modal-row">
+      <label>連番開始</label>
+      <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
+      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{name}=区切り名</span>
+    </div>
+    <div id="sortSplitQualityBadge" style="margin-bottom:6px"></div>
+    <div class="fname-preview" id="fnamePreview"></div>
+    <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px">区切り名プリセット（改行区切り）</div>
+    <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章"></textarea>
+    <div style="display:flex;gap:6px;margin-top:5px">
+      <button class="btn" onclick="loadPresetFile()" style="font-size:11px">📂 テキストファイルから読込</button>
+      <input type="file" id="presetFileInput" accept=".txt" style="display:none" onchange="onPresetFile(event)">
+    </div>
+    <div class="modal-note">区切りごとに別ファイルとして保存されます。</div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeSortSplitModal()">キャンセル</button>
+      <button class="btn primary" onclick="doSortSplitExport()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 並べ替えタブへのPDFドロップモーダル -->
+<div class="modal-bg" id="sortPdfDropModal">
+  <div class="modal" style="width:360px">
+    <h3>📄 PDFを並べ替えタブに追加</h3>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px" id="sortPdfDropInfo"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn danger" onclick="applySortPdfDrop('discard')">🗑 破棄して開き直す</button>
+      <button class="btn" onclick="applySortPdfDrop('prepend')">⬆ 先頭に挿入</button>
+      <button class="btn" onclick="applySortPdfDrop('append')">⬇ 最後尾に挿入</button>
+      <button class="btn" onclick="closeSortPdfDropModal()" style="margin-top:4px">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="progressWrap"><div class="prog-box"><div class="prog-title" id="progTitle">処理中...</div><div class="prog-bar-outer"><div class="prog-bar-inner" id="progBar"></div></div><div class="prog-pct" id="progPct">0%</div></div></div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+// =====================================================
+// 更新履歴
+// [v2.0] NamaTunePDF
+//   - 並べ替えタブ: ドロップ失敗バグ修正（最後尾以降でも正常動作）
+//   - 並べ替えタブ: ページ表示左右に前後ナビボタン追加（全高）
+//   - 並べ替えタブ: シングルクリック=選択、ダブルクリック=ポップアップ、Ctrl=複数選択、Shift=範囲選択
+//   - 並べ替えタブ: 複数選択したままドラッグでグループ移動
+//   - 並べ替えタブ: 全選択→再クリックで選択解除トグル（全消えバグ修正）
+//   - 並べ替えタブ: 「順序を逆にする」ボタンを削除
+//   - 並べ替えタブ: PDFをドロップで追加（破棄して開き直す / 先頭に挿入 / 最後尾に挿入）
+//   - A3→A4分割: 解像度オプション追加（高品質 / 元の解像度に合わせる）
+//   - クロップ: 高速ドラッグ後の縦横比を自動補正
+// [v1.9] NamaTunePDF
+//   - 完全無劣化モードを追加（pdf-libで元PDFを構造ごと保持）
+//     - 無変換ページ: copyPages で丸ごとコピー（ベクター文字・元画像・フォント・メタデータすべて保持）
+//     - 90°回転: setRotation で /Rotate メタデータを変更（ピクセル無変更）
+//     - クロップ: setCropBox で /CropBox を変更（ピクセル無変更）
+//     - 任意角度: embedPages + 変換行列でベクター/画像をそのまま再配置（再ラスタライズなし）
+//   - 90°ボタンを傾き角表示の左右に再配置（↺ +0.00° ↻）
+//   - 元PDFをpdf-libで読み込めない場合、エクスポートモーダルに理由を表示してラスタライズ出力にフォールバック
+// [v1.8] NamaTunePDF
+//   - アプリ名を NamaScorePDF → NamaTunePDF に刷新
+//   - 自身が出力したPDF（XRefストリーム形式）を再読込時に「解析中」でフリーズするバグを修正
+//   - ハンドモードでドラッグ直後にクロップモードに入るとカーソルが矢印のままになるバグを修正
+//   - 大容量PDF（500MB級）でプレビューが真っ白になる問題を緩和（プレビュー画像を最大4096pxにクランプ）
+//   - 操作パネルの縦幅を全体的に節約（ページ/補助線/表示を1行化、傾き角フォント縮小、クロップ詳細は範囲選択中のみ表示、画質設定はモーダル化）
+//   - A4ボタン削除・白銀比→「用紙」改名・比率指定入力を同じ行に統合
+// [v1.7] NamaScorePDF
+//   - アプリ名を NamaScorePDF に変更
+//   - 配色を明るく温かみのあるテーマに変更
+//   - スキャンPDFの保存解像度が下がるバグを修正
+//     （画像の範囲を正確に読み取れていなかった）
+//   - 傾き補正後の出力形式（JPEG/PNG）と品質スライダーを追加
+//   - 高解像度ディスプレイ対応（devicePixelRatio考慮）
+//   - 傾き補正モードで範囲選択OFF時にハンドモード（つかんでスクロール）を追加
+//   - クロップの範囲選択中にドラッグ枠をリアルタイムプレビュー表示
+// =====================================================
+// =====================================================
+// pages[i] = {
+//   sourceType: 'pdf-jpeg'|'image',
+//   canvas,          // 表示用（プレビュー）
+//   jpegBytes,       // 元JPEG Uint8Array（pdf-jpegの場合）
+//   origWidth, origHeight, // 元画像の実サイズ
+//   angle, rot90, applied,
+//   cropRect, cropAspect,
+//   srcName
+// }
+// =====================================================
+let pages=[], curPage=0, zoom=1.0;
+let guides=[], guideDrag=null, guideIdCnt=0;
+const GUIDE_COLORS=['#4af','#f4a','#af4','#fa4','#a4f'];
+let sortPages=[], sortSelected=new Set(), sortDragIdx=null;
+let popupIdx=0, popupSrc='sort';
+let dividerIdCnt=0;
+
+// 無劣化モード用：元PDFのバイトを保持
+let originalPdfBytes=null;
+let losslessAvailable=false;
+let losslessLoadError=null;
+
+const mainCanvas=document.getElementById('mainCanvas');
+const ctx=mainCanvas.getContext('2d');
+const canvasArea=document.getElementById('canvasArea');
+const cropOvCanvas=document.getElementById('cropOverlay');
+const cropOvCtx=cropOvCanvas.getContext('2d');
+
+// ハンドモード（パン）用
+let handDragging=false,handDragStart={x:0,y:0,scrollX:0,scrollY:0};
+
+// =====================================================
+// PDF バイナリパーサー（ブラウザ版）
+// =====================================================
+async function parsePDFImages(arrayBuffer){
+  const data=new Uint8Array(arrayBuffer);
+
+  // テキスト検索ヘルパー
+  function findBytes(pattern,start=0){
+    const p=typeof pattern==='string'?pattern.split('').map(c=>c.charCodeAt(0)):pattern;
+    outer:for(let i=start;i<=data.length-p.length;i++){
+      for(let j=0;j<p.length;j++) if(data[i+j]!==p[j]) continue outer;
+      return i;
+    }
+    return -1;
+  }
+  function readLine(pos){
+    let end=pos;
+    while(end<data.length&&data[end]!==10&&data[end]!==13) end++;
+    return {text:new TextDecoder().decode(data.slice(pos,end)),end};
+  }
+  function readUint(pos){
+    let s='';
+    while(pos<data.length&&data[pos]>=48&&data[pos]<=57) s+=String.fromCharCode(data[pos++]);
+    return {val:parseInt(s)||0,end:pos};
+  }
+  function skipWS(pos){
+    while(pos<data.length&&(data[pos]===32||data[pos]===9||data[pos]===10||data[pos]===13)) pos++;
+    return pos;
+  }
+
+  // startxref取得
+  let stxPos=data.length-1;
+  while(stxPos>0&&!(data[stxPos]===102&&data[stxPos-1]===101)) stxPos--;// 'ef'
+  // より確実に後ろからstartxrefを探す
+  let searchPos=data.length-200;
+  if(searchPos<0)searchPos=0;
+  let stxOffset=-1;
+  for(let i=data.length-20;i>searchPos;i--){
+    if(data[i]===115&&data[i+1]===116&&data[i+2]===97&&data[i+3]===114&&
+       data[i+4]===116&&data[i+5]===120&&data[i+6]===114&&data[i+7]===101&&data[i+8]===102){
+      let np=skipWS(i+9);
+      stxOffset=readUint(np).val;
+      break;
+    }
+  }
+  if(stxOffset<0) throw new Error('startxref not found');
+
+  // stxOffset位置に 'xref' キーワードがあるか確認（無い場合はXRefストリーム＝pdf-lib出力等）
+  // 'xref' = 0x78 0x72 0x65 0x66
+  if(!(data[stxOffset]===0x78&&data[stxOffset+1]===0x72&&data[stxOffset+2]===0x65&&data[stxOffset+3]===0x66)){
+    throw new Error('classic xref table not found (likely XRef stream)');
+  }
+
+  // xrefテーブルパース
+  const offsets={};
+  let xp=stxOffset;
+  // "xref"
+  xp=skipWS(xp+4);
+  let xrefIter=0;
+  while(xp<data.length){
+    if(++xrefIter>10000) throw new Error('xref parsing exceeded iteration limit');
+    xp=skipWS(xp);
+    if(data[xp]===116) break; // 't' = trailer
+    // "start count"
+    const r1=readUint(xp);
+    if(r1.end===xp) throw new Error('xref parse: expected number');
+    xp=skipWS(r1.end);
+    const r2=readUint(xp);
+    if(r2.end===xp) throw new Error('xref parse: expected count');
+    xp=skipWS(r2.end);
+    const startId=r1.val, count=r2.val;
+    if(count<=0) break;
+    for(let j=0;j<count;j++){
+      // "oooooooooo ggggg n/f"
+      const rOff=readUint(xp); xp=skipWS(rOff.end);
+      const rGen=readUint(xp); xp=skipWS(rGen.end);
+      const typ=data[xp]; xp+=1; xp=skipWS(xp);
+      if(typ===110){ // 'n'
+        offsets[startId+j]=rOff.val;
+      }
+    }
+  }
+
+  // 各オブジェクトを調べてImageを抽出
+  const images=[];
+  for(const [objId,off] of Object.entries(offsets)){
+    // endobjまでの範囲を求める（隣接するオブジェクトのデータを誤読しないため）
+    const endobjIdx=findBytes('endobj',off);
+    if(endobjIdx<0) continue;
+    const slice=data.slice(off,endobjIdx);
+    const sliceText=new TextDecoder('iso-8859-1').decode(slice);
+    if(!sliceText.includes('DCTDecode')&&!sliceText.includes('JPXDecode')) continue;
+    // /Imageだけでなく /Subtype /Image で厳密にマッチ（Pageオブジェクト等の誤検出を防ぐ）
+    if(!sliceText.includes('/Subtype /Image')&&!sliceText.includes('/Subtype/Image')) continue;
+
+    // Width, Height, Length取得
+    const wm=sliceText.match(/\/Width\s+(\d+)/);
+    const hm=sliceText.match(/\/Height\s+(\d+)/);
+    const lm=sliceText.match(/\/Length\s+(\d+)/);
+    if(!wm||!hm||!lm) continue;
+    const w=parseInt(wm[1]),h=parseInt(hm[1]),length=parseInt(lm[1]);
+
+    // isDCT or JPX
+    const isDCT=sliceText.includes('DCTDecode');
+
+    // streamキーワードをendobjより前で探す
+    let streamIdx=findBytes('stream',off);
+    if(streamIdx<0||streamIdx>=endobjIdx) continue;
+    streamIdx+=6; // skip 'stream'
+    // \r\n or \n スキップ
+    if(data[streamIdx]===13&&data[streamIdx+1]===10) streamIdx+=2;
+    else if(data[streamIdx]===10) streamIdx+=1;
+
+    if(streamIdx+length>data.length) continue;
+    const jpegBytes=data.slice(streamIdx,streamIdx+length);
+    // JPEG先頭確認
+    if(jpegBytes[0]!==0xFF||jpegBytes[1]!==0xD8) continue;
+
+    images.push({objId:parseInt(objId),w,h,jpegBytes,isDCT});
+  }
+
+  // ページ順（objId順でソート、通常ページ順に対応）
+  images.sort((a,b)=>a.objId-b.objId);
+  return images;
+}
+
+// =====================================================
+// ファイル読み込み
+// =====================================================
+document.getElementById('fileInput').addEventListener('change',e=>loadFiles(e.target.files));
+canvasArea.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropOverlay').classList.add('active');});
+canvasArea.addEventListener('dragleave',()=>document.getElementById('dropOverlay').classList.remove('active'));
+canvasArea.addEventListener('drop',e=>{
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.remove('active');
+  loadFiles(e.dataTransfer.files);
+});
+
+async function loadFiles(files){
+  if(!files||files.length===0)return;
+  const file=files[0];
+  pages=[];guides=[];sortPages=[];sortSelected=new Set();
+  originalPdfBytes=null;losslessAvailable=false;losslessLoadError=null;
+  sortUndoStack=[];sortRedoStack=[];updateUndoRedoBadges();
+  renderGuideList();
+  document.getElementById('canvasHint').style.display='none';
+  showToast('読み込み中…');
+  try{
+    if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){
+      await loadPDF(file);
+    }else{
+      await loadImages(files);
+    }
+    buildThumbsC();
+    gotoPage(0);
+    ['btnExportNormal','btnExportSplit'].forEach(id=>document.getElementById(id).disabled=false);
+    document.getElementById('hdrInfo').textContent=`${file.name}（${pages.length}p）`;
+    updateQualityBadge();
+    canvasArea.classList.add('hand-mode');
+    showToast(`${pages.length}ページ読み込みました`);
+  }catch(err){
+    hideProgress();
+    showToast('読み込みエラー: '+err.message);
+    console.error(err);
+  }
+}
+
+async function loadPDF(file){
+  showProgress('PDFを解析中…',0);
+  const buf=await file.arrayBuffer();
+
+  // 無劣化モード用：pdf-lib で読み込みを試行
+  try{
+    const{PDFDocument}=PDFLib;
+    const probeDoc=await PDFDocument.load(buf,{throwOnInvalidObject:false,updateMetadata:false});
+    // 元バイトを保持（後で再ロードして使う）
+    originalPdfBytes=new Uint8Array(buf.slice(0));
+    losslessAvailable=true;
+    losslessLoadError=null;
+    console.log('Lossless mode available, pages:',probeDoc.getPageCount());
+  }catch(e){
+    losslessAvailable=false;
+    losslessLoadError=(e&&e.message)?e.message:String(e);
+    console.warn('Lossless mode unavailable:',e);
+  }
+
+  let images=[];
+  try{
+    images=await parsePDFImages(buf);
+  }catch(e){
+    console.warn('PDFパース失敗、フォールバック:', e);
+    images=[];
+  }
+
+  if(images.length===0){
+    // フォールバック: pdf.jsを動的ロード
+    showProgress('pdf.jsで読み込み中…',0);
+    await loadPDFWithPdfJs(buf);
+    return;
+  }
+
+  document.getElementById('pageTotalLabel').textContent=`/ ${images.length}`;
+  document.getElementById('thumbPageCount').textContent=`${images.length}p`;
+
+  for(let i=0;i<images.length;i++){
+    showProgress(`画像を展開中… (${i+1}/${images.length})`, (i+1)/images.length);
+    const img=images[i];
+    // プレビュー用canvas生成（巨大画像はクランプ）
+    const previewCanvas=await jpegBytesToCanvas(img.jpegBytes);
+    pages.push({
+      sourceType:'pdf-jpeg',
+      canvas:previewCanvas,
+      jpegBytes:img.jpegBytes,
+      origWidth:img.w,
+      origHeight:img.h,
+      angle:0,rot90:0,applied:false,
+      cropRect:null,cropAspect:'free',
+      srcName:`P${i+1}`,
+      losslessCapable:losslessAvailable,
+      pdfLibPageIndex:i
+    });
+    await new Promise(r=>setTimeout(r,0));
+  }
+  hideProgress();
+}
+
+async function loadPDFWithPdfJs(buf){
+  // pdf.js動的ロード（フォールバック）
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload=()=>{
+        pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        res();
+      };
+      s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+  const pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
+  const n=pdfDoc.numPages;
+  document.getElementById('pageTotalLabel').textContent=`/ ${n}`;
+  document.getElementById('thumbPageCount').textContent=`${n}p`;
+  for(let i=1;i<=n;i++){
+    showProgress(`ページをレンダリング中… (${i}/${n})`, i/n);
+    const pg=await pdfDoc.getPage(i);
+    // プレビュー用: 軽量なscale（1.5程度）でレンダリング。ただし最大寸法でクランプ。
+    let previewScale=1.5;
+    const vpProbe=pg.getViewport({scale:previewScale});
+    const maxDim=4096;
+    const m=Math.max(vpProbe.width,vpProbe.height);
+    if(m>maxDim){previewScale=previewScale*maxDim/m;}
+    const vp=pg.getViewport({scale:previewScale});
+    const c=document.createElement('canvas');
+    c.width=vp.width;c.height=vp.height;
+    await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    // 元解像度（scale=1.0時のPDF単位）を記録し、出力時に再レンダリング
+    const vpBase=pg.getViewport({scale:1.0});
+    pages.push({sourceType:'pdf-pdfjs',canvas:c,jpegBytes:null,
+      pdfPage:pg,                         // 出力時に再レンダリング用
+      pdfBaseWidth:vpBase.width,          // scale=1.0時の幅
+      pdfBaseHeight:vpBase.height,        // scale=1.0時の高さ
+      origWidth:vp.width,origHeight:vp.height,
+      angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:`P${i}`,
+      losslessCapable:losslessAvailable,
+      pdfLibPageIndex:i-1});
+    await new Promise(r=>setTimeout(r,0));
+  }
+  hideProgress();
+}
+
+// scale指定時はそのまま、未指定時はプレビュー用に最大寸法でクランプ（巨大PDF対策）
+async function jpegBytesToCanvas(jpegBytes, scale=null, maxDim=4096){
+  const blob=new Blob([jpegBytes],{type:'image/jpeg'});
+  const url=URL.createObjectURL(blob);
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w,h;
+      if(scale!=null){
+        w=Math.round(img.naturalWidth*scale);
+        h=Math.round(img.naturalHeight*scale);
+      }else{
+        w=img.naturalWidth;h=img.naturalHeight;
+        const m=Math.max(w,h);
+        if(m>maxDim){const k=maxDim/m;w=Math.round(w*k);h=Math.round(h*k);}
+      }
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      const cx=c.getContext('2d');
+      cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+      cx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(c);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('JPEG decode failed'));};
+    img.src=url;
+  });
+}
+
+async function loadImages(files){
+  const sorted=Array.from(files).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  const n=sorted.length;
+  document.getElementById('pageTotalLabel').textContent=`/ ${n}`;
+  document.getElementById('thumbPageCount').textContent=`${n}p`;
+  showProgress('画像を読み込み中…',0);
+  for(let i=0;i<n;i++){
+    const c=await imgToCanvas(sorted[i]);
+    pages.push({sourceType:'image',canvas:c,jpegBytes:null,
+      origWidth:c.width,origHeight:c.height,
+      angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:sorted[i].name,
+      losslessCapable:false});
+    showProgress(`画像を読み込み中… (${i+1}/${n})`, (i+1)/n);
+    await new Promise(r=>setTimeout(r,0));
+  }
+  hideProgress();
+}
+
+function imgToCanvas(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth;c.height=img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      URL.revokeObjectURL(url);res(c);
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+
+function updateQualityBadge(){
+  const allJpeg=pages.every(p=>p.sourceType==='pdf-jpeg');
+  const hasPdfjs=pages.some(p=>p.sourceType==='pdf-pdfjs');
+  const el=document.getElementById('qualityInfo');
+  if(allJpeg){
+    el.innerHTML='<span class="quality-badge quality-lossless">✓ 元データ直接利用（無劣化）</span>';
+  }else if(hasPdfjs&&pages.every(p=>p.sourceType==='pdf-pdfjs')){
+    el.innerHTML='<span class="quality-badge quality-lossy">△ ベクター/複合PDF（高解像度再描画で出力）</span>';
+  }else if(pages.some(p=>p.sourceType==='pdf-jpeg')){
+    el.innerHTML='<span class="quality-badge quality-lossy">△ 混在モード</span>';
+  }else{
+    el.innerHTML='<span class="quality-badge quality-lossy">△ Canvas経由（再圧縮あり）</span>';
+  }
+}
+
+// =====================================================
+// ページ切替
+// =====================================================
+function gotoPage(idx){
+  if(pages.length===0)return;
+  idx=Math.max(0,Math.min(pages.length-1,idx));
+  curPage=idx;
+  const p=pages[idx];
+  document.getElementById('angleSlider').value=p.angle;
+  document.getElementById('pageInput').value=idx+1;
+  document.getElementById('btnPrev').disabled=idx===0;
+  document.getElementById('btnNext').disabled=idx===pages.length-1;
+  updateAngleDisplay(p.angle);
+  syncCropUIToPage(p);
+  document.querySelectorAll('.thumb-item-c').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const el=document.getElementById(`tc${idx}`);
+  if(el)el.scrollIntoView({block:'nearest'});
+  renderPage();
+}
+
+// =====================================================
+// 角度操作
+// =====================================================
+function setAngle(v){
+  v=Math.round(v*100)/100;v=Math.max(-10,Math.min(10,v));
+  if(pages.length===0)return;
+  pages[curPage].angle=v;
+  document.getElementById('angleSlider').value=v;
+  updateAngleDisplay(v);renderPage();
+}
+function nudge(d){if(pages.length===0)return;setAngle(pages[curPage].angle+d);}
+function updateAngleDisplay(v){
+  const sign=v>=0?'+':'';
+  document.getElementById('angleDisplay').innerHTML=`${sign}${v.toFixed(2)}<small>°</small>`;
+}
+function rotate90(dir){
+  if(pages.length===0)return;
+  pages[curPage].rot90=(pages[curPage].rot90+dir+4)%4;
+  pages[curPage].applied=true;updateThumbC(curPage);renderPage();
+}
+function applyToCurrentPage(){
+  if(pages.length===0)return;
+  pages[curPage].applied=true;updateThumbC(curPage);
+  showToast(`ページ ${curPage+1} に ${pages[curPage].angle.toFixed(2)}° 適用`);
+}
+function applyToAllPages(){
+  if(pages.length===0)return;
+  const a=pages[curPage].angle;
+  pages.forEach((p,i)=>{p.angle=a;p.applied=true;updateThumbC(i);});
+  showToast(`全ページに ${a.toFixed(2)}° 適用`);
+}
+function resetCurrentPage(){
+  if(pages.length===0)return;
+  const p=pages[curPage];
+  p.angle=0;p.rot90=0;p.applied=false;p.cropRect=null;
+  setAngle(0);syncCropUIToPage(p);updateThumbC(curPage);
+  showToast(`ページ ${curPage+1} をリセット`);
+}
+
+// =====================================================
+// プレビューレンダリング
+// =====================================================
+function getDispSize(p){
+  const sw=(p.rot90===1||p.rot90===3);
+  const ow=p.origWidth,oh=p.origHeight;
+  return{w:sw?oh:ow,h:sw?ow:oh};
+}
+
+function renderPage(){
+  if(pages.length===0)return;
+  const p=pages[curPage];
+  const{w:dw,h:dh}=getDispSize(p);
+  const areaW=canvasArea.offsetWidth-4,areaH=canvasArea.offsetHeight-4;
+  const baseSc=Math.min(areaW/dw,areaH/dh);
+  const sc=zoom*baseSc;
+  const dpr=window.devicePixelRatio||1;
+  const dispW=Math.round(dw*sc),dispH=Math.round(dh*sc);
+  // mainCanvas: CSS表示サイズとピクセル解像度をdpr倍に
+  mainCanvas.style.width=dispW+'px';mainCanvas.style.height=dispH+'px';
+  mainCanvas.width=Math.round(dispW*dpr);mainCanvas.height=Math.round(dispH*dpr);
+  const inner=document.getElementById('canvasInner');
+  inner.style.minWidth=Math.max(areaW,dispW+20)+'px';
+  inner.style.minHeight=Math.max(areaH,dispH+20)+'px';
+  const src=p.canvas;
+  ctx.save();
+  ctx.scale(dpr,dpr);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,dispW,dispH);
+  ctx.translate(dispW/2,dispH/2);
+  ctx.rotate(p.rot90*Math.PI/2+p.angle*Math.PI/180);
+  const srcSc=sc*(p.origWidth/src.width);
+  ctx.drawImage(src,-src.width*srcSc/2,-src.height*srcSc/2,src.width*srcSc,src.height*srcSc);
+  ctx.restore();
+  drawGuides();
+  drawCropOverlay();
+  // cropOverlay canvasをmainCanvasに合わせる（canvasInner内の絶対位置）
+  cropOvCanvas.style.width=dispW+'px';cropOvCanvas.style.height=dispH+'px';
+  cropOvCanvas.width=Math.round(dispW*dpr);cropOvCanvas.height=Math.round(dispH*dpr);
+  const mr=mainCanvas.getBoundingClientRect();
+  const ir=inner.getBoundingClientRect();
+  cropOvCanvas.style.position='absolute';
+  cropOvCanvas.style.top=(mr.top-ir.top)+'px';
+  cropOvCanvas.style.left=(mr.left-ir.left)+'px';
+  cropOvCanvas.style.pointerEvents=cropMode?'all':'none';
+  drawCropPreview();
+}
+
+// =====================================================
+// 最終出力canvas生成（高画質）
+// =====================================================
+async function buildHighResPdfjsCanvas(p){
+  // pdf.jsページを高解像度でレンダリング
+  // 短辺が6000px以上になるscaleを選ぶ（楽譜等の細かい描画に対応）
+  const BASE_PX_TARGET=6000;
+  const baseW=p.pdfBaseWidth,baseH=p.pdfBaseHeight;
+  const shortSide=Math.min(baseW,baseH);
+  const outputScale=Math.max(6.0, BASE_PX_TARGET/shortSide);
+  const vp=p.pdfPage.getViewport({scale:outputScale});
+  const c=document.createElement('canvas');
+  c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+  await p.pdfPage.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  return c;
+}
+
+async function buildOutputCanvas(p, usePreviewScale=false){
+  // pdf-pdfjsタイプは出力時に高解像度で再レンダリング（usePreviewScale=trueで元解像度相当）
+  const srcCanvas = p.sourceType==='pdf-pdfjs' && p.pdfPage && !usePreviewScale
+    ? await buildHighResPdfjsCanvas(p)
+    : p.jpegBytes
+      ? await jpegBytesToCanvas(p.jpegBytes, 1.0)
+      : p.canvas;
+
+  // pdf-pdfjsの場合origWidthはpreviewScaleのサイズなので再レンダリング後のサイズに合わせる
+  const sw=(p.rot90===1||p.rot90===3);
+  const outW=sw?srcCanvas.height:srcCanvas.width;
+  const outH=sw?srcCanvas.width:srcCanvas.height;
+
+  const needsTransform=(p.angle!==0||p.rot90!==0);
+  const needsCrop=!!p.cropRect;
+
+  if(!needsTransform&&!needsCrop){
+    return srcCanvas;
+  }
+
+  const out=document.createElement('canvas');out.width=outW;out.height=outH;
+  const c=out.getContext('2d');
+  c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  c.fillStyle='#fff';c.fillRect(0,0,outW,outH);
+  c.save();c.translate(outW/2,outH/2);
+  c.rotate(p.rot90*Math.PI/2+p.angle*Math.PI/180);
+  c.drawImage(srcCanvas,-srcCanvas.width/2,-srcCanvas.height/2);
+  c.restore();
+
+  if(needsCrop){
+    // cropRectはプレビューcanvasのスケールで記録されているので、出力スケールに変換
+    const previewW=p.sourceType==='pdf-pdfjs'?p.origWidth:srcCanvas.width;
+    const previewH=p.sourceType==='pdf-pdfjs'?p.origHeight:srcCanvas.height;
+    const scX=srcCanvas.width/previewW,scY=srcCanvas.height/previewH;
+    const cr=p.cropRect;
+    const crScaled={x:Math.round(cr.x*scX),y:Math.round(cr.y*scY),w:Math.round(cr.w*scX),h:Math.round(cr.h*scY)};
+    const cropped=cropCanvas(out,crScaled.x,crScaled.y,crScaled.w,crScaled.h);
+    if(p.cropAspect==='a4'){
+      const a4c=document.createElement('canvas');a4c.width=595;a4c.height=842;
+      const ac=a4c.getContext('2d');
+      ac.fillStyle='#fff';ac.fillRect(0,0,595,842);
+      ac.imageSmoothingEnabled=true;ac.imageSmoothingQuality='high';
+      ac.drawImage(cropped,0,0,595,842);
+      return a4c;
+    }
+    return cropped;
+  }
+  return out;
+}
+
+// =====================================================
+// PDF書き出し（高画質）
+// =====================================================
+// 変換なし・クロップなしのpdf-jpegは元JPEGバイトをそのまま埋め込む
+async function addPageToPdf(pdfDoc, p, format, quality){
+  const noTransform=(p.angle===0&&p.rot90===0&&!p.cropRect);
+
+  if(noTransform&&p.sourceType==='pdf-jpeg'&&p.jpegBytes){
+    // 元JPEGをそのまま埋め込み（完全無劣化）
+    const img=await pdfDoc.embedJpg(p.jpegBytes);
+    const pw=p.origWidth,ph=p.origHeight;
+    const pg=pdfDoc.addPage([pw,ph]);
+    pg.drawImage(img,{x:0,y:0,width:pw,height:ph});
+    return;
+  }
+
+  if(noTransform&&p.sourceType==='pdf-pdfjs'&&p.pdfPage){
+    // ベクター/複合PDF変換なし: 高解像度再描画→PNG固定
+    const hiRes=await buildHighResPdfjsCanvas(p);
+    const pngBytes=await canvasToPng(hiRes);
+    const img=await pdfDoc.embedPng(pngBytes);
+    const pg=pdfDoc.addPage([hiRes.width,hiRes.height]);
+    pg.drawImage(img,{x:0,y:0,width:hiRes.width,height:hiRes.height});
+    return;
+  }
+
+  // 変換あり: ユーザー指定の形式・品質で出力
+  const outCanvas=await buildOutputCanvas(p);
+  const fmt=format||'jpeg';
+  const q=quality!=null?quality:0.92;
+  const imgBytes=await canvasToImageBytes(outCanvas,fmt,q);
+  let img;
+  if(fmt==='png'){
+    img=await pdfDoc.embedPng(imgBytes);
+  }else{
+    img=await pdfDoc.embedJpg(imgBytes);
+  }
+  const pg=pdfDoc.addPage([outCanvas.width,outCanvas.height]);
+  pg.drawImage(img,{x:0,y:0,width:outCanvas.width,height:outCanvas.height});
+}
+
+function getOutFormat(){return document.getElementById('outFormat')?.value||'jpeg';}
+function getJpegQuality(){return (parseInt(document.getElementById('jpegQuality')?.value||'92'))/100;}
+function onOutFormatChange(){
+  const isPng=getOutFormat()==='png';
+  const row=document.getElementById('jpegQualityRow');
+  if(row)row.style.display=isPng?'none':'flex';
+}
+function getSplitFormat(){return document.getElementById('splitFormat')?.value||'jpeg';}
+function getSplitQuality(){return (parseInt(document.getElementById('splitQuality')?.value||'92'))/100;}
+function onSplitFormatChange(){
+  const isPng=getSplitFormat()==='png';
+  const row=document.getElementById('splitQualityRow');
+  if(row)row.style.display=isPng?'none':'flex';
+}
+function openExportModal(){
+  if(pages.length===0)return;
+  const cb=document.getElementById('losslessMode');
+  const note=document.getElementById('losslessNote');
+  const capable=pages.some(p=>p.losslessCapable);
+  if(capable){
+    cb.disabled=false;cb.checked=true;
+    const allCapable=pages.every(p=>p.losslessCapable);
+    note.innerHTML=allCapable
+      ? '✓ ベクター文字・元画像データを保持したまま、回転やクロップを反映できます'
+      : '一部のページは元PDF構造を保持して保存。それ以外のページは画像で出力されます';
+    note.style.color=allCapable?'var(--green)':'var(--amber)';
+  }else{
+    cb.disabled=true;cb.checked=false;
+    note.innerHTML='× 無劣化保存不可：'+(losslessLoadError
+      ? '元PDFをpdf-libで読み込めませんでした（'+escapeHtml(losslessLoadError)+'）'
+      : '画像入力または元PDFがありません');
+    note.style.color='var(--amber)';
+  }
+  updateExportModalUI();
+  document.getElementById('exportModal').classList.add('open');
+}
+function closeExportModal(){document.getElementById('exportModal').classList.remove('open');}
+function doExportPDF(){
+  closeExportModal();
+  const lossless=document.getElementById('losslessMode')?.checked;
+  if(lossless)exportPDFLossless();
+  else exportPDF('normal');
+}
+function updateExportModalUI(){
+  const lossless=document.getElementById('losslessMode')?.checked;
+  const hasFallback=lossless&&pages.some(p=>!p.losslessCapable);
+  // 無劣化モード時は形式/品質欄を「フォールバック用」として表示。すべてのページが無劣化対応なら非表示。
+  const block=document.getElementById('exportFmtBlock');
+  if(block)block.style.display=(lossless&&!hasFallback)?'none':'block';
+  const isPng=getOutFormat()==='png';
+  const qrow=document.getElementById('jpegQualityRow');
+  if(qrow)qrow.style.display=((lossless&&!hasFallback)||isPng)?'none':'flex';
+  const noteEl=document.getElementById('exportModeNote');
+  if(noteEl){
+    if(lossless&&!hasFallback)noteEl.textContent='元PDFの構造（ベクター文字、画像データ、メタデータ）をそのまま保持して出力します。';
+    else if(lossless)noteEl.textContent='対応可能ページは無劣化、それ以外のページは上記の画像形式で出力されます。';
+    else noteEl.textContent='変換のないページは元データのまま埋め込み（完全無劣化）。変換ありページにのみ上記設定が適用されます。';
+  }
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+async function canvasToImageBytes(canvas, format, quality){
+  // format: 'jpeg' | 'png'
+  // 無劣化の場合はpng固定（形式に関わらず）
+  const mimeType = format==='png' ? 'image/png' : 'image/jpeg';
+  const q = format==='jpeg' ? quality : undefined;
+  return new Promise(res=>{
+    canvas.toBlob(blob=>{
+      blob.arrayBuffer().then(buf=>res(new Uint8Array(buf)));
+    }, mimeType, q);
+  });
+}
+
+// 後方互換用（pdfjs高解像度出力など変換なし系はPNG固定）
+async function canvasToPng(canvas){
+  return canvasToImageBytes(canvas,'png',1.0);
+}
+
+// =====================================================
+// エクスポート
+// =====================================================
+function openSplitModal(){document.getElementById('splitModal').classList.add('open');}
+function closeSplitModal(){document.getElementById('splitModal').classList.remove('open');}
+
+async function doSplitExport(){
+  closeSplitModal();
+  const dir=document.getElementById('splitDir').value;
+  const after=document.getElementById('splitAfter').value;
+  const fmt=getSplitFormat(),q=getSplitQuality();
+  const useOrigRes=(document.getElementById('splitResMode')?.value==='original');
+  showProgress('処理中…',0);
+  await new Promise(r=>setTimeout(r,50));
+  try{
+    const halves=[];
+    for(let i=0;i<pages.length;i++){
+      showProgress(`分割中… (${i+1}/${pages.length})`,i/pages.length);
+      const final=await buildOutputCanvas(pages[i],useOrigRes);
+      const hw=Math.floor(final.width/2);
+      const left=cropCanvas(final,0,0,hw,final.height);
+      const right=cropCanvas(final,hw,0,final.width-hw,final.height);
+      const ordered=dir==='rl'?[right,left]:[left,right];
+      for(const h of ordered) halves.push({canvas:h,label:`P${i+1}${h===left?'L':'R'}`});
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const{PDFDocument}=PDFLib;
+    const newPdf=await PDFDocument.create();
+    for(let i=0;i<halves.length;i++){
+      showProgress(`PDF生成中… (${i+1}/${halves.length})`,(i+1)/halves.length);
+      const{canvas:c}=halves[i];
+      const imgBytes=await canvasToImageBytes(c,fmt,q);
+      let img;
+      if(fmt==='png'){img=await newPdf.embedPng(imgBytes);}
+      else{img=await newPdf.embedJpg(imgBytes);}
+      newPdf.addPage([c.width,c.height]).drawImage(img,{x:0,y:0,width:c.width,height:c.height});
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const bytes=await newPdf.save();
+    hideProgress();
+    downloadBytes(bytes,'NamaTunePDF_A4分割.pdf','application/pdf');
+    if(after==='sort'){
+      sortPages=halves.map(h=>({canvas:h.canvas,label:h.label}));
+      sortSelected=new Set();buildSortGrid();switchTab('sort');
+      showToast('並べ替えタブに渡しました');
+    }else{
+      showToast('保存しました！');
+    }
+  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+}
+
+async function exportPDF(mode){
+  if(pages.length===0)return;
+  const fmt=getOutFormat(),q=getJpegQuality();
+  showProgress('PDF生成中…',0);await new Promise(r=>setTimeout(r,50));
+  try{
+    const{PDFDocument}=PDFLib;const newPdf=await PDFDocument.create();
+    for(let i=0;i<pages.length;i++){
+      showProgress(`ページ ${i+1}/${pages.length} 処理中…`,i/pages.length);
+      await addPageToPdf(newPdf,pages[i],fmt,q);
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const bytes=await newPdf.save();
+    hideProgress();
+    downloadBytes(bytes,'NamaTunePDF_補正済み.pdf','application/pdf');
+    showToast('保存しました！');
+  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+}
+
+// =====================================================
+// 無劣化エクスポート（pdf-lib で元PDFを構造ごと保持）
+// =====================================================
+async function exportPDFLossless(){
+  if(pages.length===0)return;
+  if(!originalPdfBytes){showToast('無劣化モード不可：元PDFがありません');return;}
+  const fmt=getOutFormat(),q=getJpegQuality();
+  showProgress('無劣化PDFを生成中…',0);
+  await new Promise(r=>setTimeout(r,50));
+  try{
+    const{PDFDocument}=PDFLib;
+    const srcDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
+    const newDoc=await PDFDocument.create();
+    const srcPages=srcDoc.getPages();
+    for(let i=0;i<pages.length;i++){
+      showProgress(`ページ ${i+1}/${pages.length} 処理中…`,i/pages.length);
+      const p=pages[i];
+      if(!p.losslessCapable||p.pdfLibPageIndex==null||p.pdfLibPageIndex<0||p.pdfLibPageIndex>=srcPages.length){
+        // フォールバック：画像で埋め込み
+        await addPageToPdf(newDoc,p,fmt,q);
+      }else{
+        await addPageLossless(newDoc,srcDoc,srcPages,p);
+      }
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const bytes=await newDoc.save();
+    hideProgress();
+    downloadBytes(bytes,'NamaTunePDF_補正済み.pdf','application/pdf');
+    showToast('保存しました！（無劣化モード）');
+  }catch(err){hideProgress();showToast('無劣化エラー: '+err.message);console.error(err);}
+}
+
+// 1ページを無劣化で出力PDFに追加
+async function addPageLossless(newDoc,srcDoc,srcPages,p){
+  const{PDFDocument,degrees,pushGraphicsState,popGraphicsState,translate,rotateDegrees}=PDFLib;
+  const srcIdx=p.pdfLibPageIndex;
+  const srcPage=srcPages[srcIdx];
+  const{width:srcWpt,height:srcHpt}=srcPage.getSize();
+  // 画像px→pt変換係数（origWidth/Height は MediaBox の縦横の画像px相当）
+  const sxPt=srcWpt/p.origWidth;
+  const syPt=srcHpt/p.origHeight;
+  const ow=p.origWidth,oh=p.origHeight;
+  const k=((p.rot90%4)+4)%4;
+
+  // cropRect（表示キャンバスpx＝rot90後の画像px座標）→ 元画像px座標へ逆回転
+  function unrotateCrop(){
+    if(!p.cropRect)return null;
+    const cr=p.cropRect;
+    let ix,iy,iw,ih;
+    if(k===0){ix=cr.x;iy=cr.y;iw=cr.w;ih=cr.h;}
+    else if(k===1){ix=cr.y;iy=ow-cr.x-cr.w;iw=cr.h;ih=cr.w;}
+    else if(k===2){ix=ow-cr.x-cr.w;iy=oh-cr.y-cr.h;iw=cr.w;ih=cr.h;}
+    else{ix=oh-cr.y-cr.h;iy=cr.x;iw=cr.h;ih=cr.w;}
+    return{ix,iy,iw,ih};
+  }
+
+  if(p.angle===0){
+    // メタデータのみ変更で完全無劣化
+    const[cp]=await newDoc.copyPages(srcDoc,[srcIdx]);
+    newDoc.addPage(cp);
+    if(k!==0){
+      const cur=cp.getRotation().angle;
+      cp.setRotation(degrees(((cur+k*90)%360+360)%360));
+    }
+    const u=unrotateCrop();
+    if(u){
+      // 画像px→pt、Y軸はPDF（下原点）に
+      const x=u.ix*sxPt;
+      const w=u.iw*sxPt;
+      const h=u.ih*syPt;
+      const y=srcHpt-u.iy*syPt-h;
+      cp.setCropBox(x,y,w,h);
+    }
+    return;
+  }
+
+  // 任意角度あり：embedPages + 変換行列でベクター/画像を無劣化レンダリング
+  const[emb]=await newDoc.embedPages([srcPage]);
+  // 「表示キャンバス」サイズ（rot90反映、ptで）
+  const dispPtW=(k%2)?srcHpt:srcWpt;
+  const dispPtH=(k%2)?srcWpt:srcHpt;
+
+  let outW,outH,cropOffXpt=0,cropOffYpt=0;
+  if(p.cropRect){
+    // cropRect は表示キャンバスpx（=rot90後の画像px）。表示ptへスケール
+    const dispPxW=(k%2)?oh:ow;
+    const dispPxH=(k%2)?ow:oh;
+    const sx=dispPtW/dispPxW;
+    const sy=dispPtH/dispPxH;
+    cropOffXpt=p.cropRect.x*sx;
+    cropOffYpt=p.cropRect.y*sy;
+    outW=p.cropRect.w*sx;
+    outH=p.cropRect.h*sy;
+  }else{
+    outW=dispPtW;outH=dispPtH;
+  }
+
+  const np=newDoc.addPage([outW,outH]);
+  const totalDeg=k*90+p.angle;       // 表示でのCW角
+  const pdfRotDeg=-totalDeg;          // PDF(Y-up,CCW+)では符号反転
+
+  // CTM: 出力PDF (Y-up) → 表示Y-down系の理想キャンバスの中心へ → 回転 → embedをセンタリング
+  // 理想キャンバス中心の出力PDF座標: (dispPtW/2 - cropOffXpt, outH + cropOffYpt - dispPtH/2)
+  np.pushOperators(
+    pushGraphicsState(),
+    translate(dispPtW/2 - cropOffXpt, outH + cropOffYpt - dispPtH/2),
+    rotateDegrees(pdfRotDeg),
+    translate(-srcWpt/2, -srcHpt/2)
+  );
+  np.drawPage(emb,{x:0,y:0,width:srcWpt,height:srcHpt});
+  np.pushOperators(popGraphicsState());
+}
+
+// =====================================================
+// ズーム・ガイドライン
+// =====================================================
+function setZoom(z){
+  zoom=Math.max(0.1,Math.min(5,Math.round(z*20)/20));
+  document.getElementById('zoomVal').textContent=Math.round(zoom*100)+'%';
+  renderPage();
+}
+function fitZoom(){
+  if(pages.length===0)return;
+  const{w:dw,h:dh}=getDispSize(pages[curPage]);
+  zoom=Math.min((canvasArea.offsetWidth-4)/dw,(canvasArea.offsetHeight-4)/dh);
+  zoom=Math.round(zoom*100)/100;
+  document.getElementById('zoomVal').textContent=Math.round(zoom*100)+'%';
+  renderPage();
+}
+canvasArea.addEventListener('wheel',e=>{e.preventDefault();setZoom(zoom+(e.deltaY<0?0.1:-0.1));},{passive:false});
+
+// ハンドモード（パン）
+function updateHandMode(){
+  if(cropMode){
+    canvasArea.classList.remove('hand-mode');
+  }else{
+    canvasArea.classList.add('hand-mode');
+  }
+}
+canvasArea.addEventListener('mousedown',e=>{
+  if(cropMode||guideDrag)return;
+  // cropOverlayのイベントと重複しないよう、e.targetがcanvasAreaかcanvasInnerかmainCanvasの時のみ
+  if(e.target!==canvasArea&&e.target!==document.getElementById('canvasInner')&&e.target!==mainCanvas)return;
+  handDragging=true;
+  handDragStart={x:e.clientX,y:e.clientY,scrollX:canvasArea.scrollLeft,scrollY:canvasArea.scrollTop};
+  canvasArea.style.cursor='grabbing';
+  e.preventDefault();
+});
+document.addEventListener('mousemove',e=>{
+  if(!handDragging)return;
+  const dx=e.clientX-handDragStart.x,dy=e.clientY-handDragStart.y;
+  canvasArea.scrollLeft=handDragStart.scrollX-dx;
+  canvasArea.scrollTop=handDragStart.scrollY-dy;
+});
+document.addEventListener('mouseup',()=>{
+  if(handDragging){handDragging=false;canvasArea.style.cursor='';}
+});
+
+function addGuide(type){guides.push({type,pos:.5,id:guideIdCnt++,color:GUIDE_COLORS[guideIdCnt%5]});renderGuideList();renderPage();}
+function clearGuides(){guides=[];renderGuideList();renderPage();}
+function removeGuide(id){guides=guides.filter(g=>g.id!==id);renderGuideList();renderPage();}
+function renderGuideList(){
+  const el=document.getElementById('guideList');
+  if(!guides.length){el.innerHTML='<div style="color:var(--text3);font-size:10px;padding:2px 0">なし</div>';return;}
+  el.innerHTML=guides.map(g=>`<div class="guide-item"><div class="guide-color" style="background:${g.color}"></div><div class="guide-pos">${g.type==='h'?'水平':'垂直'} ${(g.pos*100).toFixed(1)}%</div><button class="guide-del" onclick="removeGuide(${g.id})">✕</button></div>`).join('');
+}
+function drawGuides(){
+  const dpr=window.devicePixelRatio||1;
+  const cw=mainCanvas.width,ch=mainCanvas.height;
+  ctx.save();ctx.scale(dpr,dpr);
+  const cssW=cw/dpr,cssH=ch/dpr;
+  guides.forEach(g=>{
+    ctx.save();ctx.strokeStyle=g.color;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.globalAlpha=.85;
+    if(g.type==='h'){
+      const y=g.pos*cssH;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cssW,y);ctx.stroke();
+      ctx.setLineDash([]);ctx.fillStyle=g.color;ctx.globalAlpha=1;ctx.font='bold 10px monospace';
+      ctx.fillText(`y:${(g.pos*100).toFixed(1)}%`,5,y-3);
+    }else{
+      const x=g.pos*cssW;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cssH);ctx.stroke();
+      ctx.setLineDash([]);ctx.fillStyle=g.color;ctx.globalAlpha=1;ctx.font='bold 10px monospace';
+      ctx.save();ctx.translate(x+3,14);ctx.fillText(`x:${(g.pos*100).toFixed(1)}%`,0,0);ctx.restore();
+    }
+    ctx.restore();
+  });
+  ctx.restore();
+}
+mainCanvas.addEventListener('mousedown',e=>{
+  if(cropMode){return;}
+  const r=mainCanvas.getBoundingClientRect();
+  const mx=(e.clientX-r.left)/mainCanvas.width*(window.devicePixelRatio||1)/mainCanvas.width*(mainCanvas.style.width?parseFloat(mainCanvas.style.width):mainCanvas.width),my=(e.clientY-r.top)/(mainCanvas.style.height?parseFloat(mainCanvas.style.height):mainCanvas.height);
+  // ガイドドラッグ判定
+  const cssW=parseFloat(mainCanvas.style.width)||mainCanvas.width;
+  const cssH=parseFloat(mainCanvas.style.height)||mainCanvas.height;
+  const mxN=(e.clientX-r.left)/cssW,myN=(e.clientY-r.top)/cssH;
+  for(const g of guides){
+    if(Math.abs((g.type==='h'?myN:mxN)-g.pos)<.02){guideDrag=g;mainCanvas.style.cursor=g.type==='h'?'ns-resize':'ew-resize';return;}
+  }
+});
+mainCanvas.addEventListener('mousemove',e=>{
+  if(cropMode)return;
+  const r=mainCanvas.getBoundingClientRect();
+  const cssW=parseFloat(mainCanvas.style.width)||mainCanvas.width;
+  const cssH=parseFloat(mainCanvas.style.height)||mainCanvas.height;
+  const mxN=(e.clientX-r.left)/cssW,myN=(e.clientY-r.top)/cssH;
+  if(!guideDrag){
+    let on=false;
+    for(const g of guides)if(Math.abs((g.type==='h'?myN:mxN)-g.pos)<.02){mainCanvas.style.cursor=g.type==='h'?'ns-resize':'ew-resize';on=true;break;}
+    if(!on)mainCanvas.style.cursor='';return;
+  }
+  guideDrag.pos=Math.max(0,Math.min(1,guideDrag.type==='h'?myN:mxN));
+  renderGuideList();renderPage();
+});
+mainCanvas.addEventListener('mouseup',()=>{guideDrag=null;mainCanvas.style.cursor='';});
+mainCanvas.addEventListener('mouseleave',()=>{guideDrag=null;});
+
+// =====================================================
+// クロップ
+// =====================================================
+let cropMode=false,cropAspect='free',cropCustomW=1,cropCustomH=1;
+let cropDragging=false,cropDragMode='new';
+let cropDragStart={x:0,y:0,rect:null};
+let cropResizeEdge={l:false,r:false,t:false,b:false};
+let cropMoveStart={mx:0,my:0,ox:0,oy:0};
+let cropRect={x:0,y:0,w:0,h:0};
+const HANDLE_HIT=10;
+const ASPECTS={free:null,a4:[210,297],silver:[1,Math.SQRT2],custom:null};
+
+function getCropScale(){
+  if(pages.length===0)return 1;
+  const p=pages[curPage];const{w:dw,h:dh}=getDispSize(p);
+  const areaW=canvasArea.offsetWidth-4,areaH=canvasArea.offsetHeight-4;
+  return zoom*Math.min(areaW/dw,areaH/dh);
+}
+function getDispW(){
+  if(pages.length===0)return 0;
+  const p=pages[curPage];const{w:dw,h:dh}=getDispSize(p);
+  const areaW=canvasArea.offsetWidth-4,areaH=canvasArea.offsetHeight-4;
+  return Math.round(dw*zoom*Math.min(areaW/dw,areaH/dh));
+}
+function getDispH(){
+  if(pages.length===0)return 0;
+  const p=pages[curPage];const{w:dw,h:dh}=getDispSize(p);
+  const areaW=canvasArea.offsetWidth-4,areaH=canvasArea.offsetHeight-4;
+  return Math.round(dh*zoom*Math.min(areaW/dw,areaH/dh));
+}
+function getAspectRatio(){
+  if(cropAspect==='free')return null;
+  if(cropAspect==='custom')return cropCustomW/cropCustomH;
+  const a=ASPECTS[cropAspect];return a?a[0]/a[1]:null;
+}
+function constrainCropRect(){const ar=getAspectRatio();if(ar)cropRect.h=Math.round(cropRect.w/ar);}
+
+function toggleCropMode(){
+  cropMode=!cropMode;
+  const ov=document.getElementById('cropOverlay');
+  const btn=document.getElementById('btnCropMode');
+  const det=document.getElementById('cropDetails');
+  // ハンドモードのドラッグ残留cursorをクリア（重要：直後にクロップ入った時に矢印になるバグの対策）
+  canvasArea.style.cursor='';
+  handDragging=false;
+  if(cropMode){
+    ov.classList.add('active');btn.textContent='✕ 選択解除';btn.style.borderColor='var(--accent2)';
+    canvasArea.classList.remove('hand-mode');
+    if(det)det.style.display='block';
+  }else{
+    ov.classList.remove('active');btn.textContent='✂ 範囲選択';btn.style.borderColor='';
+    canvasArea.classList.add('hand-mode');
+    cropOvCtx.clearRect(0,0,cropOvCanvas.width,cropOvCanvas.height);
+    if(det)det.style.display='none';
+  }
+}
+function setAspect(key){
+  // 旧データ互換: 'a4' は 'silver' にマップ（縦横比は同じ）
+  if(key==='a4')key='silver';
+  cropAspect=key;
+  document.querySelectorAll('.aspect-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('asp-'+key);
+  if(btn)btn.classList.add('active');
+  const customShow=(key==='custom');
+  const aspW=document.getElementById('cropAspW'),aspH=document.getElementById('cropAspH');
+  if(aspW)aspW.style.display=customShow?'inline-block':'none';
+  if(aspH)aspH.style.display=customShow?'inline-block':'none';
+  if(cropRect.w>0)constrainCropRect();
+  updateCropRect();
+}
+function updateCustomAspect(){
+  cropCustomW=parseFloat(document.getElementById('cropAspW').value)||1;
+  cropCustomH=parseFloat(document.getElementById('cropAspH').value)||1;
+  if(cropRect.w>0)constrainCropRect();updateCropRect();
+}
+function updateCropRect(){
+  ['cropX','cropY','cropW','cropH'].forEach((id,idx)=>{
+    document.getElementById(id).value=cropRect.w>0?[cropRect.x,cropRect.y,cropRect.w,cropRect.h][idx]:'';
+  });
+}
+function cropInputChanged(){
+  cropRect.x=parseInt(document.getElementById('cropX').value)||0;
+  cropRect.y=parseInt(document.getElementById('cropY').value)||0;
+  cropRect.w=parseInt(document.getElementById('cropW').value)||0;
+  cropRect.h=parseInt(document.getElementById('cropH').value)||0;
+  updateCropRect();saveCropToPage();renderPage();
+}
+function saveCropToPage(){
+  if(pages.length===0)return;
+  const p=pages[curPage];
+  if(cropRect.w>4&&cropRect.h>4){
+    p.cropRect={...cropRect};p.cropAspect=cropAspect;p.applied=true;
+    document.getElementById('btnCropClear').disabled=false;
+    updateCropStatus(p);updateThumbC(curPage);
+  }
+}
+function clearCrop(){
+  if(pages.length===0)return;
+  const p=pages[curPage];p.cropRect=null;
+  cropRect={x:0,y:0,w:0,h:0};
+  ['cropX','cropY','cropW','cropH'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('btnCropClear').disabled=true;
+  updateCropStatus(p);updateThumbC(curPage);renderPage();
+  showToast(`ページ ${curPage+1} のクロップ予定を解除`);
+}
+function syncCropUIToPage(p){
+  if(p.cropRect){cropRect={...p.cropRect};document.getElementById('btnCropClear').disabled=false;}
+  else{cropRect={x:0,y:0,w:0,h:0};document.getElementById('btnCropClear').disabled=true;}
+  ['cropX','cropY','cropW','cropH'].forEach((id,idx)=>{
+    document.getElementById(id).value=p.cropRect?[p.cropRect.x,p.cropRect.y,p.cropRect.w,p.cropRect.h][idx]:'';
+  });
+  setAspect(p.cropAspect||'free');updateCropStatus(p);
+}
+function updateCropStatus(p){
+  const el=document.getElementById('cropStatus');
+  if(p&&p.cropRect){
+    const cr=p.cropRect;
+    el.textContent=`設定済み：${cr.x},${cr.y}  ${cr.w}×${cr.h}px`;el.style.color='var(--amber)';
+  }else{
+    el.textContent='未設定（保存時は全面）';el.style.color='var(--text3)';
+  }
+}
+function drawCropOverlay(){
+  // mainCanvas上に保存済みクロップを描画（dpr対応）
+  if(pages.length===0)return;
+  const p=pages[curPage];const cr=p.cropRect;
+  if(!cr||cr.w<=0)return;
+  const sc=getCropScale();
+  const dpr=window.devicePixelRatio||1;
+  const x=cr.x*sc*dpr,y=cr.y*sc*dpr,w=cr.w*sc*dpr,h=cr.h*sc*dpr;
+  ctx.save();
+  ctx.fillStyle='rgba(180,140,100,0.28)';
+  ctx.beginPath();ctx.rect(0,0,mainCanvas.width,mainCanvas.height);ctx.rect(x,y,w,h);
+  ctx.fill('evenodd');
+  ctx.strokeStyle='#c07040';ctx.lineWidth=1.5*dpr;ctx.strokeRect(x,y,w,h);
+  const hs=6*dpr;ctx.fillStyle='#c07040';
+  [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy])=>ctx.fillRect(hx-hs/2,hy-hs/2,hs,hs));
+  ctx.fillStyle='rgba(80,50,20,0.75)';ctx.fillRect(x+2*dpr,y+2*dpr,90*dpr,16*dpr);
+  ctx.fillStyle='#c07040';ctx.font=`${11*dpr}px monospace`;
+  ctx.fillText(`${cr.w}×${cr.h}px`,x+5*dpr,y+13*dpr);
+  ctx.restore();
+}
+
+function drawCropPreview(){
+  // cropOvCanvas上にドラッグ中のリアルタイムプレビューを描画
+  cropOvCtx.clearRect(0,0,cropOvCanvas.width,cropOvCanvas.height);
+  if(!cropMode||cropRect.w<=4||cropRect.h<=4)return;
+  const sc=getCropScale();
+  const dpr=window.devicePixelRatio||1;
+  const x=cropRect.x*sc*dpr,y=cropRect.y*sc*dpr,w=cropRect.w*sc*dpr,h=cropRect.h*sc*dpr;
+  cropOvCtx.save();
+  cropOvCtx.fillStyle='rgba(180,140,100,0.22)';
+  cropOvCtx.beginPath();cropOvCtx.rect(0,0,cropOvCanvas.width,cropOvCanvas.height);cropOvCtx.rect(x,y,w,h);
+  cropOvCtx.fill('evenodd');
+  cropOvCtx.strokeStyle='#c07040';cropOvCtx.lineWidth=1.5*dpr;cropOvCtx.strokeRect(x,y,w,h);
+  const hs=6*dpr;cropOvCtx.fillStyle='#c07040';
+  [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy])=>cropOvCtx.fillRect(hx-hs/2,hy-hs/2,hs,hs));
+  cropOvCtx.fillStyle='rgba(80,50,20,0.75)';cropOvCtx.fillRect(x+2*dpr,y+2*dpr,90*dpr,16*dpr);
+  cropOvCtx.fillStyle='#c07040';cropOvCtx.font=`${11*dpr}px monospace`;
+  cropOvCtx.fillText(`${cropRect.w}×${cropRect.h}px`,x+5*dpr,y+13*dpr);
+  cropOvCtx.restore();
+}
+
+// クロップマウスイベント
+function hitTestCrop(sx,sy){
+  if(cropRect.w<=0)return 'new';
+  const sc=getCropScale();
+  const rx=cropRect.x*sc,ry=cropRect.y*sc,rw=cropRect.w*sc,rh=cropRect.h*sc;
+  const h=HANDLE_HIT;
+  const onL=Math.abs(sx-rx)<h,onR=Math.abs(sx-(rx+rw))<h;
+  const onT=Math.abs(sy-ry)<h,onB=Math.abs(sy-(ry+rh))<h;
+  const inX=sx>rx-h&&sx<rx+rw+h,inY=sy>ry-h&&sy<ry+rh+h;
+  if((onL||onR)&&inY||(onT||onB)&&inX)return 'resize';
+  if(sx>rx+h&&sx<rx+rw-h&&sy>ry+h&&sy<ry+rh-h)return 'move';
+  return 'new';
+}
+function getCropCursor(sx,sy){
+  if(cropRect.w<=0)return 'crosshair';
+  const sc=getCropScale();
+  const rx=cropRect.x*sc,ry=cropRect.y*sc,rw=cropRect.w*sc,rh=cropRect.h*sc;
+  const h=HANDLE_HIT;
+  const onL=Math.abs(sx-rx)<h,onR=Math.abs(sx-(rx+rw))<h;
+  const onT=Math.abs(sy-ry)<h,onB=Math.abs(sy-(ry+rh))<h;
+  const inX=sx>rx-h&&sx<rx+rw+h,inY=sy>ry-h&&sy<ry+rh+h;
+  if(onL&&onT||onR&&onB)return 'nwse-resize';
+  if(onR&&onT||onL&&onB)return 'nesw-resize';
+  if((onL||onR)&&inY)return 'ew-resize';
+  if((onT||onB)&&inX)return 'ns-resize';
+  if(sx>rx+h&&sx<rx+rw-h&&sy>ry+h&&sy<ry+rh-h)return 'move';
+  return 'crosshair';
+}
+const cropOv=cropOvCanvas;
+cropOv.addEventListener('mousedown',e=>{
+  if(!cropMode||pages.length===0)return;
+  const cRect=mainCanvas.getBoundingClientRect();
+  const sc=getCropScale();
+  const sx=e.clientX-cRect.left,sy=e.clientY-cRect.top;
+  const rx=sx/sc,ry=sy/sc;
+  const hit=hitTestCrop(sx,sy);
+  cropDragMode=hit;cropDragging=true;
+  if(hit==='move'){cropMoveStart={mx:rx,my:ry,ox:cropRect.x,oy:cropRect.y};}
+  else if(hit==='resize'){
+    const rr=cropRect;
+    const x1=rr.x*sc,y1=rr.y*sc,x2=(rr.x+rr.w)*sc,y2=(rr.y+rr.h)*sc;
+    const hh=HANDLE_HIT;
+    cropResizeEdge={l:Math.abs(sx-x1)<hh,r:Math.abs(sx-x2)<hh,t:Math.abs(sy-y1)<hh,b:Math.abs(sy-y2)<hh};
+    cropDragStart={x:rx,y:ry,rect:{...cropRect}};
+  }else{
+    cropDragStart={x:rx,y:ry};
+    cropRect={x:Math.round(rx),y:Math.round(ry),w:0,h:0};
+  }
+});
+cropOv.addEventListener('mousemove',e=>{
+  const cRect=mainCanvas.getBoundingClientRect();
+  const sc=getCropScale();
+  const sx=e.clientX-cRect.left,sy=e.clientY-cRect.top;
+  const rx=sx/sc,ry=sy/sc;
+  if(!cropDragging){cropOv.style.cursor=getCropCursor(sx,sy);return;}
+  const p=pages[curPage];const{w:srcW,h:srcH}=getDispSize(p);
+  const ar=getAspectRatio();
+  if(cropDragMode==='move'){
+    const dx=rx-cropMoveStart.mx,dy=ry-cropMoveStart.my;
+    cropRect.x=Math.max(0,Math.min(Math.round(cropMoveStart.ox+dx),srcW-cropRect.w));
+    cropRect.y=Math.max(0,Math.min(Math.round(cropMoveStart.oy+dy),srcH-cropRect.h));
+  }else if(cropDragMode==='resize'){
+    const orig=cropDragStart.rect;let{x,y,w,h}={...orig};
+    if(cropResizeEdge.r)w=Math.max(4,Math.round(rx-x));
+    if(cropResizeEdge.b)h=Math.max(4,Math.round(ry-y));
+    if(cropResizeEdge.l){const r=x+w;x=Math.min(Math.round(rx),r-4);w=r-x;}
+    if(cropResizeEdge.t){const b=y+h;y=Math.min(Math.round(ry),b-4);h=b-y;}
+    if(ar){if(cropResizeEdge.r||cropResizeEdge.l)h=Math.round(w/ar);else w=Math.round(h*ar);}
+    x=Math.max(0,x);y=Math.max(0,y);w=Math.min(w,srcW-x);h=Math.min(h,srcH-y);
+    cropRect={x,y,w,h};
+  }else{
+    let x=Math.min(cropDragStart.x,rx),y=Math.min(cropDragStart.y,ry);
+    let w=Math.abs(rx-cropDragStart.x),h=Math.abs(ry-cropDragStart.y);
+    if(ar)h=w/ar;
+    x=Math.max(0,Math.min(x,srcW-1));y=Math.max(0,Math.min(y,srcH-1));
+    w=Math.min(w,srcW-x);h=Math.min(h,srcH-y);
+    cropRect={x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h)};
+  }
+  updateCropRect();drawCropPreview();
+});
+function finishCropDrag(){
+  cropDragging=false;cropDragMode='new';
+  if(cropRect.w>4&&cropRect.h>4){
+    // 高速ドラッグで縦横比がズレた場合に自動補正
+    const ar=getAspectRatio();
+    if(ar&&cropRect.w>0){
+      const p=pages[curPage];const{w:srcW,h:srcH}=getDispSize(p);
+      cropRect.h=Math.round(cropRect.w/ar);
+      cropRect.h=Math.min(cropRect.h,srcH-cropRect.y);
+      if(cropRect.h<4){cropRect.w=Math.round(cropRect.h*ar);}
+    }
+    saveCropToPage();renderPage();
+  }
+}
+cropOv.addEventListener('mouseup',finishCropDrag);
+cropOv.addEventListener('mouseleave',()=>{if(cropDragging)finishCropDrag();});
+
+// =====================================================
+// サムネイル（補正タブ）
+// =====================================================
+function buildThumbsC(){
+  const list=document.getElementById('thumbListC');list.innerHTML='';
+  pages.forEach((p,i)=>{
+    const item=document.createElement('div');item.className='thumb-item-c';item.id=`tc${i}`;item.onclick=()=>gotoPage(i);
+    const num=document.createElement('div');num.className='thumb-num-c';num.textContent=`P.${i+1}`;
+    const wrap=document.createElement('div');wrap.className='thumb-wrap-c';
+    const tc=document.createElement('canvas');tc.id=`tcc${i}`;drawThumbC(tc,p);wrap.appendChild(tc);
+    const dot=document.createElement('div');dot.className=dotClass(p);dot.id=`tdc${i}`;wrap.appendChild(dot);
+    const ang=document.createElement('div');ang.className='thumb-angle-c';ang.id=`tac${i}`;ang.textContent=thumbLabelC(p);
+    item.appendChild(num);item.appendChild(wrap);item.appendChild(ang);list.appendChild(item);
+  });
+}
+function dotClass(p){return 'thumb-dot-c'+(p.applied?' done':p.angle!==0||p.rot90!==0||p.cropRect?' edited':'');}
+function thumbLabelC(p){
+  const pts=[];if(p.angle!==0)pts.push(`${p.angle>=0?'+':''}${p.angle.toFixed(2)}°`);
+  if(p.rot90!==0)pts.push(['','右90°','180°','左90°'][p.rot90]);return pts.join(' ')||'—';
+}
+function drawThumbC(tc,p){
+  const s=p.canvas;const sw=(p.rot90===1||p.rot90===3);
+  const dw=sw?p.origHeight:p.origWidth,dh=sw?p.origWidth:p.origHeight;
+  const sc=Math.min(118/dw,88/dh);
+  tc.width=Math.round(dw*sc);tc.height=Math.round(dh*sc);
+  const c=tc.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  c.fillStyle='#fff';c.fillRect(0,0,tc.width,tc.height);
+  c.save();c.translate(tc.width/2,tc.height/2);
+  c.rotate(p.rot90*Math.PI/2+p.angle*Math.PI/180);
+  const srcSc=sc*(p.origWidth/s.width);
+  c.drawImage(s,-s.width*srcSc/2,-s.height*srcSc/2,s.width*srcSc,s.height*srcSc);
+  c.restore();
+  if(p.cropRect){
+    const cr=p.cropRect;c.strokeStyle='#f2c94c';c.lineWidth=1.5;c.setLineDash([3,2]);
+    c.strokeRect(cr.x*sc,cr.y*sc,cr.w*sc,cr.h*sc);c.setLineDash([]);
+  }
+}
+function updateThumbC(i){
+  const tc=document.getElementById(`tcc${i}`);if(!tc)return;const p=pages[i];
+  drawThumbC(tc,p);
+  document.getElementById(`tdc${i}`).className=dotClass(p);
+  document.getElementById(`tac${i}`).textContent=thumbLabelC(p);
+}
+
+// =====================================================
+// 並べ替えタブ
+// =====================================================
+function buildSortGrid(){
+  if(sortPages.length===0&&pages.length>0){
+    // 元PDFの参照を保持して、並べ替えだけなら無劣化で出力できるようにする
+    sortPages=pages.map((p,i)=>({canvas:p.canvas,label:p.srcName||`P${i+1}`,page:p}));
+    sortUndoStack=[];sortRedoStack=[];updateUndoRedoBadges();
+  }
+  sortSelected=new Set();
+  if(sortPages.length===0){
+    document.getElementById('sortGrid').innerHTML='<div style="color:var(--text3);font-size:13px;padding:20px;line-height:1.8">まず傾き補正タブでPDFを開いてください。</div><div id="sortDropIndicator"></div>';
+    updateSortToolbar();return;
+  }
+  buildSortGridReal();
+}
+
+function buildSortGridReal(){
+  const grid=document.getElementById('sortGrid');grid.innerHTML='';
+  const ind=document.createElement('div');ind.id='sortDropIndicator';grid.appendChild(ind);
+  sortSelected=new Set();sortLastClicked=null;let pageIdx=0;
+  sortPages.forEach((item,i)=>{
+    if(item.isDivider){
+      const div=document.createElement('div');div.className='sort-divider';div.id=`sc${i}`;
+      div.draggable=true;
+      div.addEventListener('dragstart',e=>onSortDragStart(e,i));
+      div.addEventListener('dragover',e=>onSortDragOver(e,i));
+      div.addEventListener('drop',e=>onSortDrop(e,i));
+      div.addEventListener('dragend',onSortDragEnd);
+      const line1=document.createElement('div');line1.className='sort-div-line';
+      const lbl=document.createElement('div');lbl.className='sort-div-label';
+      lbl.contentEditable=true;lbl.textContent=item.name;
+      lbl.addEventListener('input',()=>{item.name=lbl.textContent;updateFnamePreview();});
+      lbl.addEventListener('click',e=>e.stopPropagation());
+      const line2=document.createElement('div');line2.className='sort-div-line';
+      const del=document.createElement('button');del.className='sort-div-del';del.textContent='✕';
+      del.onclick=e=>{e.stopPropagation();sortPushUndo();sortPages.splice(i,1);buildSortGridReal();};
+      div.appendChild(del);div.appendChild(line1);div.appendChild(lbl);div.appendChild(line2);
+      grid.appendChild(div);
+    }else{
+      pageIdx++;
+      const card=document.createElement('div');card.className='sort-card';card.id=`sc${i}`;
+      card.draggable=true;
+      card.addEventListener('dragstart',e=>onSortDragStart(e,i));
+      card.addEventListener('dragover',e=>onSortDragOver(e,i));
+      card.addEventListener('drop',e=>onSortDrop(e,i));
+      card.addEventListener('dragend',onSortDragEnd);
+      // シングルクリック: 選択 (Ctrl=トグル, Shift=範囲選択)
+      card.addEventListener('click',e=>{
+        if(e.target.classList.contains('sort-del'))return;
+        e.stopPropagation();
+        if(e.ctrlKey||e.metaKey){
+          if(sortSelected.has(i))sortSelected.delete(i);
+          else sortSelected.add(i);
+          sortLastClicked=i;
+        }else if(e.shiftKey&&sortLastClicked!==null){
+          const from=Math.min(sortLastClicked,i),to=Math.max(sortLastClicked,i);
+          for(let j=from;j<=to;j++){if(!sortPages[j]?.isDivider)sortSelected.add(j);}
+        }else{
+          sortSelected.clear();sortSelected.add(i);sortLastClicked=i;
+        }
+        updateSortSelection();updateSortToolbar();
+      });
+      // ダブルクリック: ポップアップ
+      card.addEventListener('dblclick',e=>{
+        if(e.target.classList.contains('sort-del'))return;
+        const pagesOnly=sortPages.filter(p=>!p.isDivider);openPopupSort(pagesOnly.indexOf(item));
+      });
+      const num=document.createElement('div');num.className='sort-card-num';num.textContent=`${pageIdx}`;
+      const wrap=document.createElement('div');wrap.className='sort-canvas-wrap';
+      const tc=document.createElement('canvas');tc.className='sort-canvas-el';drawSortThumb(tc,item.canvas);wrap.appendChild(tc);
+      const lbl=document.createElement('div');lbl.className='sort-card-label';lbl.textContent=item.label;
+      const del=document.createElement('button');del.className='sort-del';del.textContent='✕';
+      del.onclick=e=>{e.stopPropagation();sortPushUndo();sortPages.splice(i,1);buildSortGridReal();};
+      card.appendChild(del);card.appendChild(num);card.appendChild(wrap);card.appendChild(lbl);
+      grid.appendChild(card);
+    }
+  });
+  updateSortToolbar();
+}
+
+function updateSortSelection(){
+  document.querySelectorAll('#sortGrid .sort-card').forEach(el=>{
+    const i=parseInt(el.id.replace('sc',''));
+    el.classList.toggle('selected',sortSelected.has(i));
+  });
+}
+
+function drawSortThumb(tc,canvas){
+  const sc=Math.min(110/canvas.width,82/canvas.height);
+  tc.width=Math.round(canvas.width*sc);tc.height=Math.round(canvas.height*sc);
+  const c=tc.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  c.fillStyle='#fff';c.fillRect(0,0,tc.width,tc.height);c.drawImage(canvas,0,0,tc.width,tc.height);
+}
+function updateSortToolbar(){
+  const pn=sortPages.filter(p=>!p.isDivider).length;
+  const nd=sortPages.filter(p=>p.isDivider).length;
+  document.getElementById('sortInfo').textContent=pn?`${pn}ページ${nd>0?'　区切り×'+nd:''}`:'ページなし';
+  document.getElementById('btnSortDelete').disabled=sortSelected.size===0;
+  document.getElementById('btnSortExport').disabled=pn===0;
+  document.getElementById('btnSortSplit').disabled=nd===0;
+  document.getElementById('btnReturnToCorrect').disabled=pn===0;
+}
+function addDivider(){sortPushUndo();sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});buildSortGridReal();}
+function sortSelectAll(){
+  const pageIndices=sortPages.map((_,i)=>i).filter(i=>!sortPages[i].isDivider);
+  const allSelected=pageIndices.every(i=>sortSelected.has(i));
+  if(allSelected){sortSelected.clear();}
+  else{pageIndices.forEach(i=>sortSelected.add(i));}
+  updateSortSelection();updateSortToolbar();
+}
+function sortDeleteSelected(){
+  if(!sortSelected.size)return;
+  sortPushUndo();
+  sortPages=sortPages.filter((_,i)=>!sortSelected.has(i));
+  sortSelected=new Set();buildSortGridReal();
+}
+
+// ドロップ位置: index は対象カードのインデックス、before=true で対象の前、false で対象の後ろに挿入
+let sortDropTarget=null;
+let sortLastClicked=null;
+let sortDragGroup=null;
+let pendingSortDropFile=null;
+
+// アンドゥ・リドゥ（sortPages の配列スナップショット）
+let sortUndoStack=[];
+let sortRedoStack=[];
+const SORT_UNDO_MAX=40;
+
+function sortPushUndo(){
+  sortUndoStack.push(sortPages.map(sp=>({...sp})));
+  if(sortUndoStack.length>SORT_UNDO_MAX)sortUndoStack.shift();
+  sortRedoStack=[];
+  updateUndoRedoBadges();
+}
+function sortUndo(){
+  if(!sortUndoStack.length)return;
+  sortRedoStack.push(sortPages.map(sp=>({...sp})));
+  sortPages=sortUndoStack.pop();
+  buildSortGridReal();updateUndoRedoBadges();
+  showToast('元に戻しました');
+}
+function sortRedo(){
+  if(!sortRedoStack.length)return;
+  sortUndoStack.push(sortPages.map(sp=>({...sp})));
+  sortPages=sortRedoStack.pop();
+  buildSortGridReal();updateUndoRedoBadges();
+  showToast('やり直しました');
+}
+function updateUndoRedoBadges(){
+  const ub=document.getElementById('undoBadge');
+  const rb=document.getElementById('redoBadge');
+  const ub_btn=document.getElementById('btnSortUndo');
+  const rb_btn=document.getElementById('btnSortRedo');
+  if(ub){ub.textContent=sortUndoStack.length||'';ub.classList.toggle('has-count',sortUndoStack.length>0);}
+  if(rb){rb.textContent=sortRedoStack.length||'';rb.classList.toggle('has-count',sortRedoStack.length>0);}
+  if(ub_btn)ub_btn.disabled=sortUndoStack.length===0;
+  if(rb_btn)rb_btn.disabled=sortRedoStack.length===0;
+}
+function onSortDragStart(e,i){
+  sortDragIdx=i;sortDropTarget=null;
+  // 複数選択中のカードをドラッグ→グループ移動
+  if(sortSelected.has(i)&&sortSelected.size>1){
+    sortDragGroup=[...sortSelected].sort((a,b)=>a-b);
+  }else{
+    sortDragGroup=[i];
+    sortSelected.clear();sortSelected.add(i);updateSortSelection();updateSortToolbar();
+  }
+  setTimeout(()=>{for(const j of sortDragGroup)document.getElementById(`sc${j}`)?.classList.add('dragging');},0);
+  e.dataTransfer.effectAllowed='move';
+}
+function onSortDragOver(e,i){
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  if(sortDragIdx===null)return;
+  const target=document.getElementById(`sc${i}`);
+  if(!target)return;
+  const rect=target.getBoundingClientRect();
+  const before=e.clientX<rect.left+rect.width/2;
+  sortDropTarget={index:i,before};
+  // 自分の隣（移動しても変わらない位置）はインジケータを隠す
+  if(i===sortDragIdx||(before&&i===sortDragIdx+1)||(!before&&i===sortDragIdx-1)){
+    hideSortDropIndicator();return;
+  }
+  showSortDropIndicator(rect,before);
+}
+function showSortDropIndicator(targetRect,before){
+  const grid=document.getElementById('sortGrid');
+  const ind=document.getElementById('sortDropIndicator');
+  if(!ind||!grid)return;
+  const gridRect=grid.getBoundingClientRect();
+  const x=(before?targetRect.left:targetRect.right)-gridRect.left+grid.scrollLeft;
+  const y=targetRect.top-gridRect.top+grid.scrollTop;
+  ind.style.left=(x-2)+'px';
+  ind.style.top=(y-3)+'px';
+  ind.style.height=(targetRect.height+6)+'px';
+  ind.classList.add('active');
+}
+function hideSortDropIndicator(){document.getElementById('sortDropIndicator')?.classList.remove('active');}
+function doSortDrop(targetIdx,before){
+  hideSortDropIndicator();
+  if(sortDragIdx===null){sortDropTarget=null;sortDragGroup=null;return;}
+  sortPushUndo();
+  let toIdx=before?targetIdx:targetIdx+1;
+  const grp=sortDragGroup&&sortDragGroup.length>1?sortDragGroup:[sortDragIdx];
+  if(grp.length>1){
+    // グループ移動: まとめて抜いて挿入
+    const groupItems=grp.map(j=>sortPages[j]);
+    const itemsBefore=grp.filter(j=>j<toIdx).length;
+    const adjIdx=Math.max(0,toIdx-itemsBefore);
+    for(const j of [...grp].reverse())sortPages.splice(j,1);
+    sortPages.splice(Math.min(adjIdx,sortPages.length),0,...groupItems);
+  }else{
+    if(sortDragIdx<toIdx)toIdx--;
+    toIdx=Math.max(0,Math.min(toIdx,sortPages.length));
+    if(toIdx===sortDragIdx){sortDragIdx=null;sortDropTarget=null;sortDragGroup=null;return;}
+    const m=sortPages.splice(sortDragIdx,1)[0];
+    sortPages.splice(toIdx,0,m);
+  }
+  sortDragIdx=null;sortDropTarget=null;sortDragGroup=null;
+  buildSortGridReal();
+}
+function onSortDrop(e,i){
+  if(e.dataTransfer.types.includes('Files'))return;
+  e.preventDefault();
+  const t=sortDropTarget||{index:i,before:true};
+  doSortDrop(t.index,t.before);
+}
+function onSortDragEnd(){
+  hideSortDropIndicator();
+  document.querySelectorAll('.sort-card,.sort-divider').forEach(c=>c.classList.remove('dragging'));
+  sortDragIdx=null;sortDropTarget=null;sortDragGroup=null;
+}
+
+// グリッドレベルのドラッグ/ドロップ（カードの外 = 最後尾 / ファイルドロップ）
+(function setupSortGridListeners(){
+  const grid=document.getElementById('sortGrid');
+  grid.addEventListener('dragover',e=>{
+    // ファイルドロップ
+    if(e.dataTransfer.types.includes('Files')){e.preventDefault();e.dataTransfer.dropEffect='copy';return;}
+    // カード自体のdragoverは各カードが処理、グリッド空白部のみ処理
+    if(e.target.closest('.sort-card,.sort-divider'))return;
+    if(sortDragIdx===null)return;
+    e.preventDefault();e.dataTransfer.dropEffect='move';
+    const cards=[...document.querySelectorAll('#sortGrid .sort-card,#sortGrid .sort-divider')];
+    if(!cards.length)return;
+    const last=cards[cards.length-1];
+    const rect=last.getBoundingClientRect();
+    sortDropTarget={index:sortPages.length-1,before:false};
+    showSortDropIndicator(rect,false);
+  });
+  grid.addEventListener('drop',e=>{
+    // ファイルドロップ
+    if(e.dataTransfer.types.includes('Files')){
+      e.preventDefault();
+      const file=e.dataTransfer.files[0];
+      if(file&&(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf'))){
+        pendingSortDropFile=file;
+        document.getElementById('sortPdfDropInfo').textContent=`「${file.name}」（${Math.round(file.size/1024)}KB）を追加`;
+        document.getElementById('sortPdfDropModal').classList.add('open');
+      }
+      return;
+    }
+    // カード自体のdropは各カードが処理
+    if(e.target.closest('.sort-card,.sort-divider'))return;
+    e.preventDefault();
+    if(sortDragIdx===null){hideSortDropIndicator();return;}
+    doSortDrop(sortPages.length-1,false);
+  });
+  // グリッド空白クリックで選択解除
+  grid.addEventListener('click',e=>{
+    if(e.target.closest('.sort-card,.sort-divider'))return;
+    sortSelected.clear();sortLastClicked=null;
+    updateSortSelection();updateSortToolbar();
+  });
+})();
+
+async function exportSortedPDF(){
+  const pagesOnly=sortPages.filter(p=>!p.isDivider);if(!pagesOnly.length)return;
+  const losslessOk=originalPdfBytes&&pagesOnly.some(sp=>sp.page&&sp.page.losslessCapable);
+  showProgress('PDF生成中…',0);await new Promise(r=>setTimeout(r,50));
+  try{
+    const{PDFDocument}=PDFLib;
+    const newPdf=await PDFDocument.create();
+    let srcDoc=null,srcPages=null;
+    if(losslessOk){
+      srcDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
+      srcPages=srcDoc.getPages();
+    }
+    for(let i=0;i<pagesOnly.length;i++){
+      showProgress(`ページ ${i+1}/${pagesOnly.length}`,(i+1)/pagesOnly.length);
+      const sp=pagesOnly[i];
+      if(losslessOk&&sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null){
+        await addPageLossless(newPdf,srcDoc,srcPages,sp.page);
+      }else if(sp.page){
+        await addPageToPdf(newPdf,sp.page,getOutFormat(),getJpegQuality());
+      }else{
+        const pngBytes=await canvasToPng(sp.canvas);
+        const img=await newPdf.embedPng(pngBytes);
+        const c=sp.canvas;
+        newPdf.addPage([c.width,c.height]).drawImage(img,{x:0,y:0,width:c.width,height:c.height});
+      }
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const bytes=await newPdf.save();hideProgress();
+    downloadBytes(bytes,'NamaTunePDF_並べ替え済み.pdf','application/pdf');
+    showToast(losslessOk?'保存しました！（無劣化）':'保存しました！');
+  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+}
+
+// 分割保存
+function openSortSplitModal(){
+  const nd=sortPages.filter(p=>p.isDivider).length;if(!nd){showToast('区切りが1つもありません');return;}
+  updateFnamePreview();
+  // 品質バッジを計算・表示
+  const pn=sortPages.filter(p=>!p.isDivider);
+  const canLossless=!!(originalPdfBytes&&pn.some(sp=>sp.page&&sp.page.losslessCapable));
+  const allLossless=canLossless&&pn.every(sp=>sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null);
+  const qEl=document.getElementById('sortSplitQualityBadge');
+  if(qEl){
+    if(allLossless){
+      qEl.innerHTML='<span class="quality-badge quality-lossless">✓ 完全無劣化で保存（元のPDF構造をそのまま保持）</span><div style="font-size:10px;color:var(--text3);margin-top:3px">※ファイル構造の違いでサイズが数KB前後することがあります</div>';
+    }else if(canLossless){
+      qEl.innerHTML='<span class="quality-badge quality-lossy">△ 一部ページは無劣化、それ以外は画像で出力</span>';
+    }else{
+      qEl.innerHTML='<span class="quality-badge quality-lossy">△ 無劣化保存不可（画像として出力）</span>';
+    }
+  }
+  document.getElementById('sortSplitModal').classList.add('open');
+}
+function closeSortSplitModal(){document.getElementById('sortSplitModal').classList.remove('open');}
+function updateFnamePreview(){const tmpl=document.getElementById('ssFileName').value||'NamaTunePDF_{name}';const sn=parseInt(document.getElementById('ssStartNum').value)||1;const fn=sortPages.find(p=>p.isDivider)?.name||'第1章';document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';}
+function buildFileName(tmpl,seq,name){return tmpl.replace('{seq}',String(seq)).replace('{name}',name);}
+function loadPresetFile(){document.getElementById('presetFileInput').click();}
+function onPresetFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>document.getElementById('ssPresetArea').value=ev.target.result.trim();r.readAsText(f,'UTF-8');e.target.value='';}
+
+async function doSortSplitExport(){
+  closeSortSplitModal();
+  const tmpl=document.getElementById('ssFileName').value||'NamaTunePDF_{name}';
+  let seq=parseInt(document.getElementById('ssStartNum').value)||1;
+  const sections=[];let cur=[];
+  for(const item of sortPages){if(item.isDivider){if(cur.length>0)sections.push({pages:cur,name:item.name});cur=[];}else cur.push(item);}
+  if(cur.length>0)sections.push({pages:cur,name:'最終'});
+  if(!sections.length){showToast('ページが空です');return;}
+  const losslessOk=!!(originalPdfBytes&&sections.some(s=>s.pages.some(sp=>sp.page&&sp.page.losslessCapable)));
+  const fmt=getOutFormat(),q=getJpegQuality();
+  showProgress('分割保存中…',0);
+  try{
+    const{PDFDocument}=PDFLib;
+    let srcDoc=null,srcPages=null;
+    if(losslessOk){
+      srcDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
+      srcPages=srcDoc.getPages();
+    }
+    for(let si=0;si<sections.length;si++){
+      const sec=sections[si];const newPdf=await PDFDocument.create();
+      for(const sp of sec.pages){
+        if(losslessOk&&sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null){
+          // 完全無劣化：元PDF構造をそのまま保持
+          await addPageLossless(newPdf,srcDoc,srcPages,sp.page);
+        }else if(sp.page){
+          // 元ページ参照あり・無劣化不可：元解像度で画像出力
+          await addPageToPdf(newPdf,sp.page,fmt,q);
+        }else{
+          // canvasのみ（A3分割後など）：プレビュー解像度でPNG出力
+          const pngBytes=await canvasToPng(sp.canvas);
+          const img=await newPdf.embedPng(pngBytes);
+          const c=sp.canvas;
+          newPdf.addPage([c.width,c.height]).drawImage(img,{x:0,y:0,width:c.width,height:c.height});
+        }
+      }
+      const bytes=await newPdf.save();downloadBytes(bytes,buildFileName(tmpl,seq,sec.name)+'.pdf','application/pdf');
+      seq++;showProgress('分割保存中…',(si+1)/sections.length);await new Promise(r=>setTimeout(r,80));
+    }
+    hideProgress();showToast(`${sections.length}ファイル保存しました${losslessOk?'（無劣化）':''}`);
+  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+}
+
+// 返却
+function returnToCorrect(){
+  const pn=sortPages.filter(p=>!p.isDivider);if(!pn.length){showToast('返すページがありません');return;}
+  pages=pn.map((sp,i)=>{
+    // 元PDFページへの参照を保持していれば、無劣化情報を引き継ぐ
+    if(sp.page)return sp.page;
+    // A3→A4分割で生まれたページなど、元PDFと対応しないものは画像として扱う
+    return{sourceType:'image',canvas:sp.canvas,jpegBytes:null,origWidth:sp.canvas.width,origHeight:sp.canvas.height,angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:sp.label||`P${i+1}`,losslessCapable:false};
+  });
+  sortPages=[];sortSelected=new Set();
+  document.getElementById('pageTotalLabel').textContent=`/ ${pages.length}`;
+  document.getElementById('thumbPageCount').textContent=`${pages.length}p`;
+  document.getElementById('hdrInfo').textContent=`返却済み（${pages.length}p）`;
+  ['btnExportNormal','btnExportSplit'].forEach(id=>document.getElementById(id).disabled=false);
+  buildThumbsC();gotoPage(0);updateQualityBadge();switchTab('correct');
+  showToast(`${pages.length}ページを補正タブに返しました`);
+}
+
+// =====================================================
+// 並べ替えタブへのPDFドロップ
+// =====================================================
+function closeSortPdfDropModal(){document.getElementById('sortPdfDropModal').classList.remove('open');}
+
+async function loadPDFForSort(file){
+  const buf=await file.arrayBuffer();
+  const entries=[];
+  let images=[];
+  try{images=await parsePDFImages(buf);}catch(e){images=[];}
+  if(images.length>0){
+    for(let i=0;i<images.length;i++){
+      showProgress(`読み込み中… (${i+1}/${images.length})`,(i+1)/images.length);
+      const canvas=await jpegBytesToCanvas(images[i].jpegBytes);
+      entries.push({canvas,label:`${file.name} P${i+1}`});
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }else{
+    showProgress('pdf.jsで読み込み中…',0);
+    if(!window.pdfjsLib){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res();};
+        s.onerror=rej;document.head.appendChild(s);
+      });
+    }
+    const pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
+    const n=pdfDoc.numPages;
+    for(let i=1;i<=n;i++){
+      showProgress(`ページをレンダリング中… (${i}/${n})`,i/n);
+      const pg=await pdfDoc.getPage(i);
+      let sc=1.5;const vpProbe=pg.getViewport({scale:sc});
+      const m=Math.max(vpProbe.width,vpProbe.height);
+      if(m>4096)sc=sc*4096/m;
+      const vp=pg.getViewport({scale:sc});
+      const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+      await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      entries.push({canvas:c,label:`${file.name} P${i}`});
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
+  hideProgress();
+  return entries;
+}
+
+async function applySortPdfDrop(mode){
+  closeSortPdfDropModal();
+  if(!pendingSortDropFile)return;
+  const file=pendingSortDropFile;pendingSortDropFile=null;
+  showProgress('PDFを読み込み中…',0);
+  let newEntries;
+  try{newEntries=await loadPDFForSort(file);}
+  catch(err){hideProgress();showToast('読み込みエラー: '+err.message);return;}
+  if(mode==='discard'){
+    sortPushUndo();
+    sortPages=newEntries;buildSortGridReal();
+    showToast(`${newEntries.length}ページを読み込みました`);
+  }else if(mode==='prepend'){
+    sortPushUndo();
+    const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
+    sortPages=[...newEntries,div,...sortPages];buildSortGridReal();
+    showToast(`先頭に${newEntries.length}ページを挿入しました`);
+  }else if(mode==='append'){
+    sortPushUndo();
+    const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
+    sortPages=[...sortPages,div,...newEntries];buildSortGridReal();
+    showToast(`末尾に${newEntries.length}ページを挿入しました`);
+  }
+}
+
+// =====================================================
+// ポップアップ
+// =====================================================
+function openPopupSort(idx){popupIdx=idx;popupSrc='sort';renderPopup();document.getElementById('popupBg').classList.add('open');}
+function closePopup(){document.getElementById('popupBg').classList.remove('open');}
+function popupMove(d){
+  const arr=popupSrc==='sort'?sortPages.filter(p=>!p.isDivider):pages;
+  popupIdx=Math.max(0,Math.min(arr.length-1,popupIdx+d));renderPopup();
+}
+function renderPopup(){
+  const arr=popupSrc==='sort'?sortPages.filter(p=>!p.isDivider):pages;if(!arr.length)return;
+  const sp=arr[popupIdx];
+  const src=sp.canvas||sp.page?.canvas;if(!src)return;
+  const pc=document.getElementById('popupCanvas');
+  const maxW=window.innerWidth-44*2-6*2-40,maxH=window.innerHeight-60;
+  const sc=Math.min(maxW/src.width,maxH/src.height,1);
+  pc.width=Math.round(src.width*sc);pc.height=Math.round(src.height*sc);
+  const c=pc.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  c.fillStyle='#fff';c.fillRect(0,0,pc.width,pc.height);c.drawImage(src,0,0,pc.width,pc.height);
+  document.getElementById('popupInfo').textContent=`${sp.label||sp.srcName||popupIdx+1}（${popupIdx+1} / ${arr.length}）`;
+  const prev=document.getElementById('popupNavPrev'),next=document.getElementById('popupNavNext');
+  if(prev)prev.disabled=(popupIdx===0);
+  if(next)next.disabled=(popupIdx===arr.length-1);
+}
+
+// =====================================================
+// タブ切替・共通
+// =====================================================
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.id==='tab-'+name));
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.toggle('active',el.id==='content-'+name));
+  if(name==='sort')buildSortGrid();
+}
+
+function cropCanvas(src,x,y,w,h){const out=document.createElement('canvas');out.width=w;out.height=h;out.getContext('2d').drawImage(src,x,y,w,h,0,0,w,h);return out;}
+function downloadBytes(bytes,name,mime){const url=URL.createObjectURL(new Blob([bytes],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+
+// 進捗バー
+function showProgress(title,ratio){
+  document.getElementById('progressWrap').classList.add('open');
+  document.getElementById('progTitle').textContent=title;
+  const pct=Math.round(ratio*100);
+  document.getElementById('progBar').style.width=pct+'%';
+  document.getElementById('progPct').textContent=pct+'%';
+}
+function hideProgress(){document.getElementById('progressWrap').classList.remove('open');}
+
+// トースト
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400);}
+
+// キーボード
+document.addEventListener('keydown',e=>{
+  const tag=e.target.tagName;
+  if(document.getElementById('popupBg').classList.contains('open')){
+    if(e.key==='ArrowLeft')popupMove(-1);else if(e.key==='ArrowRight')popupMove(+1);else if(e.key==='Escape')closePopup();return;
+  }
+  // 並べ替えタブのショートカット（テキスト入力中は無効）
+  const onSort=document.getElementById('tab-sort').classList.contains('active');
+  if(onSort){
+    // Ctrl+Z: 元に戻す
+    if(e.ctrlKey&&!e.shiftKey&&(e.key==='z'||e.key==='Z')){e.preventDefault();sortUndo();return;}
+    // Ctrl+Y / Ctrl+Shift+Z: やり直す
+    if(e.ctrlKey&&(e.key==='y'||e.key==='Y'||(e.shiftKey&&(e.key==='z'||e.key==='Z')))){e.preventDefault();sortRedo();return;}
+    // DELETEキー: 選択ページを削除（テキスト編集中は無効）
+    if((e.key==='Delete'||e.key==='Backspace')&&tag!=='INPUT'&&tag!=='TEXTAREA'&&!e.target.isContentEditable){
+      if(sortSelected.size>0){e.preventDefault();sortDeleteSelected();}
+      return;
+    }
+  }
+  if(tag==='INPUT'||tag==='SELECT'||e.target.isContentEditable)return;
+  const onCorrect=document.getElementById('tab-correct').classList.contains('active');
+  if(onCorrect){
+    if(e.key==='ArrowLeft'&&!e.shiftKey)gotoPage(curPage-1);
+    else if(e.key==='ArrowRight'&&!e.shiftKey)gotoPage(curPage+1);
+    else if(e.key==='ArrowUp')nudge(0.01);
+    else if(e.key==='ArrowDown')nudge(-0.01);
+    else if(e.key==='Enter')applyToCurrentPage();
+    else if(e.key==='r'||e.key==='R')resetCurrentPage();
+    else if(e.key===',')rotate90(-1);else if(e.key==='.')rotate90(+1);
+  }
+});
+
+window.addEventListener('resize',()=>{if(pages.length>0)renderPage();});
+showToast('PDFまたは画像をドロップして開始');
+</script>
+
+<script>
+// Service Worker 登録
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => {
+    console.warn('[SW] 登録失敗:', err);
+  });
+  // sw.js 自体が更新されて新しいSWが有効化された場合のみリロード
+  let swChanged = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swChanged) return;
+    swChanged = true;
+    window.location.reload();
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "NamaTunePDF",
+  "short_name": "NamaTunePDF",
+  "description": "PDFページ編集・並べ替え・分割ツール",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#c07040",
+  "background_color": "#faf7f4",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "./NamaTunePDF192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./NamaTunePDF512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
