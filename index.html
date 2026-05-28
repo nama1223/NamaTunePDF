@@ -127,8 +127,9 @@ aside.ctrl{width:214px;flex-shrink:0;background:var(--bg2);border-right:1px soli
 .drop-overlay.active{opacity:1}
 
 /* クロップオーバーレイ */
-#cropOverlay{position:absolute;inset:0;pointer-events:none;display:none;top:0;left:0}
+#cropOverlay{position:absolute;inset:0;pointer-events:none;display:none;top:0;left:0;touch-action:none}
 #cropOverlay.active{display:block;pointer-events:all;cursor:crosshair}
+#mainCanvas{touch-action:none}
 .canvas-area.hand-mode{cursor:grab}
 .canvas-area.hand-mode:active{cursor:grabbing}
 
@@ -159,7 +160,8 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 .sort-grid{flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-content:start;align-items:stretch;position:relative}
 .sort-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
   cursor:grab;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px;
-  transition:transform .12s,box-shadow .12s;user-select:none;position:relative;width:136px;flex-shrink:0}
+  transition:transform .12s,box-shadow .12s;user-select:none;position:relative;width:136px;flex-shrink:0;
+  touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none}
 .sort-card:hover{border-color:var(--border2);background:var(--bg3)}
 .sort-card.dragging{opacity:.35;cursor:grabbing}
 #sortDropIndicator{position:absolute;width:3px;background:var(--accent2);border-radius:2px;pointer-events:none;display:none;z-index:10;box-shadow:0 0 6px var(--accent)}
@@ -175,7 +177,8 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 .sort-card.selected{border-color:var(--accent2);background:var(--accent-dim);outline:2px solid var(--accent)}
 /* 区切り（縦棒） */
 .sort-divider{display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 3px;
-  cursor:grab;user-select:none;position:relative;width:36px;flex-shrink:0}
+  cursor:grab;user-select:none;position:relative;width:36px;flex-shrink:0;
+  touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none}
 .sort-divider:hover .sort-div-del{display:flex}
 .sort-div-line{width:3px;flex:1;min-height:20px;background:var(--amber);border-radius:2px}
 .sort-div-label{font-size:9px;color:var(--amber);background:var(--amber-dim);border:1px solid var(--amber);
@@ -602,7 +605,7 @@ const cropOvCanvas=document.getElementById('cropOverlay');
 const cropOvCtx=cropOvCanvas.getContext('2d');
 
 // ハンドモード（パン）用
-let handDragging=false,handDragStart={x:0,y:0,scrollX:0,scrollY:0};
+let handDragging=false,handDragStart={x:0,y:0,scrollX:0,scrollY:0},handDragPointerId=null;
 
 // =====================================================
 // PDF バイナリパーサー（ブラウザ版）
@@ -1452,23 +1455,26 @@ function updateHandMode(){
     canvasArea.classList.add('hand-mode');
   }
 }
-canvasArea.addEventListener('mousedown',e=>{
+canvasArea.addEventListener('pointerdown',e=>{
   if(cropMode||guideDrag)return;
-  // cropOverlayのイベントと重複しないよう、e.targetがcanvasAreaかcanvasInnerかmainCanvasの時のみ
   if(e.target!==canvasArea&&e.target!==document.getElementById('canvasInner')&&e.target!==mainCanvas)return;
-  handDragging=true;
+  handDragging=true;handDragPointerId=e.pointerId;
   handDragStart={x:e.clientX,y:e.clientY,scrollX:canvasArea.scrollLeft,scrollY:canvasArea.scrollTop};
   canvasArea.style.cursor='grabbing';
+  try{canvasArea.setPointerCapture(e.pointerId);}catch(_){}
   e.preventDefault();
 });
-document.addEventListener('mousemove',e=>{
+document.addEventListener('pointermove',e=>{
   if(!handDragging)return;
   const dx=e.clientX-handDragStart.x,dy=e.clientY-handDragStart.y;
   canvasArea.scrollLeft=handDragStart.scrollX-dx;
   canvasArea.scrollTop=handDragStart.scrollY-dy;
 });
-document.addEventListener('mouseup',()=>{
-  if(handDragging){handDragging=false;canvasArea.style.cursor='';}
+document.addEventListener('pointerup',e=>{
+  if(handDragging){try{canvasArea.releasePointerCapture(handDragPointerId);}catch(_){};handDragging=false;handDragPointerId=null;canvasArea.style.cursor='';}
+});
+document.addEventListener('pointercancel',()=>{
+  if(handDragging){handDragging=false;handDragPointerId=null;canvasArea.style.cursor='';}
 });
 
 function addGuide(type){guides.push({type,pos:.5,id:guideIdCnt++,color:GUIDE_COLORS[guideIdCnt%5]});renderGuideList();renderPage();}
@@ -1499,25 +1505,33 @@ function drawGuides(){
   });
   ctx.restore();
 }
-mainCanvas.addEventListener('mousedown',e=>{
+mainCanvas.addEventListener('pointerdown',e=>{
   if(cropMode){return;}
   const r=mainCanvas.getBoundingClientRect();
-  const mx=(e.clientX-r.left)/mainCanvas.width*(window.devicePixelRatio||1)/mainCanvas.width*(mainCanvas.style.width?parseFloat(mainCanvas.style.width):mainCanvas.width),my=(e.clientY-r.top)/(mainCanvas.style.height?parseFloat(mainCanvas.style.height):mainCanvas.height);
   // ガイドドラッグ判定
   const cssW=parseFloat(mainCanvas.style.width)||mainCanvas.width;
   const cssH=parseFloat(mainCanvas.style.height)||mainCanvas.height;
   const mxN=(e.clientX-r.left)/cssW,myN=(e.clientY-r.top)/cssH;
+  // タッチではホバー判定が無いので当たり判定をやや甘くする
+  const tol=e.pointerType==='touch'?.035:.02;
   for(const g of guides){
-    if(Math.abs((g.type==='h'?myN:mxN)-g.pos)<.02){guideDrag=g;mainCanvas.style.cursor=g.type==='h'?'ns-resize':'ew-resize';return;}
+    if(Math.abs((g.type==='h'?myN:mxN)-g.pos)<tol){
+      guideDrag=g;
+      mainCanvas.style.cursor=g.type==='h'?'ns-resize':'ew-resize';
+      e.preventDefault();
+      try{mainCanvas.setPointerCapture(e.pointerId);}catch(_){}
+      return;
+    }
   }
 });
-mainCanvas.addEventListener('mousemove',e=>{
+mainCanvas.addEventListener('pointermove',e=>{
   if(cropMode)return;
   const r=mainCanvas.getBoundingClientRect();
   const cssW=parseFloat(mainCanvas.style.width)||mainCanvas.width;
   const cssH=parseFloat(mainCanvas.style.height)||mainCanvas.height;
   const mxN=(e.clientX-r.left)/cssW,myN=(e.clientY-r.top)/cssH;
   if(!guideDrag){
+    if(e.pointerType==='touch')return;
     let on=false;
     for(const g of guides)if(Math.abs((g.type==='h'?myN:mxN)-g.pos)<.02){mainCanvas.style.cursor=g.type==='h'?'ns-resize':'ew-resize';on=true;break;}
     if(!on)mainCanvas.style.cursor='';return;
@@ -1525,8 +1539,9 @@ mainCanvas.addEventListener('mousemove',e=>{
   guideDrag.pos=Math.max(0,Math.min(1,guideDrag.type==='h'?myN:mxN));
   renderGuideList();renderPage();
 });
-mainCanvas.addEventListener('mouseup',()=>{guideDrag=null;mainCanvas.style.cursor='';});
-mainCanvas.addEventListener('mouseleave',()=>{guideDrag=null;});
+mainCanvas.addEventListener('pointerup',e=>{try{mainCanvas.releasePointerCapture(e.pointerId);}catch(_){};guideDrag=null;mainCanvas.style.cursor='';});
+mainCanvas.addEventListener('pointercancel',()=>{guideDrag=null;mainCanvas.style.cursor='';});
+mainCanvas.addEventListener('pointerleave',()=>{if(!guideDrag)mainCanvas.style.cursor='';});
 
 // =====================================================
 // クロップ
@@ -1720,8 +1735,10 @@ function getCropCursor(sx,sy){
   return 'crosshair';
 }
 const cropOv=cropOvCanvas;
-cropOv.addEventListener('mousedown',e=>{
+cropOv.addEventListener('pointerdown',e=>{
   if(!cropMode||pages.length===0)return;
+  e.preventDefault();
+  try{cropOv.setPointerCapture(e.pointerId);}catch(_){}
   const cRect=mainCanvas.getBoundingClientRect();
   const sc=getCropScale();
   const sx=e.clientX-cRect.left,sy=e.clientY-cRect.top;
@@ -1740,7 +1757,7 @@ cropOv.addEventListener('mousedown',e=>{
     cropRect={x:Math.round(rx),y:Math.round(ry),w:0,h:0};
   }
 });
-cropOv.addEventListener('mousemove',e=>{
+cropOv.addEventListener('pointermove',e=>{
   const cRect=mainCanvas.getBoundingClientRect();
   const sc=getCropScale();
   const sx=e.clientX-cRect.left,sy=e.clientY-cRect.top;
@@ -1785,8 +1802,9 @@ function finishCropDrag(){
     saveCropToPage();renderPage();
   }
 }
-cropOv.addEventListener('mouseup',finishCropDrag);
-cropOv.addEventListener('mouseleave',()=>{if(cropDragging)finishCropDrag();});
+cropOv.addEventListener('pointerup',e=>{try{cropOv.releasePointerCapture(e.pointerId);}catch(_){};finishCropDrag();});
+cropOv.addEventListener('pointercancel',()=>{if(cropDragging)finishCropDrag();});
+cropOv.addEventListener('contextmenu',e=>{if(cropMode)e.preventDefault();});
 
 // =====================================================
 // サムネイル（補正タブ）
@@ -1861,6 +1879,7 @@ function buildSortGridReal(){
       div.addEventListener('dragover',e=>onSortDragOver(e,i));
       div.addEventListener('drop',e=>onSortDrop(e,i));
       div.addEventListener('dragend',onSortDragEnd);
+      setupSortTouchDrag(div,i);
       const line1=document.createElement('div');line1.className='sort-div-line';
       const lbl=document.createElement('div');lbl.className='sort-div-label';
       lbl.contentEditable=true;lbl.textContent=item.name;
@@ -1879,6 +1898,7 @@ function buildSortGridReal(){
       card.addEventListener('dragover',e=>onSortDragOver(e,i));
       card.addEventListener('drop',e=>onSortDrop(e,i));
       card.addEventListener('dragend',onSortDragEnd);
+      setupSortTouchDrag(card,i);
       // シングルクリック: 選択 (Ctrl=トグル, Shift=範囲選択)
       card.addEventListener('click',e=>{
         if(e.target.classList.contains('sort-del'))return;
@@ -1991,6 +2011,88 @@ function updateUndoRedoBadges(){
   if(ub_btn)ub_btn.disabled=sortUndoStack.length===0;
   if(rb_btn)rb_btn.disabled=sortRedoStack.length===0;
 }
+// ===== タッチ用ドラッグ (Pointer Events) =====
+// Android等のタッチデバイスではHTML5 D&Dが機能しないため独自実装で対応
+let touchDragState=null;
+function setupSortTouchDrag(el,i){
+  // 長押し→コンテキストメニュー（ダウンロード/共有/印刷）を抑止
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  el.addEventListener('pointerdown',e=>{
+    if(e.pointerType!=='touch')return; // マウスは既存のHTML5 D&Dが処理
+    if(e.target.classList.contains('sort-del')||e.target.classList.contains('sort-div-del'))return;
+    if(e.target.isContentEditable)return; // ラベル編集中は無視
+    touchDragState={
+      idx:i,el,pointerId:e.pointerId,
+      startX:e.clientX,startY:e.clientY,
+      started:false,moved:false
+    };
+    try{el.setPointerCapture(e.pointerId);}catch(_){}
+  });
+  el.addEventListener('pointermove',e=>{
+    const s=touchDragState;
+    if(!s||e.pointerId!==s.pointerId)return;
+    const dx=e.clientX-s.startX,dy=e.clientY-s.startY;
+    if(!s.started){
+      if(Math.hypot(dx,dy)<8)return; // しきい値未満はタップ扱い
+      s.started=true;s.moved=true;
+      // ドラッグ開始: 既存ロジックと同じ状態を作る
+      sortDragIdx=s.idx;sortDropTarget=null;
+      if(sortSelected.has(s.idx)&&sortSelected.size>1){
+        sortDragGroup=[...sortSelected].sort((a,b)=>a-b);
+      }else{
+        sortDragGroup=[s.idx];
+        sortSelected.clear();sortSelected.add(s.idx);
+        updateSortSelection();updateSortToolbar();
+      }
+      for(const j of sortDragGroup)document.getElementById(`sc${j}`)?.classList.add('dragging');
+    }
+    e.preventDefault();
+    // ドロップ位置判定 (elementFromPointで探索)
+    s.el.style.pointerEvents='none';
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    s.el.style.pointerEvents='';
+    const targetCard=under?.closest('.sort-card,.sort-divider');
+    if(targetCard&&targetCard.id.startsWith('sc')){
+      const j=parseInt(targetCard.id.slice(2),10);
+      const rect=targetCard.getBoundingClientRect();
+      const before=e.clientX<rect.left+rect.width/2;
+      sortDropTarget={index:j,before};
+      if(j===sortDragIdx||(before&&j===sortDragIdx+1)||(!before&&j===sortDragIdx-1)){
+        hideSortDropIndicator();
+      }else{
+        showSortDropIndicator(rect,before);
+      }
+    }else{
+      // 空白部 = 末尾配置
+      const cards=[...document.querySelectorAll('#sortGrid .sort-card,#sortGrid .sort-divider')];
+      if(cards.length){
+        const last=cards[cards.length-1];
+        const rect=last.getBoundingClientRect();
+        sortDropTarget={index:sortPages.length-1,before:false};
+        showSortDropIndicator(rect,false);
+      }
+    }
+  });
+  function endTouch(e,commit){
+    const s=touchDragState;
+    if(!s||e.pointerId!==s.pointerId)return;
+    try{el.releasePointerCapture(e.pointerId);}catch(_){}
+    const started=s.started;
+    touchDragState=null;
+    if(!started){
+      // タップ扱い: ブラウザがclickイベントを自動発火するので何もしない
+      return;
+    }
+    if(commit&&sortDropTarget){
+      doSortDrop(sortDropTarget.index,sortDropTarget.before);
+    }else{
+      onSortDragEnd();
+    }
+  }
+  el.addEventListener('pointerup',e=>endTouch(e,true));
+  el.addEventListener('pointercancel',e=>endTouch(e,false));
+}
+
 function onSortDragStart(e,i){
   sortDragIdx=i;sortDropTarget=null;
   // 複数選択中のカードをドラッグ→グループ移動
