@@ -1942,6 +1942,7 @@ function buildSortGridReal(){
       // ダブルクリック: ポップアップ
       card.addEventListener('dblclick',e=>{
         if(e.target.classList.contains('sort-del'))return;
+        if(sortMultiTouchMode)return; // 複数選択モード中は拡大表示しない
         const pagesOnly=sortPages.filter(p=>!p.isDivider);openPopupSort(pagesOnly.indexOf(item));
       });
       const num=document.createElement('div');num.className='sort-card-num';num.textContent=`${pageIdx}`;
@@ -2079,7 +2080,7 @@ function updateUndoRedoBadges(){
 let touchDragState=null;
 let sortMultiTouchMode=false;     // タッチでの複数選択モード
 let suppressNextSortClick=false;  // 長押し直後のclick抑止
-const LONG_PRESS_MS=500;
+const LONG_PRESS_MS=450;
 
 function enterMultiSelectMode(){
   if(sortMultiTouchMode)return;
@@ -2129,7 +2130,9 @@ function setupSortTouchDrag(el,i){
     if(!s||e.pointerId!==s.pointerId)return;
     const dx=e.clientX-s.startX,dy=e.clientY-s.startY;
     if(!s.started){
-      if(Math.hypot(dx,dy)<8)return; // しきい値未満はタップ扱い
+      // 長押し待機中は移動許容を15pxに拡大（指の自然な揺れを許容）、待機完了後は8px
+      const tol=s.longPressTimer?15:8;
+      if(Math.hypot(dx,dy)<tol)return;
       // 動いた → 長押しタイマーをキャンセル
       if(s.longPressTimer){clearTimeout(s.longPressTimer);s.longPressTimer=null;}
       s.started=true;s.moved=true;
@@ -2180,9 +2183,13 @@ function setupSortTouchDrag(el,i){
     if(s.longPressTimer){clearTimeout(s.longPressTimer);s.longPressTimer=null;}
     try{el.releasePointerCapture(e.pointerId);}catch(_){}
     const started=s.started;
+    const longPressFired=s.longPressFired;
     touchDragState=null;
+    // 長押し発火後、続くclickが来ない環境(Android長押し時など)でもフラグを残さない
+    // setTimeout(0)で次タスクへ。clickが先に発火する場合はそこで消費される
+    if(longPressFired)setTimeout(()=>{suppressNextSortClick=false;},0);
     if(!started){
-      // タップ扱い: ブラウザがclickイベントを自動発火するので何もしない
+      // タップ扱い: ブラウザがclickイベントを自動発火する（長押し後はsuppressNextSortClickで吸収）
       return;
     }
     if(commit&&sortDropTarget){

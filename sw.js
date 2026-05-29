@@ -5,7 +5,7 @@
 //   オフライン時 → キャッシュから提供
 // CDNライブラリのみキャッシュファースト（URLにバージョン入りで不変なため）
 // =====================================================
-const CACHE_NAME = 'namatunepdf-cache';
+const CACHE_NAME = 'namatunepdf-cache2';
 
 const PRECACHE_URLS = [
   './index.html',
