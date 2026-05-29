@@ -1971,7 +1971,7 @@ function buildSortGrid(){
   }
   sortSelected=new Set();
   if(sortPages.length===0){
-    document.getElementById('sortGrid').innerHTML='<div style="color:var(--text3);font-size:13px;padding:20px;line-height:1.8">まず傾き補正タブでPDFを開いてください。</div><div id="sortDropIndicator"></div>';
+    document.getElementById('sortGrid').innerHTML='<div style="text-align:center;padding:40px 20px;pointer-events:none"><div style="font-size:44px;opacity:.2;margin-bottom:8px">🎵</div><p style="color:var(--text3);font-size:13px;line-height:1.7">PDFまたは画像をここにドロップ<br>または右上の「開く」から選択</p></div><div id="sortDropIndicator"></div>';
     updateSortToolbar();return;
   }
   buildSortGridReal();
