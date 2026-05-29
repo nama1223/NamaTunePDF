@@ -436,9 +436,10 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="modal-row">
       <input type="text" id="cfg_splitFileName"
         style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px"
-        placeholder="{seq}) {name}"
-        oninput="cfgSave()">
+        placeholder="{seq}) {file}_{name}"
+        oninput="cfgSave();cfgUpdateSplitPreview()">
     </div>
+    <div class="fname-preview" id="cfg_splitPreview"></div>
     <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成</p>
   </div>
 
@@ -846,6 +847,7 @@ async function loadFiles(files){
   pages=[];guides=[];sortPages=[];sortSelected=new Set();
   originalPdfBytes=null;losslessAvailable=false;losslessLoadError=null;
   currentBaseName=file.name.replace(/\.[^.]+$/,''); // 拡張子除いたファイル名をベースに
+  cfgUpdateSplitPreview();
   sortUndoStack=[];sortRedoStack=[];updateUndoRedoBadges();
   renderGuideList();
   document.getElementById('canvasHint').style.display='none';
@@ -2507,11 +2509,23 @@ function closeSortSplitModal(){
   if(fnEl){fnEl.value='';fnEl.dataset.auto='1';}
 }
 function updateFnamePreview(){
-  const tmpl=document.getElementById('ssFileName').value||`${currentBaseName}_{name}`;
+  const tmpl=document.getElementById('ssFileName').value||`{seq}) {file}_{name}`;
   const sn=parseInt(document.getElementById('ssStartNum').value)||1;
   const preset0=(document.getElementById('ssPresetArea').value.split(/\r?\n/)[0]||'').trim();
   const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
   document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';
+  cfgUpdateSplitPreview();
+}
+function cfgUpdateSplitPreview(){
+  const el=document.getElementById('cfg_splitPreview');if(!el)return;
+  const tmpl=(document.getElementById('cfg_splitFileName')?.value||'').trim()||`{seq}) {file}_{name}`;
+  const fileLabel=currentBaseName||'ファイル名';
+  const fn='Trumpet';
+  const result=tmpl
+    .replace(/\{seq\}/g,'1')
+    .replace(/\{name\}/g,fn)
+    .replace(/\{file\}/g,fileLabel);
+  el.textContent=result+'.pdf（例）';
 }
 function buildFileName(tmpl,seq,name){
   return tmpl
@@ -2765,6 +2779,7 @@ function cfgLoad(){
   cfgLoadPresetList();
   // 画質モーダルのデフォルト値も同期
   cfgSyncExportModal();
+  cfgUpdateSplitPreview();
 }
 function cfgSave(){
   const isPng=document.getElementById('cfg_outFormat').value==='png';
