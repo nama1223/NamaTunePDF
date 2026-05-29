@@ -398,6 +398,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <button class="btn" id="btnSortUndo" onclick="sortUndo()" disabled title="元に戻す (Ctrl+Z)">↩<span class="undo-badge" id="undoBadge"></span></button>
     <button class="btn" id="btnSortRedo" onclick="sortRedo()" disabled title="やり直す (Ctrl+Y)">↪<span class="undo-badge" id="redoBadge"></span></button>
     <div style="flex:1"></div>
+    <button class="btn" onclick="insertBlankPage()" id="btnInsertBlank" disabled title="選択ページの直前に同寸白紙を挿入（未選択時は最後尾に追加）">□ 白紙挿入</button>
     <button class="btn" onclick="addDivider()">｜ 区切りを追加</button>
     <button class="btn green" id="btnSortExport" onclick="exportSortedPDF()" disabled>💾 この順で保存</button>
     <button class="btn" id="btnSortSplit" onclick="openSortSplitModal()" disabled>✂ 区切りで分割保存</button>
@@ -438,7 +439,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
         placeholder="{seq}) {name}"
         oninput="cfgSave()">
     </div>
-    <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{name}=区切り名　空欄のまま開くとファイル名から自動生成</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成</p>
   </div>
 
   <div class="panel">
@@ -454,18 +455,19 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
       <label style="white-space:nowrap">プリセット名</label>
       <input type="text" id="cfg_presetName"
         style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px"
-        placeholder="例: 楽章名テンプレート" oninput="cfgOnPresetNameInput()">
+        placeholder="例: パート名テンプレート" oninput="cfgOnPresetNameInput()">
     </div>
     <textarea id="cfg_presetBody"
       style="width:100%;min-height:100px;resize:vertical;background:var(--bg);border:1px solid var(--border);
              border-radius:var(--radius);color:var(--text);padding:6px 8px;font-size:12px;font-family:inherit"
-      placeholder="第1楽章&#10;第2楽章&#10;第3楽章&#10;（1行1区切り）"></textarea>
+      placeholder="Trumpet&#10;Horn&#10;Tuba&#10;（1行1区切り）"></textarea>
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <button class="btn primary" id="cfg_btnSavePreset" onclick="cfgSavePreset()" disabled>💾 LocalStorageに保存</button>
+      <button class="btn primary" id="cfg_btnSavePreset" onclick="cfgSavePreset()" disabled>💾 このアプリに保存</button>
       <button class="btn" onclick="cfgExportPreset()">📤 テキストで書き出し</button>
       <button class="btn" onclick="document.getElementById('cfg_importFile').click()">📂 テキストから読込</button>
       <input type="file" id="cfg_importFile" accept=".txt" style="display:none" onchange="cfgImportPreset(event)">
     </div>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">「このアプリに保存」はこのブラウザ・端末内にのみ保存されます（LocalStorage）。アンインストールやブラウザのデータ消去で失われます。大切なプリセットは「テキストで書き出し」でバックアップしておくことをお勧めします。</p>
   </div>
 
 </div>
@@ -569,7 +571,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="modal-row">
       <label>連番開始</label>
       <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
-      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{name}=区切り名</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{name}=区切り名　{file}=元ファイル名</span>
     </div>
     <div class="fname-preview" id="fnamePreview"></div>
     <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px">区切り名プリセット（改行区切り）</div>
@@ -2098,11 +2100,41 @@ function updateSortToolbar(){
   document.getElementById('btnSortDelete').disabled=sortSelected.size===0;
   document.getElementById('btnSortRotL').disabled=sortSelected.size===0;
   document.getElementById('btnSortRotR').disabled=sortSelected.size===0;
+  document.getElementById('btnInsertBlank').disabled=pn===0;
   document.getElementById('btnSortExport').disabled=pn===0;
   document.getElementById('btnSortSplit').disabled=nd===0;
   document.getElementById('btnReturnToCorrect').disabled=pn===0;
 }
 function addDivider(){sortPushUndo();sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});buildSortGridReal();}
+
+function insertBlankPage(){
+  const pagesOnly=sortPages.filter(p=>!p.isDivider);
+  if(!pagesOnly.length)return;
+  // 寸法の基準: 選択中の先頭ページ、なければ最終ページ
+  const selNonDiv=[...sortSelected].filter(i=>!sortPages[i]?.isDivider).sort((a,b)=>a-b);
+  const refIdx=selNonDiv.length>0?selNonDiv[0]:sortPages.map((_,i)=>i).filter(i=>!sortPages[i]?.isDivider).pop();
+  const ref=sortPages[refIdx];
+  if(!ref)return;
+  // 白紙canvas生成（参照ページと同じ表示解像度）
+  const src=ref.canvas;
+  const rot=ref.rot90||0;
+  const rw=(rot===1||rot===3)?src.height:src.width;
+  const rh=(rot===1||rot===3)?src.width:src.height;
+  const blank=document.createElement('canvas');blank.width=rw;blank.height=rh;
+  const c=blank.getContext('2d');c.fillStyle='#ffffff';c.fillRect(0,0,rw,rh);
+  const sp={canvas:blank,label:'白紙',isBlank:true};
+  sortPushUndo();
+  if(selNonDiv.length>0){
+    // 選択ページの直前に挿入（複数選択時は先頭の直前）
+    sortPages.splice(refIdx,0,sp);
+    showToast(`白紙を ${refIdx+1} 枚目の直前に挿入しました`);
+  }else{
+    // 最後尾に追加
+    sortPages.push(sp);
+    showToast('白紙を最後尾に追加しました');
+  }
+  buildSortGridReal();
+}
 function sortSelectAll(){
   const pageIndices=sortPages.map((_,i)=>i).filter(i=>!sortPages[i].isDivider);
   const allSelected=pageIndices.every(i=>sortSelected.has(i));
@@ -2448,7 +2480,7 @@ function openSortSplitModal(){
   const fnEl=document.getElementById('ssFileName');
   const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
   if(!fnEl.value||fnEl.dataset.auto==='1'){
-    fnEl.value=cfgFn||`{seq}) ${currentBaseName}_{name}`;
+    fnEl.value=cfgFn||`{seq}) {file}_{name}`;
   }
   fnEl.dataset.auto='0';
   updateFnamePreview();
@@ -2481,7 +2513,12 @@ function updateFnamePreview(){
   const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
   document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';
 }
-function buildFileName(tmpl,seq,name){return tmpl.replace('{seq}',String(seq)).replace('{name}',name);}
+function buildFileName(tmpl,seq,name){
+  return tmpl
+    .replace(/\{seq\}/g,String(seq))
+    .replace(/\{name\}/g,name)
+    .replace(/\{file\}/g,currentBaseName);
+}
 function loadPresetFile(){document.getElementById('presetFileInput').click();}
 function onPresetFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>document.getElementById('ssPresetArea').value=ev.target.result.trim();r.readAsText(f,'UTF-8');e.target.value='';}
 
