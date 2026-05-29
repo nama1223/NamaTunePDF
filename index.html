@@ -1592,11 +1592,16 @@ function toggleCropMode(){
     ov.classList.add('active');btn.textContent='✕ 選択解除';btn.style.borderColor='var(--accent2)';
     canvasArea.classList.remove('hand-mode');
     if(det)det.style.display='block';
+    // renderPage()でインラインstyleが先に'none'にセットされている場合があるので上書き
+    ov.style.pointerEvents='all';
+    ov.style.cursor='crosshair';
   }else{
     ov.classList.remove('active');btn.textContent='✂ 範囲選択';btn.style.borderColor='';
     canvasArea.classList.add('hand-mode');
     cropOvCtx.clearRect(0,0,cropOvCanvas.width,cropOvCanvas.height);
     if(det)det.style.display='none';
+    ov.style.pointerEvents='none';
+    ov.style.cursor='';
   }
 }
 function setAspect(key){
