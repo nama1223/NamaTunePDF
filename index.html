@@ -248,6 +248,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
   <div class="logo">NamaTunePDF <span>v2.0</span></div>
   <div class="tab active" id="tab-correct" onclick="switchTab('correct')">🎵 傾き補正</div>
   <div class="tab" id="tab-sort" onclick="switchTab('sort')">🗂 並べ替え</div>
+  <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙ 設定</div>
   <div class="tabbar-sep"></div>
   <div class="tabbar-right">
     <div class="hdr-info" id="hdrInfo">ファイルを開いてください</div>
@@ -406,6 +407,70 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 </div>
 </div>
 
+<!-- 設定タブ -->
+<div class="tab-content" id="content-settings">
+<div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;max-width:640px">
+
+  <div class="panel">
+    <div class="panel-title">画質のデフォルト設定</div>
+    <div class="modal-row">
+      <label>形式</label>
+      <select id="cfg_outFormat" onchange="cfgSave()" style="flex:1">
+        <option value="jpeg">JPEG（サイズ小）</option>
+        <option value="png">PNG（完全可逆）</option>
+      </select>
+    </div>
+    <div class="modal-row" id="cfg_jpegQualityRow">
+      <label>JPEG品質</label>
+      <input type="range" id="cfg_jpegQuality" min="50" max="100" value="92" step="1"
+        style="flex:1;accent-color:var(--accent)"
+        oninput="document.getElementById('cfg_jpegQualityVal').textContent=this.value+'%';cfgSave()">
+      <span id="cfg_jpegQualityVal" style="font-size:12px;color:var(--text);min-width:36px;text-align:right">92%</span>
+    </div>
+    <p style="font-size:10px;color:var(--text3);margin-top:4px">傾き補正・並べ替え保存のデフォルト値です。各保存モーダルで変更可能。</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">分割保存のデフォルトファイル名</div>
+    <div class="modal-row">
+      <input type="text" id="cfg_splitFileName"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px"
+        placeholder="{seq}) {name}"
+        oninput="cfgSave()">
+    </div>
+    <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{name}=区切り名　空欄のまま開くとファイル名から自動生成</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">区切り名プリセットの管理</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+      <select id="cfg_presetSelect" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
+        <option value="">— 新規作成 —</option>
+      </select>
+      <button class="btn" onclick="cfgLoadPreset()" title="選択したプリセットを読み込む">読込</button>
+      <button class="btn danger" id="cfg_btnDeletePreset" onclick="cfgDeletePreset()" title="選択したプリセットを削除" disabled>削除</button>
+    </div>
+    <div class="modal-row" style="margin-bottom:6px">
+      <label style="white-space:nowrap">プリセット名</label>
+      <input type="text" id="cfg_presetName"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px"
+        placeholder="例: 楽章名テンプレート" oninput="cfgOnPresetNameInput()">
+    </div>
+    <textarea id="cfg_presetBody"
+      style="width:100%;min-height:100px;resize:vertical;background:var(--bg);border:1px solid var(--border);
+             border-radius:var(--radius);color:var(--text);padding:6px 8px;font-size:12px;font-family:inherit"
+      placeholder="第1楽章&#10;第2楽章&#10;第3楽章&#10;（1行1区切り）"></textarea>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn primary" id="cfg_btnSavePreset" onclick="cfgSavePreset()" disabled>💾 LocalStorageに保存</button>
+      <button class="btn" onclick="cfgExportPreset()">📤 テキストで書き出し</button>
+      <button class="btn" onclick="document.getElementById('cfg_importFile').click()">📂 テキストから読込</button>
+      <input type="file" id="cfg_importFile" accept=".txt" style="display:none" onchange="cfgImportPreset(event)">
+    </div>
+  </div>
+
+</div>
+</div>
+
 <!-- ポップアップ -->
 <div class="popup-bg" id="popupBg" onclick="if(event.target===this)closePopup()">
   <div class="popup-center">
@@ -499,22 +564,28 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <h3>✂ 区切りで分割保存</h3>
     <div class="modal-row">
       <label>共通ファイル名</label>
-      <input type="text" id="ssFileName" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" value="NamaTunePDF_{name}" oninput="updateFnamePreview()">
+      <input type="text" id="ssFileName" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
     </div>
     <div class="modal-row">
       <label>連番開始</label>
       <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
       <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{name}=区切り名</span>
     </div>
-    <div id="sortSplitQualityBadge" style="margin-bottom:6px"></div>
     <div class="fname-preview" id="fnamePreview"></div>
     <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px">区切り名プリセット（改行区切り）</div>
+    <div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">
+      <select id="ss_presetPicker" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:3px 6px;font-size:11px">
+        <option value="">— 保存済みプリセットを呼び出す —</option>
+      </select>
+      <button class="btn btn-mini" onclick="ssApplyPreset()">適用</button>
+    </div>
     <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章" oninput="updateFnamePreview()"></textarea>
     <div style="display:flex;gap:6px;margin-top:5px">
       <button class="btn" onclick="loadPresetFile()" style="font-size:11px">📂 テキストファイルから読込</button>
       <input type="file" id="presetFileInput" accept=".txt" style="display:none" onchange="onPresetFile(event)">
     </div>
     <div class="modal-note">区切りごとに別ファイルとして保存されます。</div>
+    <div id="sortSplitQualityBadge" style="margin-top:8px"></div>
     <div class="modal-btns">
       <button class="btn" onclick="closeSortSplitModal()">キャンセル</button>
       <button class="btn primary" onclick="doSortSplitExport()">保存する</button>
@@ -600,6 +671,8 @@ let dividerIdCnt=0;
 let originalPdfBytes=null;
 let losslessAvailable=false;
 let losslessLoadError=null;
+// 出力ファイル名のベース（拡張子・パスなし）
+let currentBaseName='出力';
 
 const mainCanvas=document.getElementById('mainCanvas');
 const ctx=mainCanvas.getContext('2d');
@@ -770,6 +843,7 @@ async function loadFiles(files){
   const file=files[0];
   pages=[];guides=[];sortPages=[];sortSelected=new Set();
   originalPdfBytes=null;losslessAvailable=false;losslessLoadError=null;
+  currentBaseName=file.name.replace(/\.[^.]+$/,''); // 拡張子除いたファイル名をベースに
   sortUndoStack=[];sortRedoStack=[];updateUndoRedoBadges();
   renderGuideList();
   document.getElementById('canvasHint').style.display='none';
@@ -1191,8 +1265,17 @@ async function addPageToPdf(pdfDoc, p, format, quality){
   pg.drawImage(img,{x:0,y:0,width:outCanvas.width,height:outCanvas.height});
 }
 
-function getOutFormat(){return document.getElementById('outFormat')?.value||'jpeg';}
-function getJpegQuality(){return (parseInt(document.getElementById('jpegQuality')?.value||'92'))/100;}
+// 画質はモーダル内のUI（変更時はそちら優先）→ なければ設定タブのデフォルトを参照
+function getOutFormat(){
+  const modal=document.getElementById('outFormat');
+  if(modal&&document.getElementById('exportModal')?.classList.contains('open'))return modal.value;
+  return document.getElementById('cfg_outFormat')?.value||'jpeg';
+}
+function getJpegQuality(){
+  const modal=document.getElementById('jpegQuality');
+  if(modal&&document.getElementById('exportModal')?.classList.contains('open'))return parseInt(modal.value||'92')/100;
+  return parseInt(document.getElementById('cfg_jpegQuality')?.value||'92')/100;
+}
 function onOutFormatChange(){
   const isPng=getOutFormat()==='png';
   const row=document.getElementById('jpegQualityRow');
@@ -1309,7 +1392,7 @@ async function doSplitExport(){
     }
     const bytes=await newPdf.save();
     hideProgress();
-    downloadBytes(bytes,'NamaTunePDF_A4分割.pdf','application/pdf');
+    downloadBytes(bytes,`${currentBaseName}_A4分割.pdf`,'application/pdf');
     if(after==='sort'){
       sortPages=halves.map(h=>({canvas:h.canvas,label:h.label}));
       sortSelected=new Set();buildSortGrid();switchTab('sort');
@@ -1333,7 +1416,7 @@ async function exportPDF(mode){
     }
     const bytes=await newPdf.save();
     hideProgress();
-    downloadBytes(bytes,'NamaTunePDF_補正済み.pdf','application/pdf');
+    downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
     showToast('保存しました！');
   }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
@@ -1365,7 +1448,7 @@ async function exportPDFLossless(){
     }
     const bytes=await newDoc.save();
     hideProgress();
-    downloadBytes(bytes,'NamaTunePDF_補正済み.pdf','application/pdf');
+    downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
     showToast('保存しました！（無劣化モード）');
   }catch(err){hideProgress();showToast('無劣化エラー: '+err.message);console.error(err);}
 }
@@ -2353,7 +2436,7 @@ async function exportSortedPDF(){
       await new Promise(r=>setTimeout(r,0));
     }
     const bytes=await newPdf.save();hideProgress();
-    downloadBytes(bytes,'NamaTunePDF_並べ替え済み.pdf','application/pdf');
+    downloadBytes(bytes,`${currentBaseName}_並べ替え済み.pdf`,'application/pdf');
     showToast(losslessOk?'保存しました！（無劣化）':'保存しました！');
   }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
@@ -2361,6 +2444,13 @@ async function exportSortedPDF(){
 // 分割保存
 function openSortSplitModal(){
   const nd=sortPages.filter(p=>p.isDivider).length;if(!nd){showToast('区切りが1つもありません');return;}
+  // ファイル名欄: 設定タブのデフォルト > 元ファイル名ベース で初期化
+  const fnEl=document.getElementById('ssFileName');
+  const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
+  if(!fnEl.value||fnEl.dataset.auto==='1'){
+    fnEl.value=cfgFn||`{seq}) ${currentBaseName}_{name}`;
+  }
+  fnEl.dataset.auto='0';
   updateFnamePreview();
   // 品質バッジを計算・表示
   const pn=sortPages.filter(p=>!p.isDivider);
@@ -2378,9 +2468,14 @@ function openSortSplitModal(){
   }
   document.getElementById('sortSplitModal').classList.add('open');
 }
-function closeSortSplitModal(){document.getElementById('sortSplitModal').classList.remove('open');}
+function closeSortSplitModal(){
+  document.getElementById('sortSplitModal').classList.remove('open');
+  // 次回オープン時にファイル名を再生成するためリセット
+  const fnEl=document.getElementById('ssFileName');
+  if(fnEl){fnEl.value='';fnEl.dataset.auto='1';}
+}
 function updateFnamePreview(){
-  const tmpl=document.getElementById('ssFileName').value||'NamaTunePDF_{name}';
+  const tmpl=document.getElementById('ssFileName').value||`${currentBaseName}_{name}`;
   const sn=parseInt(document.getElementById('ssStartNum').value)||1;
   const preset0=(document.getElementById('ssPresetArea').value.split(/\r?\n/)[0]||'').trim();
   const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
@@ -2392,7 +2487,7 @@ function onPresetFile(e){const f=e.target.files[0];if(!f)return;const r=new File
 
 async function doSortSplitExport(){
   closeSortSplitModal();
-  const tmpl=document.getElementById('ssFileName').value||'NamaTunePDF_{name}';
+  const tmpl=document.getElementById('ssFileName').value||`${currentBaseName}_{name}`;
   let seq=parseInt(document.getElementById('ssStartNum').value)||1;
   const sections=[];let cur=[];
   for(const item of sortPages){if(item.isDivider){if(cur.length>0)sections.push({pages:cur,name:item.name});cur=[];}else cur.push(item);}
@@ -2556,6 +2651,7 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.id==='tab-'+name));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.toggle('active',el.id==='content-'+name));
   if(name==='sort')buildSortGrid();
+  if(name==='settings')cfgLoadPresetList();
 }
 
 function cropCanvas(src,x,y,w,h){const out=document.createElement('canvas');out.width=w;out.height=h;out.getContext('2d').drawImage(src,x,y,w,h,0,0,w,h);return out;}
@@ -2609,6 +2705,157 @@ document.addEventListener('keydown',e=>{
 
 window.addEventListener('resize',()=>{if(pages.length>0)renderPage();});
 showToast('PDFまたは画像をドロップして開始');
+
+// =====================================================
+// 設定タブ
+// =====================================================
+const CFG_KEY='namatunepdf_config';
+const PRESET_LS_KEY='namatunepdf_presets'; // {name:string, body:string}[]
+
+function cfgLoad(){
+  try{
+    const s=JSON.parse(localStorage.getItem(CFG_KEY)||'{}');
+    if(s.outFormat)document.getElementById('cfg_outFormat').value=s.outFormat;
+    if(s.jpegQuality!=null){
+      document.getElementById('cfg_jpegQuality').value=s.jpegQuality;
+      document.getElementById('cfg_jpegQualityVal').textContent=s.jpegQuality+'%';
+    }
+    if(s.splitFileName!=null)document.getElementById('cfg_splitFileName').value=s.splitFileName;
+    // JPEG品質行の表示切替
+    const isPng=document.getElementById('cfg_outFormat').value==='png';
+    document.getElementById('cfg_jpegQualityRow').style.display=isPng?'none':'flex';
+  }catch(_){}
+  cfgLoadPresetList();
+  // 画質モーダルのデフォルト値も同期
+  cfgSyncExportModal();
+}
+function cfgSave(){
+  const isPng=document.getElementById('cfg_outFormat').value==='png';
+  document.getElementById('cfg_jpegQualityRow').style.display=isPng?'none':'flex';
+  const s={
+    outFormat:document.getElementById('cfg_outFormat').value,
+    jpegQuality:document.getElementById('cfg_jpegQuality').value,
+    splitFileName:document.getElementById('cfg_splitFileName').value,
+  };
+  localStorage.setItem(CFG_KEY,JSON.stringify(s));
+  cfgSyncExportModal();
+}
+function cfgSyncExportModal(){
+  // 傾き補正エクスポートモーダルのUIにもデフォルト値を反映
+  const fmt=document.getElementById('cfg_outFormat')?.value||'jpeg';
+  const q=document.getElementById('cfg_jpegQuality')?.value||'92';
+  const fmtEl=document.getElementById('outFormat');
+  const qEl=document.getElementById('jpegQuality');
+  const qValEl=document.getElementById('jpegQualityVal');
+  if(fmtEl)fmtEl.value=fmt;
+  if(qEl){qEl.value=q;if(qValEl)qValEl.textContent=q+'%';}
+  const isPng=fmt==='png';
+  const row=document.getElementById('jpegQualityRow');if(row)row.style.display=isPng?'none':'flex';
+}
+
+// --- プリセット管理 ---
+function cfgGetPresets(){
+  try{return JSON.parse(localStorage.getItem(PRESET_LS_KEY)||'[]');}catch(_){return [];}
+}
+function cfgSetPresets(list){localStorage.setItem(PRESET_LS_KEY,JSON.stringify(list));}
+
+function cfgLoadPresetList(){
+  const list=cfgGetPresets();
+  // 設定タブのセレクト
+  const sel=document.getElementById('cfg_presetSelect');
+  if(sel){
+    sel.innerHTML='<option value="">— 新規作成 —</option>';
+    list.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;sel.appendChild(o);});
+    sel.onchange=()=>{
+      const i=parseInt(sel.value);
+      const del=document.getElementById('cfg_btnDeletePreset');
+      if(!isNaN(i)){
+        document.getElementById('cfg_presetName').value=list[i].name;
+        document.getElementById('cfg_presetBody').value=list[i].body;
+        if(del)del.disabled=false;
+      }else{
+        if(del)del.disabled=true;
+      }
+    };
+  }
+  // 分割保存モーダルのセレクト
+  const ss=document.getElementById('ss_presetPicker');
+  if(ss){
+    ss.innerHTML='<option value="">— 保存済みプリセットを呼び出す —</option>';
+    list.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;ss.appendChild(o);});
+  }
+}
+function cfgLoadPreset(){
+  const sel=document.getElementById('cfg_presetSelect');
+  const i=parseInt(sel?.value);
+  if(isNaN(i))return;
+  const list=cfgGetPresets();
+  if(!list[i])return;
+  document.getElementById('cfg_presetName').value=list[i].name;
+  document.getElementById('cfg_presetBody').value=list[i].body;
+}
+function cfgOnPresetNameInput(){
+  document.getElementById('cfg_btnSavePreset').disabled=
+    !document.getElementById('cfg_presetName').value.trim();
+}
+function cfgSavePreset(){
+  const name=document.getElementById('cfg_presetName').value.trim();
+  if(!name){showToast('プリセット名を入力してください');return;}
+  const body=document.getElementById('cfg_presetBody').value;
+  const list=cfgGetPresets();
+  // 同名なら上書き
+  const idx=list.findIndex(p=>p.name===name);
+  if(idx>=0)list[idx].body=body;
+  else list.push({name,body});
+  cfgSetPresets(list);
+  cfgLoadPresetList();
+  showToast(`「${name}」を保存しました`);
+}
+function cfgDeletePreset(){
+  const sel=document.getElementById('cfg_presetSelect');
+  const i=parseInt(sel?.value);
+  if(isNaN(i))return;
+  const list=cfgGetPresets();
+  const name=list[i]?.name;
+  list.splice(i,1);
+  cfgSetPresets(list);
+  document.getElementById('cfg_presetName').value='';
+  document.getElementById('cfg_presetBody').value='';
+  document.getElementById('cfg_btnSavePreset').disabled=true;
+  cfgLoadPresetList();
+  showToast(`「${name}」を削除しました`);
+}
+function cfgExportPreset(){
+  const name=document.getElementById('cfg_presetName').value.trim()||'preset';
+  const body=document.getElementById('cfg_presetBody').value;
+  const bytes=new TextEncoder().encode(body);
+  downloadBytes(bytes,name+'.txt','text/plain');
+}
+function cfgImportPreset(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    document.getElementById('cfg_presetBody').value=ev.target.result.trim();
+    if(!document.getElementById('cfg_presetName').value)
+      document.getElementById('cfg_presetName').value=f.name.replace(/\.txt$/i,'');
+    cfgOnPresetNameInput();
+  };
+  r.readAsText(f,'UTF-8');e.target.value='';
+}
+// 分割保存モーダルのプリセット適用
+function ssApplyPreset(){
+  const ss=document.getElementById('ss_presetPicker');
+  const i=parseInt(ss?.value);
+  if(isNaN(i)){showToast('プリセットを選択してください');return;}
+  const list=cfgGetPresets();
+  if(!list[i])return;
+  document.getElementById('ssPresetArea').value=list[i].body;
+  updateFnamePreview();
+  showToast(`「${list[i].name}」を適用しました`);
+}
+
+// 起動時にロード
+cfgLoad();
 </script>
 
 <script>
