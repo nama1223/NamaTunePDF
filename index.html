@@ -391,6 +391,9 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <span class="sort-info" id="sortInfo">ページなし</span>
     <button class="btn" onclick="sortSelectAll()">全選択</button>
     <button class="btn danger" onclick="sortDeleteSelected()" id="btnSortDelete" disabled>削除</button>
+    <button class="btn" id="btnSortRotL" onclick="sortRotateSelected(-1)" disabled title="選択を左90°回転（無劣化）">↺90°</button>
+    <button class="btn" id="btnSortRotR" onclick="sortRotateSelected(+1)" disabled title="選択を右90°回転（無劣化）">↻90°</button>
+    <button class="btn danger" id="btnSortExitMulti" onclick="exitMultiSelectMode()" style="display:none">✕ 選択モード解除</button>
     <button class="btn" id="btnSortUndo" onclick="sortUndo()" disabled title="元に戻す (Ctrl+Z)">↩<span class="undo-badge" id="undoBadge"></span></button>
     <button class="btn" id="btnSortRedo" onclick="sortRedo()" disabled title="やり直す (Ctrl+Y)">↪<span class="undo-badge" id="redoBadge"></span></button>
     <div style="flex:1"></div>
@@ -506,7 +509,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div id="sortSplitQualityBadge" style="margin-bottom:6px"></div>
     <div class="fname-preview" id="fnamePreview"></div>
     <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px">区切り名プリセット（改行区切り）</div>
-    <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章"></textarea>
+    <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章" oninput="updateFnamePreview()"></textarea>
     <div style="display:flex;gap:6px;margin-top:5px">
       <button class="btn" onclick="loadPresetFile()" style="font-size:11px">📂 テキストファイルから読込</button>
       <input type="file" id="presetFileInput" accept=".txt" style="display:none" onchange="onPresetFile(event)">
@@ -736,7 +739,24 @@ async function parsePDFImages(arrayBuffer){
 // =====================================================
 // ファイル読み込み
 // =====================================================
-document.getElementById('fileInput').addEventListener('change',e=>loadFiles(e.target.files));
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const files=e.target.files;
+  if(!files||!files.length)return;
+  const file=files[0];
+  const onSort=document.getElementById('tab-sort').classList.contains('active');
+  const hasContent=sortPages.length>0||pages.length>0;
+  const isPdf=file&&(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf'));
+  // 並べ替えタブ + 既存コンテンツあり + 単一PDF → ドロップと同じモーダル
+  if(onSort&&hasContent&&isPdf&&files.length===1){
+    pendingSortDropFile=file;
+    document.getElementById('sortPdfDropInfo').textContent=`「${file.name}」（${Math.round(file.size/1024)}KB）を追加`;
+    document.getElementById('sortPdfDropModal').classList.add('open');
+    e.target.value='';
+    return;
+  }
+  loadFiles(files);
+  e.target.value='';
+});
 canvasArea.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropOverlay').classList.add('active');});
 canvasArea.addEventListener('dragleave',()=>document.getElementById('dropOverlay').classList.remove('active'));
 canvasArea.addEventListener('drop',e=>{
@@ -766,6 +786,8 @@ async function loadFiles(files){
     document.getElementById('hdrInfo').textContent=`${file.name}（${pages.length}p）`;
     updateQualityBadge();
     canvasArea.classList.add('hand-mode');
+    // 並べ替えタブが表示中なら一覧を再構築
+    if(document.getElementById('tab-sort').classList.contains('active'))buildSortGrid();
     showToast(`${pages.length}ページ読み込みました`);
   }catch(err){
     hideProgress();
@@ -1900,11 +1922,12 @@ function buildSortGridReal(){
       card.addEventListener('drop',e=>onSortDrop(e,i));
       card.addEventListener('dragend',onSortDragEnd);
       setupSortTouchDrag(card,i);
-      // シングルクリック: 選択 (Ctrl=トグル, Shift=範囲選択)
+      // シングルクリック: 選択 (Ctrl=トグル, Shift=範囲選択, タッチ複数選択モード=トグル)
       card.addEventListener('click',e=>{
         if(e.target.classList.contains('sort-del'))return;
+        if(suppressNextSortClick){suppressNextSortClick=false;return;}
         e.stopPropagation();
-        if(e.ctrlKey||e.metaKey){
+        if(sortMultiTouchMode||e.ctrlKey||e.metaKey){
           if(sortSelected.has(i))sortSelected.delete(i);
           else sortSelected.add(i);
           sortLastClicked=i;
@@ -1923,7 +1946,7 @@ function buildSortGridReal(){
       });
       const num=document.createElement('div');num.className='sort-card-num';num.textContent=`${pageIdx}`;
       const wrap=document.createElement('div');wrap.className='sort-canvas-wrap';
-      const tc=document.createElement('canvas');tc.className='sort-canvas-el';drawSortThumb(tc,item.canvas);wrap.appendChild(tc);
+      const tc=document.createElement('canvas');tc.className='sort-canvas-el';drawSortThumb(tc,item.canvas,item.rot90);wrap.appendChild(tc);
       const lbl=document.createElement('div');lbl.className='sort-card-label';lbl.textContent=item.label;
       const del=document.createElement('button');del.className='sort-del';del.textContent='✕';
       del.onclick=e=>{e.stopPropagation();sortPushUndo();sortPages.splice(i,1);buildSortGridReal();};
@@ -1941,17 +1964,56 @@ function updateSortSelection(){
   });
 }
 
-function drawSortThumb(tc,canvas){
-  const sc=Math.min(110/canvas.width,82/canvas.height);
-  tc.width=Math.round(canvas.width*sc);tc.height=Math.round(canvas.height*sc);
+function drawSortThumb(tc,canvas,rot90){
+  const k=(((rot90||0)%4)+4)%4;
+  const sw=canvas.width,sh=canvas.height;
+  const rotated=(k===1||k===3);
+  const cw=rotated?sh:sw,ch=rotated?sw:sh;
+  const sc=Math.min(110/cw,82/ch);
+  tc.width=Math.round(cw*sc);tc.height=Math.round(ch*sc);
   const c=tc.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-  c.fillStyle='#fff';c.fillRect(0,0,tc.width,tc.height);c.drawImage(canvas,0,0,tc.width,tc.height);
+  c.fillStyle='#fff';c.fillRect(0,0,tc.width,tc.height);
+  c.save();c.translate(tc.width/2,tc.height/2);c.rotate(k*Math.PI/2);
+  c.drawImage(canvas,-sw*sc/2,-sh*sc/2,sw*sc,sh*sc);
+  c.restore();
+}
+function sortRotateSelected(dir){
+  if(!sortSelected.size)return;
+  sortPushUndo();
+  for(const i of sortSelected){
+    const sp=sortPages[i];if(!sp||sp.isDivider)continue;
+    sp.rot90=(((sp.rot90||0)+dir)%4+4)%4;
+  }
+  buildSortGridReal();
+}
+// 回転適用済みcanvasを返す（rot90=0なら元canvasをそのまま）
+function rotateCanvasIfNeeded(src,rot90){
+  const k=(((rot90||0)%4)+4)%4;
+  if(k===0)return src;
+  const rotated=(k===1||k===3);
+  const w=rotated?src.height:src.width,h=rotated?src.width:src.height;
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+  x.translate(w/2,h/2);x.rotate(k*Math.PI/2);
+  x.drawImage(src,-src.width/2,-src.height/2);
+  return c;
+}
+// p.rot90 を sp.rot90 だけ一時シフトして fn を実行
+async function withSortRot(sp,fn){
+  const extra=sp.rot90||0;
+  if(!extra||!sp.page)return await fn();
+  const orig=sp.page.rot90;
+  sp.page.rot90=(((orig+extra)%4)+4)%4;
+  try{return await fn();}
+  finally{sp.page.rot90=orig;}
 }
 function updateSortToolbar(){
   const pn=sortPages.filter(p=>!p.isDivider).length;
   const nd=sortPages.filter(p=>p.isDivider).length;
   document.getElementById('sortInfo').textContent=pn?`${pn}ページ${nd>0?'　区切り×'+nd:''}`:'ページなし';
   document.getElementById('btnSortDelete').disabled=sortSelected.size===0;
+  document.getElementById('btnSortRotL').disabled=sortSelected.size===0;
+  document.getElementById('btnSortRotR').disabled=sortSelected.size===0;
   document.getElementById('btnSortExport').disabled=pn===0;
   document.getElementById('btnSortSplit').disabled=nd===0;
   document.getElementById('btnReturnToCorrect').disabled=pn===0;
@@ -2015,6 +2077,22 @@ function updateUndoRedoBadges(){
 // ===== タッチ用ドラッグ (Pointer Events) =====
 // Android等のタッチデバイスではHTML5 D&Dが機能しないため独自実装で対応
 let touchDragState=null;
+let sortMultiTouchMode=false;     // タッチでの複数選択モード
+let suppressNextSortClick=false;  // 長押し直後のclick抑止
+const LONG_PRESS_MS=500;
+
+function enterMultiSelectMode(){
+  if(sortMultiTouchMode)return;
+  sortMultiTouchMode=true;
+  document.getElementById('btnSortExitMulti').style.display='';
+  showToast('複数選択モード（タップでトグル / 空白タップで解除）');
+}
+function exitMultiSelectMode(){
+  sortMultiTouchMode=false;
+  document.getElementById('btnSortExitMulti').style.display='none';
+  sortSelected.clear();sortLastClicked=null;
+  updateSortSelection();updateSortToolbar();
+}
 function setupSortTouchDrag(el,i){
   // 長押し→コンテキストメニュー（ダウンロード/共有/印刷）を抑止
   el.addEventListener('contextmenu',e=>e.preventDefault());
@@ -2025,8 +2103,25 @@ function setupSortTouchDrag(el,i){
     touchDragState={
       idx:i,el,pointerId:e.pointerId,
       startX:e.clientX,startY:e.clientY,
-      started:false,moved:false
+      started:false,moved:false,
+      longPressTimer:null,longPressFired:false
     };
+    // 長押し→複数選択モードに移行（区切り線は対象外）
+    if(!sortPages[i]?.isDivider){
+      touchDragState.longPressTimer=setTimeout(()=>{
+        const s=touchDragState;
+        if(!s||s.started)return;
+        s.longPressFired=true;
+        enterMultiSelectMode();
+        // 触れたカードもトグルで選択
+        if(sortSelected.has(i))sortSelected.delete(i);
+        else sortSelected.add(i);
+        sortLastClicked=i;
+        updateSortSelection();updateSortToolbar();
+        suppressNextSortClick=true;
+        if(navigator.vibrate)navigator.vibrate(30);
+      },LONG_PRESS_MS);
+    }
     try{el.setPointerCapture(e.pointerId);}catch(_){}
   });
   el.addEventListener('pointermove',e=>{
@@ -2035,6 +2130,8 @@ function setupSortTouchDrag(el,i){
     const dx=e.clientX-s.startX,dy=e.clientY-s.startY;
     if(!s.started){
       if(Math.hypot(dx,dy)<8)return; // しきい値未満はタップ扱い
+      // 動いた → 長押しタイマーをキャンセル
+      if(s.longPressTimer){clearTimeout(s.longPressTimer);s.longPressTimer=null;}
       s.started=true;s.moved=true;
       // ドラッグ開始: 既存ロジックと同じ状態を作る
       sortDragIdx=s.idx;sortDropTarget=null;
@@ -2042,8 +2139,11 @@ function setupSortTouchDrag(el,i){
         sortDragGroup=[...sortSelected].sort((a,b)=>a-b);
       }else{
         sortDragGroup=[s.idx];
-        sortSelected.clear();sortSelected.add(s.idx);
-        updateSortSelection();updateSortToolbar();
+        // 長押し発火後のドラッグは選択クリアしない（モード中の操作のため）
+        if(!s.longPressFired&&!sortMultiTouchMode){
+          sortSelected.clear();sortSelected.add(s.idx);
+          updateSortSelection();updateSortToolbar();
+        }
       }
       for(const j of sortDragGroup)document.getElementById(`sc${j}`)?.classList.add('dragging');
     }
@@ -2077,6 +2177,7 @@ function setupSortTouchDrag(el,i){
   function endTouch(e,commit){
     const s=touchDragState;
     if(!s||e.pointerId!==s.pointerId)return;
+    if(s.longPressTimer){clearTimeout(s.longPressTimer);s.longPressTimer=null;}
     try{el.releasePointerCapture(e.pointerId);}catch(_){}
     const started=s.started;
     touchDragState=null;
@@ -2191,9 +2292,14 @@ function onSortDragEnd(){
       e.preventDefault();
       const file=e.dataTransfer.files[0];
       if(file&&(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf'))){
-        pendingSortDropFile=file;
-        document.getElementById('sortPdfDropInfo').textContent=`「${file.name}」（${Math.round(file.size/1024)}KB）を追加`;
-        document.getElementById('sortPdfDropModal').classList.add('open');
+        // 何も読み込まれていない場合は素直に読み込む
+        if(sortPages.length===0&&pages.length===0){
+          loadFiles([file]);
+        }else{
+          pendingSortDropFile=file;
+          document.getElementById('sortPdfDropInfo').textContent=`「${file.name}」（${Math.round(file.size/1024)}KB）を追加`;
+          document.getElementById('sortPdfDropModal').classList.add('open');
+        }
       }
       return;
     }
@@ -2203,9 +2309,10 @@ function onSortDragEnd(){
     if(sortDragIdx===null){hideSortDropIndicator();return;}
     doSortDrop(sortPages.length-1,false);
   });
-  // グリッド空白クリックで選択解除
+  // グリッド空白クリックで選択解除（複数選択モード中はモードごと解除）
   grid.addEventListener('click',e=>{
     if(e.target.closest('.sort-card,.sort-divider'))return;
+    if(sortMultiTouchMode){exitMultiSelectMode();return;}
     sortSelected.clear();sortLastClicked=null;
     updateSortSelection();updateSortToolbar();
   });
@@ -2227,13 +2334,13 @@ async function exportSortedPDF(){
       showProgress(`ページ ${i+1}/${pagesOnly.length}`,(i+1)/pagesOnly.length);
       const sp=pagesOnly[i];
       if(losslessOk&&sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null){
-        await addPageLossless(newPdf,srcDoc,srcPages,sp.page);
+        await withSortRot(sp,()=>addPageLossless(newPdf,srcDoc,srcPages,sp.page));
       }else if(sp.page){
-        await addPageToPdf(newPdf,sp.page,getOutFormat(),getJpegQuality());
+        await withSortRot(sp,()=>addPageToPdf(newPdf,sp.page,getOutFormat(),getJpegQuality()));
       }else{
-        const pngBytes=await canvasToPng(sp.canvas);
+        const c=rotateCanvasIfNeeded(sp.canvas,sp.rot90);
+        const pngBytes=await canvasToPng(c);
         const img=await newPdf.embedPng(pngBytes);
-        const c=sp.canvas;
         newPdf.addPage([c.width,c.height]).drawImage(img,{x:0,y:0,width:c.width,height:c.height});
       }
       await new Promise(r=>setTimeout(r,0));
@@ -2265,7 +2372,13 @@ function openSortSplitModal(){
   document.getElementById('sortSplitModal').classList.add('open');
 }
 function closeSortSplitModal(){document.getElementById('sortSplitModal').classList.remove('open');}
-function updateFnamePreview(){const tmpl=document.getElementById('ssFileName').value||'NamaTunePDF_{name}';const sn=parseInt(document.getElementById('ssStartNum').value)||1;const fn=sortPages.find(p=>p.isDivider)?.name||'第1章';document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';}
+function updateFnamePreview(){
+  const tmpl=document.getElementById('ssFileName').value||'NamaTunePDF_{name}';
+  const sn=parseInt(document.getElementById('ssStartNum').value)||1;
+  const preset0=(document.getElementById('ssPresetArea').value.split(/\r?\n/)[0]||'').trim();
+  const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
+  document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';
+}
 function buildFileName(tmpl,seq,name){return tmpl.replace('{seq}',String(seq)).replace('{name}',name);}
 function loadPresetFile(){document.getElementById('presetFileInput').click();}
 function onPresetFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>document.getElementById('ssPresetArea').value=ev.target.result.trim();r.readAsText(f,'UTF-8');e.target.value='';}
@@ -2278,6 +2391,9 @@ async function doSortSplitExport(){
   for(const item of sortPages){if(item.isDivider){if(cur.length>0)sections.push({pages:cur,name:item.name});cur=[];}else cur.push(item);}
   if(cur.length>0)sections.push({pages:cur,name:'最終'});
   if(!sections.length){showToast('ページが空です');return;}
+  // 区切り名プリセット（改行区切り）: i行目があればsections[i].nameを上書き
+  const presetLines=document.getElementById('ssPresetArea').value.split(/\r?\n/).map(s=>s.trim());
+  for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
   const losslessOk=!!(originalPdfBytes&&sections.some(s=>s.pages.some(sp=>sp.page&&sp.page.losslessCapable)));
   const fmt=getOutFormat(),q=getJpegQuality();
   showProgress('分割保存中…',0);
@@ -2293,15 +2409,15 @@ async function doSortSplitExport(){
       for(const sp of sec.pages){
         if(losslessOk&&sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null){
           // 完全無劣化：元PDF構造をそのまま保持
-          await addPageLossless(newPdf,srcDoc,srcPages,sp.page);
+          await withSortRot(sp,()=>addPageLossless(newPdf,srcDoc,srcPages,sp.page));
         }else if(sp.page){
           // 元ページ参照あり・無劣化不可：元解像度で画像出力
-          await addPageToPdf(newPdf,sp.page,fmt,q);
+          await withSortRot(sp,()=>addPageToPdf(newPdf,sp.page,fmt,q));
         }else{
           // canvasのみ（A3分割後など）：プレビュー解像度でPNG出力
-          const pngBytes=await canvasToPng(sp.canvas);
+          const c=rotateCanvasIfNeeded(sp.canvas,sp.rot90);
+          const pngBytes=await canvasToPng(c);
           const img=await newPdf.embedPng(pngBytes);
-          const c=sp.canvas;
           newPdf.addPage([c.width,c.height]).drawImage(img,{x:0,y:0,width:c.width,height:c.height});
         }
       }
