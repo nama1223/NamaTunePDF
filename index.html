@@ -262,6 +262,18 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <aside class="ctrl">
   <div class="panel">
     <div class="panel-row-title">
+      <div class="panel-title" style="margin:0">表示</div>
+      <div class="zoom-ctrl zoom-ctrl-compact">
+        <button class="btn btn-mini" onclick="setZoom(zoom-0.1)">−</button>
+        <div class="zoom-val" id="zoomVal">100%</div>
+        <button class="btn btn-mini" onclick="setZoom(zoom+0.1)">+</button>
+        <button class="btn btn-mini" onclick="fitZoom()">合わせる</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-row-title">
       <div class="panel-title" style="margin:0">ページ</div>
       <div class="page-nav">
         <button onclick="gotoPage(curPage-1)" id="btnPrev">◀</button>
@@ -300,6 +312,18 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     </div>
   </div>
 
+  <div class="panel">
+    <div class="panel-row-title">
+      <div class="panel-title" style="margin:0">補助線 <span class="panel-inline-hint">（線をドラッグで移動）</span></div>
+    </div>
+    <div class="guide-add-row">
+      <button class="btn" onclick="addGuide('h')">— 水平線</button>
+      <button class="btn" onclick="addGuide('v')">｜ 垂直線</button>
+    </div>
+    <div class="guide-list" id="guideList"></div>
+    <button class="btn" onclick="clearGuides()" style="width:100%;margin-top:2px">すべて消す</button>
+  </div>
+
   <div class="panel" id="cropPanel">
     <div class="panel-title">クロップ</div>
     <div style="display:flex;gap:4px;margin-bottom:5px">
@@ -324,30 +348,6 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
       <div class="crop-wh-row" style="margin-top:3px">
         <input class="crop-num-input" type="number" id="cropW" placeholder="W" oninput="cropInputChanged()">
         <input class="crop-num-input" type="number" id="cropH" placeholder="H" oninput="cropInputChanged()">
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-row-title">
-      <div class="panel-title" style="margin:0">補助線 <span class="panel-inline-hint">（線をドラッグで移動）</span></div>
-    </div>
-    <div class="guide-add-row">
-      <button class="btn" onclick="addGuide('h')">— 水平線</button>
-      <button class="btn" onclick="addGuide('v')">｜ 垂直線</button>
-    </div>
-    <div class="guide-list" id="guideList"></div>
-    <button class="btn" onclick="clearGuides()" style="width:100%;margin-top:2px">すべて消す</button>
-  </div>
-
-  <div class="panel">
-    <div class="panel-row-title">
-      <div class="panel-title" style="margin:0">表示</div>
-      <div class="zoom-ctrl zoom-ctrl-compact">
-        <button class="btn btn-mini" onclick="setZoom(zoom-0.1)">−</button>
-        <div class="zoom-val" id="zoomVal">100%</div>
-        <button class="btn btn-mini" onclick="setZoom(zoom+0.1)">+</button>
-        <button class="btn btn-mini" onclick="fitZoom()">合わせる</button>
       </div>
     </div>
   </div>
@@ -1438,12 +1438,8 @@ function setZoom(z){
   renderPage();
 }
 function fitZoom(){
-  if(pages.length===0)return;
-  const{w:dw,h:dh}=getDispSize(pages[curPage]);
-  zoom=Math.min((canvasArea.offsetWidth-4)/dw,(canvasArea.offsetHeight-4)/dh);
-  zoom=Math.round(zoom*100)/100;
-  document.getElementById('zoomVal').textContent=Math.round(zoom*100)+'%';
-  renderPage();
+  // renderPage()内で baseSc(エリアに収まるスケール) × zoom が実スケールになるので zoom=1 でフィット
+  setZoom(1);
 }
 canvasArea.addEventListener('wheel',e=>{e.preventDefault();setZoom(zoom+(e.deltaY<0?0.1:-0.1));},{passive:false});
 
