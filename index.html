@@ -1487,7 +1487,9 @@ async function addPageLossless(newDoc,srcDoc,srcPages,p){
     newDoc.addPage(cp);
     if(k!==0){
       const cur=cp.getRotation().angle;
-      cp.setRotation(degrees(((cur+k*90)%360+360)%360));
+      // ★Bug2修正: PDF の /Rotate は時計回り(CW)が正。
+      // rot90(+1) は UI上「右90°(CW)」なので、PDF Rotate には (4-k)*90 = (360 - k*90) を足す。
+      cp.setRotation(degrees(((cur+(4-k)*90)%360+360)%360));
     }
     const u=unrotateCrop();
     if(u){
@@ -2537,15 +2539,17 @@ function loadPresetFile(){document.getElementById('presetFileInput').click();}
 function onPresetFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>document.getElementById('ssPresetArea').value=ev.target.result.trim();r.readAsText(f,'UTF-8');e.target.value='';}
 
 async function doSortSplitExport(){
-  closeSortSplitModal();
+  // ★Bug1修正: closeSortSplitModal() を呼ぶ前に値を読み出す（閉じるとssFileNameがリセットされる）
   const tmpl=document.getElementById('ssFileName').value||`${currentBaseName}_{name}`;
   let seq=parseInt(document.getElementById('ssStartNum').value)||1;
+  const presetLinesRaw=document.getElementById('ssPresetArea').value;
+  closeSortSplitModal();
   const sections=[];let cur=[];
   for(const item of sortPages){if(item.isDivider){if(cur.length>0)sections.push({pages:cur,name:item.name});cur=[];}else cur.push(item);}
   if(cur.length>0)sections.push({pages:cur,name:'最終'});
   if(!sections.length){showToast('ページが空です');return;}
   // 区切り名プリセット（改行区切り）: i行目があればsections[i].nameを上書き
-  const presetLines=document.getElementById('ssPresetArea').value.split(/\r?\n/).map(s=>s.trim());
+  const presetLines=presetLinesRaw.split(/\r?\n/).map(s=>s.trim());
   for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
   const losslessOk=!!(originalPdfBytes&&sections.some(s=>s.pages.some(sp=>sp.page&&sp.page.losslessCapable)));
   const fmt=getOutFormat(),q=getJpegQuality();
