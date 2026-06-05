@@ -2608,16 +2608,46 @@ function returnToCorrect(){
 // =====================================================
 function closeSortPdfDropModal(){document.getElementById('sortPdfDropModal').classList.remove('open');}
 
+// ★Bug4修正: loadPDFForSort を loadPDF と同等の処理にリライト。
+// lossless情報（originalPdfBytes, losslessCapable, pdfLibPageIndex, jpegBytes 等）を
+// 完全に構築し、sortPage エントリに page オブジェクトとして格納する。
+// 戻り値: { entries: sortPage[], pdfBytes: Uint8Array|null, losslessAvail: bool, losslessErr: string|null }
 async function loadPDFForSort(file){
   const buf=await file.arrayBuffer();
   const entries=[];
+
+  // lossless 試行
+  let filePdfBytes=null,fileLosslessAvail=false,fileLosslessErr=null;
+  try{
+    const{PDFDocument}=PDFLib;
+    await PDFDocument.load(buf,{throwOnInvalidObject:false,updateMetadata:false});
+    filePdfBytes=new Uint8Array(buf.slice(0));
+    fileLosslessAvail=true;
+  }catch(e){
+    fileLosslessAvail=false;
+    fileLosslessErr=(e&&e.message)?e.message:String(e);
+  }
+
   let images=[];
   try{images=await parsePDFImages(buf);}catch(e){images=[];}
+
   if(images.length>0){
     for(let i=0;i<images.length;i++){
       showProgress(`読み込み中… (${i+1}/${images.length})`,(i+1)/images.length);
       const canvas=await jpegBytesToCanvas(images[i].jpegBytes);
-      entries.push({canvas,label:`${file.name} P${i+1}`});
+      const pageObj={
+        sourceType:'pdf-jpeg',
+        canvas,
+        jpegBytes:images[i].jpegBytes,
+        origWidth:images[i].w,
+        origHeight:images[i].h,
+        angle:0,rot90:0,applied:false,
+        cropRect:null,cropAspect:'free',
+        srcName:`${file.name} P${i+1}`,
+        losslessCapable:fileLosslessAvail,
+        pdfLibPageIndex:i
+      };
+      entries.push({canvas,label:`${file.name} P${i+1}`,page:pageObj});
       await new Promise(r=>setTimeout(r,0));
     }
   }else{
@@ -2641,12 +2671,25 @@ async function loadPDFForSort(file){
       const vp=pg.getViewport({scale:sc});
       const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
       await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-      entries.push({canvas:c,label:`${file.name} P${i}`});
+      const vpBase=pg.getViewport({scale:1.0});
+      const pageObj={
+        sourceType:'pdf-pdfjs',
+        canvas:c,jpegBytes:null,
+        pdfPage:pg,
+        pdfBaseWidth:vpBase.width,
+        pdfBaseHeight:vpBase.height,
+        origWidth:vp.width,origHeight:vp.height,
+        angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',
+        srcName:`${file.name} P${i}`,
+        losslessCapable:fileLosslessAvail,
+        pdfLibPageIndex:i-1
+      };
+      entries.push({canvas:c,label:`${file.name} P${i}`,page:pageObj});
       await new Promise(r=>setTimeout(r,0));
     }
   }
   hideProgress();
-  return entries;
+  return{entries,pdfBytes:filePdfBytes,losslessAvail:fileLosslessAvail,losslessErr:fileLosslessErr};
 }
 
 async function applySortPdfDrop(mode){
@@ -2654,19 +2697,35 @@ async function applySortPdfDrop(mode){
   if(!pendingSortDropFile)return;
   const file=pendingSortDropFile;pendingSortDropFile=null;
   showProgress('PDFを読み込み中…',0);
-  let newEntries;
-  try{newEntries=await loadPDFForSort(file);}
+  let result;
+  try{result=await loadPDFForSort(file);}
   catch(err){hideProgress();showToast('読み込みエラー: '+err.message);return;}
+  const{entries:newEntries,pdfBytes,losslessAvail,losslessErr}=result;
   if(mode==='discard'){
+    // ★Bug4修正: discard 時は originalPdfBytes 等を新ファイルで差し替え
+    originalPdfBytes=pdfBytes;
+    losslessAvailable=losslessAvail;
+    losslessLoadError=losslessErr;
+    currentBaseName=file.name.replace(/\.[^.]+$/,'');
+    // 傾き補正タブの古いページ群と originalPdfBytes が矛盾しないようリセット
+    pages=[];
+    document.getElementById('hdrInfo').textContent=`${file.name}（${newEntries.length}p）`;
+    document.getElementById('pageTotalLabel').textContent=`/ ${newEntries.length}`;
+    document.getElementById('thumbPageCount').textContent=`${newEntries.length}p`;
     sortPushUndo();
     sortPages=newEntries;buildSortGridReal();
     showToast(`${newEntries.length}ページを読み込みました`);
   }else if(mode==='prepend'){
+    // 挿入時は既存の originalPdfBytes と別ファイルになるため、
+    // 新ページの losslessCapable を false にして混在を正確に表示する
+    newEntries.forEach(e=>{if(e.page)e.page.losslessCapable=false;});
     sortPushUndo();
     const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
     sortPages=[...newEntries,div,...sortPages];buildSortGridReal();
     showToast(`先頭に${newEntries.length}ページを挿入しました`);
   }else if(mode==='append'){
+    // 同上
+    newEntries.forEach(e=>{if(e.page)e.page.losslessCapable=false;});
     sortPushUndo();
     const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
     sortPages=[...sortPages,div,...newEntries];buildSortGridReal();
