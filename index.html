@@ -670,10 +670,25 @@ let sortPages=[], sortSelected=new Set(), sortDragIdx=null;
 let popupIdx=0, popupSrc='sort';
 let dividerIdCnt=0;
 
-// 無劣化モード用：元PDFのバイトを保持
+// 無劣化モード用
+// originalPdfBytes: 傾き補正タブで開いたPDFのバイト列（補正タブ専用・後方互換）
 let originalPdfBytes=null;
 let losslessAvailable=false;
 let losslessLoadError=null;
+// ページごとのソースPDFキャッシュ: srcPdfBytes(Uint8Array参照) → {doc, pages}
+// 複数PDF混在でも各ページのソースを無劣化で引ける
+const _srcDocCache=new Map();
+async function getSrcDocForPage(p){
+  const{PDFDocument}=PDFLib;
+  const bytes=p.srcPdfBytes;
+  if(!bytes)return null;
+  if(_srcDocCache.has(bytes))return _srcDocCache.get(bytes);
+  const doc=await PDFDocument.load(bytes,{throwOnInvalidObject:false,updateMetadata:false});
+  const entry={doc,pages:doc.getPages()};
+  _srcDocCache.set(bytes,entry);
+  return entry;
+}
+function clearSrcDocCache(){_srcDocCache.clear();}
 // 出力ファイル名のベース（拡張子・パスなし）
 let currentBaseName='出力';
 
@@ -881,13 +896,14 @@ async function loadPDF(file){
   // 無劣化モード用：pdf-lib で読み込みを試行
   try{
     const{PDFDocument}=PDFLib;
-    const probeDoc=await PDFDocument.load(buf,{throwOnInvalidObject:false,updateMetadata:false});
-    // 元バイトを保持（後で再ロードして使う）
+    // 先に slice して保持し、そちらを load に渡す（buf 本体は parsePDFImages 用に温存）
     originalPdfBytes=new Uint8Array(buf.slice(0));
+    const probeDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
     losslessAvailable=true;
     losslessLoadError=null;
     console.log('Lossless mode available, pages:',probeDoc.getPageCount());
   }catch(e){
+    originalPdfBytes=null;
     losslessAvailable=false;
     losslessLoadError=(e&&e.message)?e.message:String(e);
     console.warn('Lossless mode unavailable:',e);
@@ -926,7 +942,8 @@ async function loadPDF(file){
       cropRect:null,cropAspect:'free',
       srcName:`P${i+1}`,
       losslessCapable:losslessAvailable,
-      pdfLibPageIndex:i
+      pdfLibPageIndex:i,
+      srcPdfBytes:losslessAvailable?originalPdfBytes:null
     });
     await new Promise(r=>setTimeout(r,0));
   }
@@ -967,13 +984,14 @@ async function loadPDFWithPdfJs(buf){
     // 元解像度（scale=1.0時のPDF単位）を記録し、出力時に再レンダリング
     const vpBase=pg.getViewport({scale:1.0});
     pages.push({sourceType:'pdf-pdfjs',canvas:c,jpegBytes:null,
-      pdfPage:pg,                         // 出力時に再レンダリング用
-      pdfBaseWidth:vpBase.width,          // scale=1.0時の幅
-      pdfBaseHeight:vpBase.height,        // scale=1.0時の高さ
+      pdfPage:pg,
+      pdfBaseWidth:vpBase.width,
+      pdfBaseHeight:vpBase.height,
       origWidth:vp.width,origHeight:vp.height,
       angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:`P${i}`,
       losslessCapable:losslessAvailable,
-      pdfLibPageIndex:i-1});
+      pdfLibPageIndex:i-1,
+      srcPdfBytes:losslessAvailable?originalPdfBytes:null});
     await new Promise(r=>setTimeout(r,0));
   }
   hideProgress();
@@ -1430,35 +1448,45 @@ async function exportPDF(mode){
 // =====================================================
 async function exportPDFLossless(){
   if(pages.length===0)return;
-  if(!originalPdfBytes){showToast('無劣化モード不可：元PDFがありません');return;}
   const fmt=getOutFormat(),q=getJpegQuality();
   showProgress('無劣化PDFを生成中…',0);
   await new Promise(r=>setTimeout(r,50));
   try{
     const{PDFDocument}=PDFLib;
-    const srcDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
+    clearSrcDocCache();
     const newDoc=await PDFDocument.create();
-    const srcPages=srcDoc.getPages();
     for(let i=0;i<pages.length;i++){
       showProgress(`ページ ${i+1}/${pages.length} 処理中…`,i/pages.length);
       const p=pages[i];
-      if(!p.losslessCapable||p.pdfLibPageIndex==null||p.pdfLibPageIndex<0||p.pdfLibPageIndex>=srcPages.length){
-        // フォールバック：画像で埋め込み
-        await addPageToPdf(newDoc,p,fmt,q);
+      if(p.losslessCapable&&p.srcPdfBytes&&p.pdfLibPageIndex!=null&&p.pdfLibPageIndex>=0){
+        await addPageLossless(newDoc,null,null,p);
       }else{
-        await addPageLossless(newDoc,srcDoc,srcPages,p);
+        await addPageToPdf(newDoc,p,fmt,q);
       }
       await new Promise(r=>setTimeout(r,0));
     }
     const bytes=await newDoc.save();
+    clearSrcDocCache();
     hideProgress();
     downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
     showToast('保存しました！（無劣化モード）');
-  }catch(err){hideProgress();showToast('無劣化エラー: '+err.message);console.error(err);}
+  }catch(err){clearSrcDocCache();hideProgress();showToast('無劣化エラー: '+err.message);console.error(err);}
 }
 
 // 1ページを無劣化で出力PDFに追加
-async function addPageLossless(newDoc,srcDoc,srcPages,p){
+// addPageLossless: srcDoc/srcPages を p.srcPdfBytes から自動解決するため引数を削減
+// 旧シグネチャ (newDoc, srcDoc, srcPages, p) との後方互換のため第2-3引数は無視
+async function addPageLossless(newDoc,_srcDocArg,_srcPagesArg,p){
+  // 第4引数なし（旧コードが3引数で呼んだ場合）に対応
+  if(p===undefined){p=_srcDocArg;_srcDocArg=null;_srcPagesArg=null;}
+  const cached=await getSrcDocForPage(p);
+  if(!cached){
+    // srcPdfBytes なし → フォールバック
+    await addPageToPdf(newDoc,p,getOutFormat(),getJpegQuality());
+    return;
+  }
+  const srcDoc=cached.doc;
+  const srcPages=cached.pages;
   const{PDFDocument,degrees,pushGraphicsState,popGraphicsState,translate,rotateDegrees}=PDFLib;
   const srcIdx=p.pdfLibPageIndex;
   const srcPage=srcPages[srcIdx];
@@ -2091,11 +2119,21 @@ function rotateCanvasIfNeeded(src,rot90){
 // p.rot90 を sp.rot90 だけ一時シフトして fn を実行
 async function withSortRot(sp,fn){
   const extra=sp.rot90||0;
-  if(!extra||!sp.page)return await fn();
-  const orig=sp.page.rot90;
-  sp.page.rot90=(((orig+extra)%4)+4)%4;
-  try{return await fn();}
-  finally{sp.page.rot90=orig;}
+  if(!extra)return await fn();
+  if(sp.page){
+    // 通常ページ: page.rot90に並べ替えタブの回転を一時加算
+    const orig=sp.page.rot90;
+    sp.page.rot90=(((orig+extra)%4)+4)%4;
+    try{return await fn();}
+    finally{sp.page.rot90=orig;}
+  }
+  if(sp.isBlank&&sp.blankPtW&&sp.blankPtH){
+    // 白紙ページ: 奇数回転ならW/Hを入れ替えてfnを呼ぶ
+    if(extra%2!==0){const tmp=sp.blankPtW;sp.blankPtW=sp.blankPtH;sp.blankPtH=tmp;}
+    try{return await fn();}
+    finally{if(extra%2!==0){const tmp=sp.blankPtW;sp.blankPtW=sp.blankPtH;sp.blankPtH=tmp;}}
+  }
+  return await fn();
 }
 function updateSortToolbar(){
   const pn=sortPages.filter(p=>!p.isDivider).length;
@@ -2111,7 +2149,7 @@ function updateSortToolbar(){
 }
 function addDivider(){sortPushUndo();sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});buildSortGridReal();}
 
-function insertBlankPage(){
+async function insertBlankPage(){
   const pagesOnly=sortPages.filter(p=>!p.isDivider);
   if(!pagesOnly.length)return;
   // 寸法の基準: 選択中の先頭ページ、なければ最終ページ
@@ -2119,21 +2157,42 @@ function insertBlankPage(){
   const refIdx=selNonDiv.length>0?selNonDiv[0]:sortPages.map((_,i)=>i).filter(i=>!sortPages[i]?.isDivider).pop();
   const ref=sortPages[refIdx];
   if(!ref)return;
-  // 白紙canvas生成（参照ページと同じ表示解像度）
-  const src=ref.canvas;
+
   const rot=ref.rot90||0;
-  const rw=(rot===1||rot===3)?src.height:src.width;
-  const rh=(rot===1||rot===3)?src.width:src.height;
-  const blank=document.createElement('canvas');blank.width=rw;blank.height=rh;
-  const c=blank.getContext('2d');c.fillStyle='#ffffff';c.fillRect(0,0,rw,rh);
-  const sp={canvas:blank,label:'白紙',isBlank:true};
+  let blankPtW=0,blankPtH=0;
+  const rp=ref.page;
+  if(rp&&rp.srcPdfBytes&&rp.pdfLibPageIndex!=null){
+    // srcDoc から正確なpt寸法を取得（getSrcDocForPage はキャッシュを使うので高速）
+    try{
+      const cached=await getSrcDocForPage(rp);
+      if(cached){
+        const sz=cached.pages[rp.pdfLibPageIndex].getSize();
+        // rot90適用後の向きに合わせる
+        blankPtW=(rot===1||rot===3)?sz.height:sz.width;
+        blankPtH=(rot===1||rot===3)?sz.width:sz.height;
+      }
+    }catch(e){/* fallthrough */}
+  }
+  if(!blankPtW){
+    // canvasサイズから取得（表示解像度px、アスペクト比は正しい）
+    const src=ref.canvas;
+    blankPtW=(rot===1||rot===3)?src.height:src.width;
+    blankPtH=(rot===1||rot===3)?src.width:src.height;
+  }
+
+  // プレビュー用canvas（表示専用・縮小可）
+  const PREV_MAX=600;
+  const sc=Math.min(1,PREV_MAX/Math.max(blankPtW,blankPtH));
+  const blank=document.createElement('canvas');
+  blank.width=Math.round(blankPtW*sc);blank.height=Math.round(blankPtH*sc);
+  const ctx=blank.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,blank.width,blank.height);
+
+  const sp={canvas:blank,label:'白紙',isBlank:true,blankPtW,blankPtH,rot90:0};
   sortPushUndo();
   if(selNonDiv.length>0){
-    // 選択ページの直前に挿入（複数選択時は先頭の直前）
     sortPages.splice(refIdx,0,sp);
     showToast(`白紙を ${refIdx+1} 枚目の直前に挿入しました`);
   }else{
-    // 最後尾に追加
     sortPages.push(sp);
     showToast('白紙を最後尾に追加しました');
   }
@@ -2446,21 +2505,19 @@ function onSortDragEnd(){
 
 async function exportSortedPDF(){
   const pagesOnly=sortPages.filter(p=>!p.isDivider);if(!pagesOnly.length)return;
-  const losslessOk=originalPdfBytes&&pagesOnly.some(sp=>sp.page&&sp.page.losslessCapable);
   showProgress('PDF生成中…',0);await new Promise(r=>setTimeout(r,50));
   try{
     const{PDFDocument}=PDFLib;
+    clearSrcDocCache();
     const newPdf=await PDFDocument.create();
-    let srcDoc=null,srcPages=null;
-    if(losslessOk){
-      srcDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
-      srcPages=srcDoc.getPages();
-    }
     for(let i=0;i<pagesOnly.length;i++){
       showProgress(`ページ ${i+1}/${pagesOnly.length}`,(i+1)/pagesOnly.length);
       const sp=pagesOnly[i];
-      if(losslessOk&&sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null){
-        await withSortRot(sp,()=>addPageLossless(newPdf,srcDoc,srcPages,sp.page));
+      if(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes&&sp.page.pdfLibPageIndex!=null){
+        await withSortRot(sp,()=>addPageLossless(newPdf,null,null,sp.page));
+      }else if(sp.isBlank&&sp.blankPtW&&sp.blankPtH){
+        // 白紙ページ：pdf-libで直接生成（完全無劣化）
+        await withSortRot(sp,()=>{newPdf.addPage([sp.blankPtW,sp.blankPtH]);return Promise.resolve();});
       }else if(sp.page){
         await withSortRot(sp,()=>addPageToPdf(newPdf,sp.page,getOutFormat(),getJpegQuality()));
       }else{
@@ -2471,10 +2528,15 @@ async function exportSortedPDF(){
       }
       await new Promise(r=>setTimeout(r,0));
     }
-    const bytes=await newPdf.save();hideProgress();
+    const bytes=await newPdf.save();
+    clearSrcDocCache();
+    hideProgress();
+    const isPageLossless=sp=>(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes)||(sp.isBlank&&sp.blankPtW);
+    const anyLossless=pagesOnly.some(isPageLossless);
+    const allLossless=pagesOnly.length>0&&pagesOnly.every(isPageLossless);
     downloadBytes(bytes,`${currentBaseName}_並べ替え済み.pdf`,'application/pdf');
-    showToast(losslessOk?'保存しました！（無劣化）':'保存しました！');
-  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+    showToast(allLossless?'保存しました！（完全無劣化）':anyLossless?'保存しました！（一部無劣化）':'保存しました！');
+  }catch(err){clearSrcDocCache();hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
 
 // 分割保存
@@ -2490,8 +2552,11 @@ function openSortSplitModal(){
   updateFnamePreview();
   // 品質バッジを計算・表示
   const pn=sortPages.filter(p=>!p.isDivider);
-  const canLossless=!!(originalPdfBytes&&pn.some(sp=>sp.page&&sp.page.losslessCapable));
-  const allLossless=canLossless&&pn.every(sp=>sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null);
+  // 各ページが無劣化可能かどうかをsrcPdfBytesベースで判定
+  const isPageLossless=sp=>(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes&&sp.page.pdfLibPageIndex!=null)
+    ||(sp.isBlank&&sp.blankPtW);  // 白紙はpdf-libで直接生成できるため常に無劣化
+  const canLossless=pn.some(isPageLossless);
+  const allLossless=pn.length>0&&pn.every(isPageLossless);
   const qEl=document.getElementById('sortSplitQualityBadge');
   if(qEl){
     if(allLossless){
@@ -2551,27 +2616,24 @@ async function doSortSplitExport(){
   // 区切り名プリセット（改行区切り）: i行目があればsections[i].nameを上書き
   const presetLines=presetLinesRaw.split(/\r?\n/).map(s=>s.trim());
   for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
-  const losslessOk=!!(originalPdfBytes&&sections.some(s=>s.pages.some(sp=>sp.page&&sp.page.losslessCapable)));
+  const losslessOk=sections.some(s=>s.pages.some(sp=>sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes));
   const fmt=getOutFormat(),q=getJpegQuality();
   showProgress('分割保存中…',0);
   try{
     const{PDFDocument}=PDFLib;
-    let srcDoc=null,srcPages=null;
-    if(losslessOk){
-      srcDoc=await PDFDocument.load(originalPdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
-      srcPages=srcDoc.getPages();
-    }
+    clearSrcDocCache();
     for(let si=0;si<sections.length;si++){
       const sec=sections[si];const newPdf=await PDFDocument.create();
       for(const sp of sec.pages){
-        if(losslessOk&&sp.page&&sp.page.losslessCapable&&sp.page.pdfLibPageIndex!=null){
-          // 完全無劣化：元PDF構造をそのまま保持
-          await withSortRot(sp,()=>addPageLossless(newPdf,srcDoc,srcPages,sp.page));
+        if(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes&&sp.page.pdfLibPageIndex!=null){
+          // 完全無劣化：ページごとのsrcPdfBytesからコピー
+          await withSortRot(sp,()=>addPageLossless(newPdf,null,null,sp.page));
+        }else if(sp.isBlank&&sp.blankPtW&&sp.blankPtH){
+          // 白紙ページ：pdf-libで直接生成（完全無劣化）
+          await withSortRot(sp,()=>{newPdf.addPage([sp.blankPtW,sp.blankPtH]);return Promise.resolve();});
         }else if(sp.page){
-          // 元ページ参照あり・無劣化不可：元解像度で画像出力
           await withSortRot(sp,()=>addPageToPdf(newPdf,sp.page,fmt,q));
         }else{
-          // canvasのみ（A3分割後など）：プレビュー解像度でPNG出力
           const c=rotateCanvasIfNeeded(sp.canvas,sp.rot90);
           const pngBytes=await canvasToPng(c);
           const img=await newPdf.embedPng(pngBytes);
@@ -2581,8 +2643,9 @@ async function doSortSplitExport(){
       const bytes=await newPdf.save();downloadBytes(bytes,buildFileName(tmpl,seq,sec.name)+'.pdf','application/pdf');
       seq++;showProgress('分割保存中…',(si+1)/sections.length);await new Promise(r=>setTimeout(r,80));
     }
+    clearSrcDocCache();
     hideProgress();showToast(`${sections.length}ファイル保存しました${losslessOk?'（無劣化）':''}`);
-  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+  }catch(err){clearSrcDocCache();hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
 
 // 返却
@@ -2616,14 +2679,16 @@ async function loadPDFForSort(file){
   const buf=await file.arrayBuffer();
   const entries=[];
 
-  // lossless 試行
+  // lossless 試行（buf を slice して保持しておく）
   let filePdfBytes=null,fileLosslessAvail=false,fileLosslessErr=null;
   try{
     const{PDFDocument}=PDFLib;
-    await PDFDocument.load(buf,{throwOnInvalidObject:false,updateMetadata:false});
+    // slice してから load（load が内部で ArrayBuffer を消費しても buf 本体は残す）
     filePdfBytes=new Uint8Array(buf.slice(0));
+    await PDFDocument.load(filePdfBytes,{throwOnInvalidObject:false,updateMetadata:false});
     fileLosslessAvail=true;
   }catch(e){
+    filePdfBytes=null;
     fileLosslessAvail=false;
     fileLosslessErr=(e&&e.message)?e.message:String(e);
   }
@@ -2645,7 +2710,8 @@ async function loadPDFForSort(file){
         cropRect:null,cropAspect:'free',
         srcName:`${file.name} P${i+1}`,
         losslessCapable:fileLosslessAvail,
-        pdfLibPageIndex:i
+        pdfLibPageIndex:i,
+        srcPdfBytes:fileLosslessAvail?filePdfBytes:null
       };
       entries.push({canvas,label:`${file.name} P${i+1}`,page:pageObj});
       await new Promise(r=>setTimeout(r,0));
@@ -2682,7 +2748,8 @@ async function loadPDFForSort(file){
         angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',
         srcName:`${file.name} P${i}`,
         losslessCapable:fileLosslessAvail,
-        pdfLibPageIndex:i-1
+        pdfLibPageIndex:i-1,
+        srcPdfBytes:fileLosslessAvail?filePdfBytes:null
       };
       entries.push({canvas:c,label:`${file.name} P${i}`,page:pageObj});
       await new Promise(r=>setTimeout(r,0));
@@ -2716,16 +2783,11 @@ async function applySortPdfDrop(mode){
     sortPages=newEntries;buildSortGridReal();
     showToast(`${newEntries.length}ページを読み込みました`);
   }else if(mode==='prepend'){
-    // 挿入時は既存の originalPdfBytes と別ファイルになるため、
-    // 新ページの losslessCapable を false にして混在を正確に表示する
-    newEntries.forEach(e=>{if(e.page)e.page.losslessCapable=false;});
     sortPushUndo();
     const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
     sortPages=[...newEntries,div,...sortPages];buildSortGridReal();
     showToast(`先頭に${newEntries.length}ページを挿入しました`);
   }else if(mode==='append'){
-    // 同上
-    newEntries.forEach(e=>{if(e.page)e.page.losslessCapable=false;});
     sortPushUndo();
     const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
     sortPages=[...sortPages,div,...newEntries];buildSortGridReal();
