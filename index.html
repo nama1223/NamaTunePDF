@@ -1060,9 +1060,15 @@ function imgToCanvas(file){
 function updateQualityBadge(){
   const allJpeg=pages.every(p=>p.sourceType==='pdf-jpeg');
   const hasPdfjs=pages.some(p=>p.sourceType==='pdf-pdfjs');
+  // sourceTypeに関わらず、losslessCapableが全ページtrueなら無劣化保存が可能
+  // （例：XRef Stream形式のPDFはparsePDFImagesが失敗してpdf-pdfjsになるが、
+  //   pdf-libでは読めるためlosslessCapable=trueのまま。並べ替えタブと同じ判定基準を使う）
+  const allLossless=pages.length>0&&pages.every(p=>p.losslessCapable);
   const el=document.getElementById('qualityInfo');
   if(allJpeg){
     el.innerHTML='<span class="quality-badge quality-lossless">✓ 元データ直接利用（無劣化）</span>';
+  }else if(allLossless){
+    el.innerHTML='<span class="quality-badge quality-lossless">✓ 元PDF構造を保持（無劣化保存可）</span>';
   }else if(hasPdfjs&&pages.every(p=>p.sourceType==='pdf-pdfjs')){
     el.innerHTML='<span class="quality-badge quality-lossy">△ ベクター/複合PDF（高解像度再描画で出力）</span>';
   }else if(pages.some(p=>p.sourceType==='pdf-jpeg')){
