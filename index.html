@@ -1521,9 +1521,10 @@ async function addPageLossless(newDoc,_srcDocArg,_srcPagesArg,p){
     newDoc.addPage(cp);
     if(k!==0){
       const cur=cp.getRotation().angle;
-      // ★Bug2修正: PDF の /Rotate は時計回り(CW)が正。
-      // rot90(+1) は UI上「右90°(CW)」なので、PDF Rotate には (4-k)*90 = (360 - k*90) を足す。
-      cp.setRotation(degrees(((cur+(4-k)*90)%360+360)%360));
+      // PDF /Rotate は CW方向が正（ISO 32000 §7.7.3.3）。
+      // rot90(+1)=「右90°(CW)」なので /Rotate に k*90 を加算するだけでよい。
+      // ※ angle≠0 の embedPages パスも k*90 を使っており、こちらと一致させる。
+      cp.setRotation(degrees(((cur+k*90)%360+360)%360));
     }
     const u=unrotateCrop();
     if(u){
@@ -2070,7 +2071,7 @@ function buildSortGridReal(){
       });
       const num=document.createElement('div');num.className='sort-card-num';num.textContent=`${pageIdx}`;
       const wrap=document.createElement('div');wrap.className='sort-canvas-wrap';
-      const tc=document.createElement('canvas');tc.className='sort-canvas-el';drawSortThumb(tc,item.canvas,item.rot90);wrap.appendChild(tc);
+      const tc=document.createElement('canvas');tc.className='sort-canvas-el';drawSortThumb(tc,item.canvas,(((item.rot90||0)+(item.page?.rot90||0))%4+4)%4);wrap.appendChild(tc);
       const lbl=document.createElement('div');lbl.className='sort-card-label';lbl.textContent=item.label;
       const del=document.createElement('button');del.className='sort-del';del.textContent='✕';
       del.onclick=e=>{e.stopPropagation();sortPushUndo();sortPages.splice(i,1);buildSortGridReal();};
@@ -2659,7 +2660,11 @@ function returnToCorrect(){
   const pn=sortPages.filter(p=>!p.isDivider);if(!pn.length){showToast('返すページがありません');return;}
   pages=pn.map((sp,i)=>{
     // 元PDFページへの参照を保持していれば、無劣化情報を引き継ぐ
-    if(sp.page)return sp.page;
+    if(sp.page){
+      // 並べ替えタブで加えた回転を補正タブの page.rot90 に統合する
+      if(sp.rot90){sp.page.rot90=(((sp.page.rot90||0)+(sp.rot90||0))%4+4)%4;sp.page.applied=true;}
+      return sp.page;
+    }
     // A3→A4分割で生まれたページなど、元PDFと対応しないものは画像として扱う
     return{sourceType:'image',canvas:sp.canvas,jpegBytes:null,origWidth:sp.canvas.width,origHeight:sp.canvas.height,angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:sp.label||`P${i+1}`,losslessCapable:false};
   });
@@ -2813,13 +2818,30 @@ function popupMove(d){
 function renderPopup(){
   const arr=popupSrc==='sort'?sortPages.filter(p=>!p.isDivider):pages;if(!arr.length)return;
   const sp=arr[popupIdx];
-  const src=sp.canvas||sp.page?.canvas;if(!src)return;
+  const rawSrc=sp.canvas||sp.page?.canvas;if(!rawSrc)return;
+  // rot90を合算して描画に反映する。
+  // 並べ替えタブ: sp.rot90（並べ替え分）+ sp.page.rot90（補正タブ分）
+  // 補正タブ:     sp.rot90（page自身の rot90）のみ
+  const totalRot90=popupSrc==='sort'
+    ?(((sp.rot90||0)+(sp.page?.rot90||0))%4+4)%4
+    :(((sp.rot90||0)%4)+4)%4;
+  const k=totalRot90;
+  const rotated=(k===1||k===3);
+  const srcW=rawSrc.width,srcH=rawSrc.height;
+  const displayW=rotated?srcH:srcW,displayH=rotated?srcW:srcH;
   const pc=document.getElementById('popupCanvas');
   const maxW=window.innerWidth-44*2-6*2-40,maxH=window.innerHeight-60;
-  const sc=Math.min(maxW/src.width,maxH/src.height,1);
-  pc.width=Math.round(src.width*sc);pc.height=Math.round(src.height*sc);
+  const sc=Math.min(maxW/displayW,maxH/displayH,1);
+  pc.width=Math.round(displayW*sc);pc.height=Math.round(displayH*sc);
   const c=pc.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-  c.fillStyle='#fff';c.fillRect(0,0,pc.width,pc.height);c.drawImage(src,0,0,pc.width,pc.height);
+  c.fillStyle='#fff';c.fillRect(0,0,pc.width,pc.height);
+  if(k===0){
+    c.drawImage(rawSrc,0,0,pc.width,pc.height);
+  }else{
+    c.save();c.translate(pc.width/2,pc.height/2);c.rotate(k*Math.PI/2);
+    c.drawImage(rawSrc,-srcW*sc/2,-srcH*sc/2,srcW*sc,srcH*sc);
+    c.restore();
+  }
   document.getElementById('popupInfo').textContent=`${sp.label||sp.srcName||popupIdx+1}（${popupIdx+1} / ${arr.length}）`;
   const prev=document.getElementById('popupNavPrev'),next=document.getElementById('popupNavNext');
   if(prev)prev.disabled=(popupIdx===0);
