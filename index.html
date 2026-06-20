@@ -400,6 +400,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div style="flex:1"></div>
     <button class="btn" onclick="insertBlankPage()" id="btnInsertBlank" disabled title="選択ページの直前に同寸白紙を挿入（未選択時は最後尾に追加）">□ 白紙挿入</button>
     <button class="btn" onclick="addDivider()">｜ 区切りを追加</button>
+    <button class="btn" onclick="openBulkDividerModal()" title="複数の区切りをまとめて追加">｜⋮ まとめて追加</button>
     <button class="btn green" id="btnSortExport" onclick="exportSortedPDF()" disabled>💾 この順で保存</button>
     <button class="btn" id="btnSortSplit" onclick="openSortSplitModal()" disabled>✂ 区切りで分割保存</button>
     <button class="btn" id="btnReturnToCorrect" onclick="returnToCorrect()" disabled>↩ 補正タブに返す</button>
@@ -440,7 +441,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
         oninput="cfgSave();cfgUpdateSplitPreview()">
     </div>
     <div class="fname-preview" id="cfg_splitPreview"></div>
-    <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{seq2}/{seq3}=ゼロ埋め連番(2/3桁)　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成</p>
   </div>
 
   <div class="panel">
@@ -572,7 +573,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="modal-row">
       <label>連番開始</label>
       <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
-      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{name}=区切り名　{file}=元ファイル名</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{seq2}/{seq3}=ゼロ埋め(2/3桁)　{name}=区切り名　{file}=元ファイル名</span>
     </div>
     <div class="fname-preview" id="fnamePreview"></div>
     <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px">区切り名プリセット（改行区切り）</div>
@@ -592,6 +593,51 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="modal-btns">
       <button class="btn" onclick="closeSortSplitModal()">キャンセル</button>
       <button class="btn primary" onclick="doSortSplitExport()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 区切りをまとめて追加モーダル -->
+<div class="modal-bg" id="bulkDividerModal">
+  <div class="modal" style="width:420px">
+    <h3>｜ 区切りをまとめて追加</h3>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+        <input type="radio" name="bulkDivMode" value="every" checked onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
+        全ページ間に追加（1ページ＝1ファイルにする）
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+        <input type="radio" name="bulkDivMode" value="interval" onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
+        ページおきに区切る
+      </label>
+      <div class="modal-row" id="bulkDivRowInterval" style="display:none;margin-left:24px">
+        <input type="number" id="bulkDivIntervalN" min="1" value="2" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
+        <span style="font-size:11px;color:var(--text3)">ページごとに1本（既存の区切りでカウントをリセット）</span>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+        <input type="radio" name="bulkDivMode" value="count" onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
+        末尾にまとめて追加
+      </label>
+      <div class="modal-row" id="bulkDivRowCount" style="display:none;margin-left:24px">
+        <input type="number" id="bulkDivCountN" min="1" max="50" value="5" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
+        <span style="font-size:11px;color:var(--text3)">本追加（あとはドラッグで配置）</span>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+        <input type="radio" name="bulkDivMode" value="bylist" onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
+        ページ数のリストから一括配置（パート譜向け）
+      </label>
+      <div id="bulkDivRowList" style="display:none;margin-left:24px">
+        <textarea class="preset-area" id="bulkDivListArea" style="height:90px" placeholder="Trumpet:4&#10;Horn:3&#10;Tuba:5&#10;（名前:ページ数。名前は省略可、数字だけでもOK）"></textarea>
+        <div style="display:flex;gap:6px;margin-top:5px">
+          <button class="btn btn-mini" onclick="loadBulkDivListFile()" style="font-size:11px">📂 テキストファイルから読込</button>
+          <input type="file" id="bulkDivListFileInput" accept=".txt" style="display:none" onchange="onBulkDivListFile(event)">
+        </div>
+        <p style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5">先頭から指定ページ数ずつ区切ります。合計が実際のページ数を超える場合はエラーになります。少ない場合は残りを最終セクションに含めます。<br>※実行すると、既存の区切りはすべてこのリストの内容で置き換わります。</p>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeBulkDividerModal()">キャンセル</button>
+      <button class="btn primary" onclick="doBulkDividerAdd()">追加する</button>
     </div>
   </div>
 </div>
@@ -786,12 +832,29 @@ async function parsePDFImages(arrayBuffer){
 
   // 各オブジェクトを調べてImageを抽出
   const images=[];
+  // /Type /Page オブジェクトも収集（/Rotate 継承解決・ページ順決定に使う）
+  const pageObjs={}; // objId -> {rotate, parentId}  ※リーフページのみ（ページ順決定に使用）
+  // /Type /Pages（中間/ルートのページツリーノード）も収集。
+  // /Rotate はPDF仕様上ページツリーを継承する属性なので、中間ノードに
+  // 設定されているケース（リーフページ自身には /Rotate が無い）にも対応する。
+  const pagesNodeObjs={}; // objId -> {rotate, parentId}
   for(const [objId,off] of Object.entries(offsets)){
     // endobjまでの範囲を求める（隣接するオブジェクトのデータを誤読しないため）
     const endobjIdx=findBytes('endobj',off);
     if(endobjIdx<0) continue;
     const slice=data.slice(off,endobjIdx);
     const sliceText=new TextDecoder('iso-8859-1').decode(slice);
+
+    const isPagesType=/\/Type\s*\/Pages\b/.test(sliceText);
+    const isPageType=/\/Type\s*\/Page\b/.test(sliceText)&&!isPagesType;
+    if(isPageType||isPagesType){
+      const rm=sliceText.match(/\/Rotate\s+(-?\d+)/);
+      const pm=sliceText.match(/\/Parent\s+(\d+)\s+\d+\s+R/);
+      const entry={rotate:rm?parseInt(rm[1]):null,parentId:pm?pm[1]:null};
+      if(isPageType)pageObjs[objId]=entry;
+      else pagesNodeObjs[objId]=entry;
+    }
+
     if(!sliceText.includes('DCTDecode')&&!sliceText.includes('JPXDecode')) continue;
     // /Imageだけでなく /Subtype /Image で厳密にマッチ（Pageオブジェクト等の誤検出を防ぐ）
     if(!sliceText.includes('/Subtype /Image')&&!sliceText.includes('/Subtype/Image')) continue;
@@ -824,6 +887,37 @@ async function parsePDFImages(arrayBuffer){
 
   // ページ順（objId順でソート、通常ページ順に対応）
   images.sort((a,b)=>a.objId-b.objId);
+
+  // /Rotate を解決：自身（リーフページ）に無ければ /Parent を辿る。
+  // 辿る先がリーフページ用マップに無くても /Pages 中間ノード用マップを見て継続する
+  // （PDF仕様上 /Rotate はページツリーの継承属性のため）。
+  function resolveRotate(objId){
+    let cur=String(objId),depth=0;
+    let first=true;
+    while(cur&&depth<32){
+      const po=first?pageObjs[cur]:(pagesNodeObjs[cur]||pageObjs[cur]);
+      first=false;
+      if(!po) return 0;
+      if(po.rotate!=null){
+        // 0/90/180/270 に正規化
+        let r=((po.rotate%360)+360)%360;
+        return r;
+      }
+      cur=po.parentId;
+      depth++;
+    }
+    return 0;
+  }
+
+  // ページオブジェクトをobjId順に並べ、画像と1対1対応させて /Rotate を付与
+  // （ページ順は objId 昇順を仮定。images も同じ並べ替え規則のため、通常のスキャンPDFでは画像出現順と一致する）
+  const pageObjIds=Object.keys(pageObjs).map(id=>parseInt(id)).sort((a,b)=>a-b);
+  for(let i=0;i<images.length;i++){
+    // 対応するページが取れればその /Rotate を、取れなければ 0 を設定
+    const pid=pageObjIds[i];
+    images[i].pageRotate=pid!=null?resolveRotate(pid):0;
+  }
+
   return images;
 }
 
@@ -932,13 +1026,16 @@ async function loadPDF(file){
     const img=images[i];
     // プレビュー用canvas生成（巨大画像はクランプ）
     const previewCanvas=await jpegBytesToCanvas(img.jpegBytes);
+    // PDFページの /Rotate（CubePDF Utility等で回転指定のみ書き換えられたPDFに対応）
+    // 0/90/180/270 -> rot90 の 0..3 に変換（/Rotate はCW方向が正でrot90の定義と一致）
+    const initRot90=Math.round((img.pageRotate||0)/90)%4;
     pages.push({
       sourceType:'pdf-jpeg',
       canvas:previewCanvas,
       jpegBytes:img.jpegBytes,
       origWidth:img.w,
       origHeight:img.h,
-      angle:0,rot90:0,applied:false,
+      angle:0,rot90:initRot90,applied:false,
       cropRect:null,cropAspect:'free',
       srcName:`P${i+1}`,
       losslessCapable:losslessAvailable,
@@ -971,24 +1068,29 @@ async function loadPDFWithPdfJs(buf){
   for(let i=1;i<=n;i++){
     showProgress(`ページをレンダリング中… (${i}/${n})`, i/n);
     const pg=await pdfDoc.getPage(i);
+    // ページの /Rotate（0/90/180/270）を絶対表示角として rot90 の初期値に使う。
+    // レンダリング自体は rotation:0 を明示して常に「無回転」状態で行う
+    // （pdf-jpeg経路と同じ convention に統一し、renderPage 等の表示・出力ロジックを共通化するため）。
+    const baseRotate=((pg.rotate%360)+360)%360;
+    const initRot90=Math.round(baseRotate/90)%4;
     // プレビュー用: 軽量なscale（1.5程度）でレンダリング。ただし最大寸法でクランプ。
     let previewScale=1.5;
-    const vpProbe=pg.getViewport({scale:previewScale});
+    const vpProbe=pg.getViewport({scale:previewScale,rotation:0});
     const maxDim=4096;
     const m=Math.max(vpProbe.width,vpProbe.height);
     if(m>maxDim){previewScale=previewScale*maxDim/m;}
-    const vp=pg.getViewport({scale:previewScale});
+    const vp=pg.getViewport({scale:previewScale,rotation:0});
     const c=document.createElement('canvas');
     c.width=vp.width;c.height=vp.height;
     await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-    // 元解像度（scale=1.0時のPDF単位）を記録し、出力時に再レンダリング
-    const vpBase=pg.getViewport({scale:1.0});
+    // 元解像度（scale=1.0,無回転時のPDF単位）を記録し、出力時に再レンダリング
+    const vpBase=pg.getViewport({scale:1.0,rotation:0});
     pages.push({sourceType:'pdf-pdfjs',canvas:c,jpegBytes:null,
       pdfPage:pg,
       pdfBaseWidth:vpBase.width,
       pdfBaseHeight:vpBase.height,
       origWidth:vp.width,origHeight:vp.height,
-      angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:`P${i}`,
+      angle:0,rot90:initRot90,applied:false,cropRect:null,cropAspect:'free',srcName:`P${i}`,
       losslessCapable:losslessAvailable,
       pdfLibPageIndex:i-1,
       srcPdfBytes:losslessAvailable?originalPdfBytes:null});
@@ -1189,13 +1291,13 @@ function renderPage(){
 // 最終出力canvas生成（高画質）
 // =====================================================
 async function buildHighResPdfjsCanvas(p){
-  // pdf.jsページを高解像度でレンダリング
+  // pdf.jsページを高解像度でレンダリング（無回転。rot90側で表示用回転を適用する）
   // 短辺が6000px以上になるscaleを選ぶ（楽譜等の細かい描画に対応）
   const BASE_PX_TARGET=6000;
   const baseW=p.pdfBaseWidth,baseH=p.pdfBaseHeight;
   const shortSide=Math.min(baseW,baseH);
   const outputScale=Math.max(6.0, BASE_PX_TARGET/shortSide);
-  const vp=p.pdfPage.getViewport({scale:outputScale});
+  const vp=p.pdfPage.getViewport({scale:outputScale,rotation:0});
   const c=document.createElement('canvas');
   c.width=Math.round(vp.width);c.height=Math.round(vp.height);
   await p.pdfPage.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
@@ -1519,13 +1621,10 @@ async function addPageLossless(newDoc,_srcDocArg,_srcPagesArg,p){
     // メタデータのみ変更で完全無劣化
     const[cp]=await newDoc.copyPages(srcDoc,[srcIdx]);
     newDoc.addPage(cp);
-    if(k!==0){
-      const cur=cp.getRotation().angle;
-      // PDF /Rotate は CW方向が正（ISO 32000 §7.7.3.3）。
-      // rot90(+1)=「右90°(CW)」なので /Rotate に k*90 を加算するだけでよい。
-      // ※ angle≠0 の embedPages パスも k*90 を使っており、こちらと一致させる。
-      cp.setRotation(degrees(((cur+k*90)%360+360)%360));
-    }
+    // p.rot90 は読み込み経路によらず「絶対表示角」（0/90/180/270、元PDFの /Rotate を含む）
+    // として統一的に扱う（読み込み時に両経路とも元の /Rotate を rot90 の初期値へ反映済み）。
+    // そのため元ページの現在の /Rotate に加算するのではなく、絶対値としてそのまま設定する。
+    cp.setRotation(degrees(((k*90)%360+360)%360));
     const u=unrotateCrop();
     if(u){
       // 画像px→pt、Y軸はPDF（下原点）に
@@ -2156,6 +2255,98 @@ function updateSortToolbar(){
 }
 function addDivider(){sortPushUndo();sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});buildSortGridReal();}
 
+// ===== 区切りをまとめて追加 =====
+function openBulkDividerModal(){
+  if(!sortPages.filter(p=>!p.isDivider).length){showToast('ページがありません');return;}
+  document.getElementById('bulkDividerModal').classList.add('open');
+  updateBulkDividerModeUI();
+}
+function closeBulkDividerModal(){document.getElementById('bulkDividerModal').classList.remove('open');}
+function updateBulkDividerModeUI(){
+  const mode=document.querySelector('input[name="bulkDivMode"]:checked')?.value;
+  document.getElementById('bulkDivRowInterval').style.display=(mode==='interval')?'flex':'none';
+  document.getElementById('bulkDivRowCount').style.display=(mode==='count')?'flex':'none';
+  document.getElementById('bulkDivRowList').style.display=(mode==='bylist')?'block':'none';
+}
+function loadBulkDivListFile(){document.getElementById('bulkDivListFileInput').click();}
+function onBulkDivListFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{document.getElementById('bulkDivListArea').value=ev.target.result.trim();};
+  r.readAsText(f,'UTF-8');e.target.value='';
+}
+function doBulkDividerAdd(){
+  const mode=document.querySelector('input[name="bulkDivMode"]:checked')?.value;
+  const pagesOnly=sortPages.filter(p=>!p.isDivider);
+  if(!pagesOnly.length){showToast('ページがありません');return;}
+
+  if(mode==='every'){
+    sortPushUndo();
+    const next=[];
+    for(let i=0;i<sortPages.length;i++){
+      const cur=sortPages[i],nxt=sortPages[i+1];
+      next.push(cur);
+      if(!cur.isDivider&&nxt&&!nxt.isDivider)next.push({isDivider:true,name:`区切り${++dividerIdCnt}`});
+    }
+    sortPages=next;
+    buildSortGridReal();closeBulkDividerModal();
+    showToast('全ページ間に区切りを追加しました');
+
+  }else if(mode==='interval'){
+    const n=Math.max(1,parseInt(document.getElementById('bulkDivIntervalN').value)||1);
+    sortPushUndo();
+    const next=[];let cnt=0;
+    for(let i=0;i<sortPages.length;i++){
+      const item=sortPages[i];
+      next.push(item);
+      if(item.isDivider){cnt=0;continue;}
+      cnt++;
+      const nxt=sortPages[i+1];
+      if(cnt>=n&&nxt&&!nxt.isDivider){next.push({isDivider:true,name:`区切り${++dividerIdCnt}`});cnt=0;}
+    }
+    sortPages=next;
+    buildSortGridReal();closeBulkDividerModal();
+    showToast(`${n}ページおきに区切りを追加しました`);
+
+  }else if(mode==='count'){
+    const n=Math.max(1,Math.min(50,parseInt(document.getElementById('bulkDivCountN').value)||1));
+    sortPushUndo();
+    for(let i=0;i<n;i++)sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});
+    buildSortGridReal();closeBulkDividerModal();
+    showToast(`末尾に区切りを${n}本追加しました`);
+
+  }else if(mode==='bylist'){
+    const text=document.getElementById('bulkDivListArea').value;
+    const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(!lines.length){showToast('リストが空です');return;}
+    const sections=[];
+    for(const line of lines){
+      const m=line.match(/^(?:(.*):)?\s*(\d+)\s*$/);
+      if(!m){showToast(`形式エラー: "${line}"（名前:ページ数 の形式で入力してください）`);return;}
+      const name=(m[1]||'').trim();
+      const cnt=parseInt(m[2]);
+      if(!cnt||cnt<=0){showToast(`形式エラー: "${line}"`);return;}
+      sections.push({name,cnt});
+    }
+    const totalNeeded=sections.reduce((a,s)=>a+s.cnt,0);
+    if(totalNeeded>pagesOnly.length){
+      showToast(`合計${totalNeeded}ページ指定ですが、実際は${pagesOnly.length}ページしかありません`);
+      return;
+    }
+    sortPushUndo();
+    const next=[];let idx=0;
+    sections.forEach(s=>{
+      for(let k=0;k<s.cnt;k++)next.push(pagesOnly[idx++]);
+      next.push({isDivider:true,name:s.name||`区切り${++dividerIdCnt}`});
+    });
+    while(idx<pagesOnly.length)next.push(pagesOnly[idx++]); // 余りは最終セクションへ
+    sortPages=next;
+    buildSortGridReal();closeBulkDividerModal();
+    const remain=pagesOnly.length-totalNeeded;
+    showToast(`区切りを${sections.length}本配置しました${remain>0?`（残り${remain}ページは最終セクション）`:''}`);
+  }
+}
+
 async function insertBlankPage(){
   const pagesOnly=sortPages.filter(p=>!p.isDivider);
   if(!pagesOnly.length)return;
@@ -2596,6 +2787,8 @@ function cfgUpdateSplitPreview(){
   const fileLabel=currentBaseName||'ファイル名';
   const fn='Trumpet';
   const result=tmpl
+    .replace(/\{seq3\}/g,'001')
+    .replace(/\{seq2\}/g,'01')
     .replace(/\{seq\}/g,'1')
     .replace(/\{name\}/g,fn)
     .replace(/\{file\}/g,fileLabel);
@@ -2603,6 +2796,8 @@ function cfgUpdateSplitPreview(){
 }
 function buildFileName(tmpl,seq,name){
   return tmpl
+    .replace(/\{seq3\}/g,String(seq).padStart(3,'0'))
+    .replace(/\{seq2\}/g,String(seq).padStart(2,'0'))
     .replace(/\{seq\}/g,String(seq))
     .replace(/\{name\}/g,name)
     .replace(/\{file\}/g,currentBaseName);
@@ -2711,13 +2906,15 @@ async function loadPDFForSort(file){
     for(let i=0;i<images.length;i++){
       showProgress(`読み込み中… (${i+1}/${images.length})`,(i+1)/images.length);
       const canvas=await jpegBytesToCanvas(images[i].jpegBytes);
+      // PDFページの /Rotate（CubePDF Utility等で回転指定のみ書き換えられたPDFに対応）
+      const initRot90=Math.round((images[i].pageRotate||0)/90)%4;
       const pageObj={
         sourceType:'pdf-jpeg',
         canvas,
         jpegBytes:images[i].jpegBytes,
         origWidth:images[i].w,
         origHeight:images[i].h,
-        angle:0,rot90:0,applied:false,
+        angle:0,rot90:initRot90,applied:false,
         cropRect:null,cropAspect:'free',
         srcName:`${file.name} P${i+1}`,
         losslessCapable:fileLosslessAvail,
@@ -2742,13 +2939,16 @@ async function loadPDFForSort(file){
     for(let i=1;i<=n;i++){
       showProgress(`ページをレンダリング中… (${i}/${n})`,i/n);
       const pg=await pdfDoc.getPage(i);
-      let sc=1.5;const vpProbe=pg.getViewport({scale:sc});
+      // /Rotate を絶対表示角として rot90 の初期値に使い、レンダリングは無回転で統一
+      const baseRotate=((pg.rotate%360)+360)%360;
+      const initRot90=Math.round(baseRotate/90)%4;
+      let sc=1.5;const vpProbe=pg.getViewport({scale:sc,rotation:0});
       const m=Math.max(vpProbe.width,vpProbe.height);
       if(m>4096)sc=sc*4096/m;
-      const vp=pg.getViewport({scale:sc});
+      const vp=pg.getViewport({scale:sc,rotation:0});
       const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
       await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-      const vpBase=pg.getViewport({scale:1.0});
+      const vpBase=pg.getViewport({scale:1.0,rotation:0});
       const pageObj={
         sourceType:'pdf-pdfjs',
         canvas:c,jpegBytes:null,
@@ -2756,7 +2956,7 @@ async function loadPDFForSort(file){
         pdfBaseWidth:vpBase.width,
         pdfBaseHeight:vpBase.height,
         origWidth:vp.width,origHeight:vp.height,
-        angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',
+        angle:0,rot90:initRot90,applied:false,cropRect:null,cropAspect:'free',
         srcName:`${file.name} P${i}`,
         losslessCapable:fileLosslessAvail,
         pdfLibPageIndex:i-1,
