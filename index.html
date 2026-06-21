@@ -148,7 +148,6 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 .thumb-wrap-c{position:relative;width:118px;height:88px;background:var(--bg3);border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .thumb-canvas-c{max-width:118px;max-height:88px;display:block}
 .thumb-dot-c{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--border)}
-.thumb-dot-c.done{background:var(--green)}
 .thumb-dot-c.edited{background:var(--amber)}
 .thumb-angle-c{font-size:10px;color:var(--text2);font-variant-numeric:tabular-nums;align-self:flex-start}
 
@@ -307,7 +306,6 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
       <button class="angle-btn" onclick="nudge(+0.01)">+0.01°</button>
     </div>
     <div class="apply-col">
-      <button class="btn primary" style="width:100%" onclick="applyToCurrentPage()">✓ このページに適用</button>
       <button class="btn" style="width:100%" onclick="applyToAllPages()">⟳ 全ページに同じ角度</button>
       <button class="btn danger" style="width:100%" onclick="resetCurrentPage()">✕ このページをリセット</button>
     </div>
@@ -704,7 +702,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 //   canvas,          // 表示用（プレビュー）
 //   jpegBytes,       // 元JPEG Uint8Array（pdf-jpegの場合）
 //   origWidth, origHeight, // 元画像の実サイズ
-//   angle, rot90, applied,
+//   angle, rot90,
 //   cropRect, cropAspect,
 //   srcName
 // }
@@ -1035,7 +1033,7 @@ async function loadPDF(file){
       jpegBytes:img.jpegBytes,
       origWidth:img.w,
       origHeight:img.h,
-      angle:0,rot90:initRot90,applied:false,
+      angle:0,rot90:initRot90,
       cropRect:null,cropAspect:'free',
       srcName:`P${i+1}`,
       losslessCapable:losslessAvailable,
@@ -1090,7 +1088,7 @@ async function loadPDFWithPdfJs(buf){
       pdfBaseWidth:vpBase.width,
       pdfBaseHeight:vpBase.height,
       origWidth:vp.width,origHeight:vp.height,
-      angle:0,rot90:initRot90,applied:false,cropRect:null,cropAspect:'free',srcName:`P${i}`,
+      angle:0,rot90:initRot90,cropRect:null,cropAspect:'free',srcName:`P${i}`,
       losslessCapable:losslessAvailable,
       pdfLibPageIndex:i-1,
       srcPdfBytes:losslessAvailable?originalPdfBytes:null});
@@ -1137,7 +1135,7 @@ async function loadImages(files){
     const c=await imgToCanvas(sorted[i]);
     pages.push({sourceType:'image',canvas:c,jpegBytes:null,
       origWidth:c.width,origHeight:c.height,
-      angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:sorted[i].name,
+      angle:0,rot90:0,cropRect:null,cropAspect:'free',srcName:sorted[i].name,
       losslessCapable:false});
     showProgress(`画像を読み込み中… (${i+1}/${n})`, (i+1)/n);
     await new Promise(r=>setTimeout(r,0));
@@ -1208,7 +1206,7 @@ function setAngle(v){
   if(pages.length===0)return;
   pages[curPage].angle=v;
   document.getElementById('angleSlider').value=v;
-  updateAngleDisplay(v);renderPage();
+  updateAngleDisplay(v);renderPage();updateThumbC(curPage);
 }
 function nudge(d){if(pages.length===0)return;setAngle(pages[curPage].angle+d);}
 function updateAngleDisplay(v){
@@ -1218,23 +1216,18 @@ function updateAngleDisplay(v){
 function rotate90(dir){
   if(pages.length===0)return;
   pages[curPage].rot90=(pages[curPage].rot90+dir+4)%4;
-  pages[curPage].applied=true;updateThumbC(curPage);renderPage();
-}
-function applyToCurrentPage(){
-  if(pages.length===0)return;
-  pages[curPage].applied=true;updateThumbC(curPage);
-  showToast(`ページ ${curPage+1} に ${pages[curPage].angle.toFixed(2)}° 適用`);
+  updateThumbC(curPage);renderPage();
 }
 function applyToAllPages(){
   if(pages.length===0)return;
   const a=pages[curPage].angle;
-  pages.forEach((p,i)=>{p.angle=a;p.applied=true;updateThumbC(i);});
+  pages.forEach((p,i)=>{p.angle=a;updateThumbC(i);});
   showToast(`全ページに ${a.toFixed(2)}° 適用`);
 }
 function resetCurrentPage(){
   if(pages.length===0)return;
   const p=pages[curPage];
-  p.angle=0;p.rot90=0;p.applied=false;p.cropRect=null;
+  p.angle=0;p.rot90=0;p.cropRect=null;
   setAngle(0);syncCropUIToPage(p);updateThumbC(curPage);
   showToast(`ページ ${curPage+1} をリセット`);
 }
@@ -1880,7 +1873,7 @@ function saveCropToPage(){
   if(pages.length===0)return;
   const p=pages[curPage];
   if(cropRect.w>4&&cropRect.h>4){
-    p.cropRect={...cropRect};p.cropAspect=cropAspect;p.applied=true;
+    p.cropRect={...cropRect};p.cropAspect=cropAspect;
     document.getElementById('btnCropClear').disabled=false;
     updateCropStatus(p);updateThumbC(curPage);
   }
@@ -2067,7 +2060,7 @@ function buildThumbsC(){
     item.appendChild(num);item.appendChild(wrap);item.appendChild(ang);list.appendChild(item);
   });
 }
-function dotClass(p){return 'thumb-dot-c'+(p.applied?' done':p.angle!==0||p.rot90!==0||p.cropRect?' edited':'');}
+function dotClass(p){return 'thumb-dot-c'+(p.angle!==0||p.rot90!==0||p.cropRect?' edited':'');}
 function thumbLabelC(p){
   const pts=[];if(p.angle!==0)pts.push(`${p.angle>=0?'+':''}${p.angle.toFixed(2)}°`);
   if(p.rot90!==0)pts.push(['','右90°','180°','左90°'][p.rot90]);return pts.join(' ')||'—';
@@ -2857,11 +2850,11 @@ function returnToCorrect(){
     // 元PDFページへの参照を保持していれば、無劣化情報を引き継ぐ
     if(sp.page){
       // 並べ替えタブで加えた回転を補正タブの page.rot90 に統合する
-      if(sp.rot90){sp.page.rot90=(((sp.page.rot90||0)+(sp.rot90||0))%4+4)%4;sp.page.applied=true;}
+      if(sp.rot90){sp.page.rot90=(((sp.page.rot90||0)+(sp.rot90||0))%4+4)%4;}
       return sp.page;
     }
     // A3→A4分割で生まれたページなど、元PDFと対応しないものは画像として扱う
-    return{sourceType:'image',canvas:sp.canvas,jpegBytes:null,origWidth:sp.canvas.width,origHeight:sp.canvas.height,angle:0,rot90:0,applied:false,cropRect:null,cropAspect:'free',srcName:sp.label||`P${i+1}`,losslessCapable:false};
+    return{sourceType:'image',canvas:sp.canvas,jpegBytes:null,origWidth:sp.canvas.width,origHeight:sp.canvas.height,angle:0,rot90:0,cropRect:null,cropAspect:'free',srcName:sp.label||`P${i+1}`,losslessCapable:false};
   });
   sortPages=[];sortSelected=new Set();
   document.getElementById('pageTotalLabel').textContent=`/ ${pages.length}`;
@@ -2914,7 +2907,7 @@ async function loadPDFForSort(file){
         jpegBytes:images[i].jpegBytes,
         origWidth:images[i].w,
         origHeight:images[i].h,
-        angle:0,rot90:initRot90,applied:false,
+        angle:0,rot90:initRot90,
         cropRect:null,cropAspect:'free',
         srcName:`${file.name} P${i+1}`,
         losslessCapable:fileLosslessAvail,
@@ -2956,7 +2949,7 @@ async function loadPDFForSort(file){
         pdfBaseWidth:vpBase.width,
         pdfBaseHeight:vpBase.height,
         origWidth:vp.width,origHeight:vp.height,
-        angle:0,rot90:initRot90,applied:false,cropRect:null,cropAspect:'free',
+        angle:0,rot90:initRot90,cropRect:null,cropAspect:'free',
         srcName:`${file.name} P${i}`,
         losslessCapable:fileLosslessAvail,
         pdfLibPageIndex:i-1,
@@ -3101,7 +3094,6 @@ document.addEventListener('keydown',e=>{
     else if(e.key==='ArrowRight'&&!e.shiftKey)gotoPage(curPage+1);
     else if(e.key==='ArrowUp')nudge(0.01);
     else if(e.key==='ArrowDown')nudge(-0.01);
-    else if(e.key==='Enter')applyToCurrentPage();
     else if(e.key==='r'||e.key==='R')resetCurrentPage();
     else if(e.key===',')rotate90(-1);else if(e.key==='.')rotate90(+1);
   }
