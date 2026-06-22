@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#c07040">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -470,6 +471,12 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">「このアプリに保存」はこのブラウザ・端末内にのみ保存されます（LocalStorage）。アンインストールやブラウザのデータ消去で失われます。大切なプリセットは「テキストで書き出し」でバックアップしておくことをお勧めします。</p>
   </div>
 
+  <div class="panel">
+    <div class="panel-title">アプリ</div>
+    <button class="btn primary" id="btnPwaInstall" style="width:100%" onclick="onPwaInstallClick()">📲 アプリとしてインストール</button>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">ホーム画面やデスクトップに追加すると、ブラウザのアドレスバーなしで素早く起動できます。</p>
+  </div>
+
 </div>
 </div>
 
@@ -586,7 +593,20 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
       <button class="btn" onclick="loadPresetFile()" style="font-size:11px">📂 テキストファイルから読込</button>
       <input type="file" id="presetFileInput" accept=".txt" style="display:none" onchange="onPresetFile(event)">
     </div>
-    <div class="modal-note">区切りごとに別ファイルとして保存されます。</div>
+    <div class="modal-row" style="margin-top:10px;align-items:flex-start">
+      <label style="padding-top:3px">保存方法</label>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <input type="radio" name="ssOutMode" value="individual" onchange="updateSsOutModeNote()" style="accent-color:var(--accent)">
+          個別ファイルとしてダウンロード
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <input type="radio" name="ssOutMode" value="zip" onchange="updateSsOutModeNote()" style="accent-color:var(--accent)">
+          ZIPにまとめて1つでダウンロード（分割数が多い時におすすめ）
+        </label>
+      </div>
+    </div>
+    <div class="modal-note" id="ssOutModeNote">区切りごとに別ファイルとして保存されます。</div>
     <div id="sortSplitQualityBadge" style="margin-top:8px"></div>
     <div class="modal-btns">
       <button class="btn" onclick="closeSortSplitModal()">キャンセル</button>
@@ -636,6 +656,17 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="modal-btns">
       <button class="btn" onclick="closeBulkDividerModal()">キャンセル</button>
       <button class="btn primary" onclick="doBulkDividerAdd()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- PWAインストール案内モーダル -->
+<div class="modal-bg" id="pwaInstallModal">
+  <div class="modal" style="width:380px">
+    <h3 id="pwaModalTitle">インストール方法</h3>
+    <div id="pwaModalBody" style="font-size:13px;line-height:1.8;color:var(--text2);margin-top:10px"></div>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="closePwaInstallModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -2741,6 +2772,14 @@ function openSortSplitModal(){
   }
   fnEl.dataset.auto='0';
   updateFnamePreview();
+  // 分割数に応じて保存方法（個別／ZIP）の初期選択を決める
+  // （分割数が多いとブラウザの連続自動ダウンロード制限で一部欠落するリスクがあるためZIPを既定にする）
+  const secCount=countSortSections();
+  const recommendZip=secCount>=SS_ZIP_SUGGEST_THRESHOLD;
+  const zipRadio=document.querySelector('input[name="ssOutMode"][value="zip"]');
+  const indivRadio=document.querySelector('input[name="ssOutMode"][value="individual"]');
+  if(zipRadio&&indivRadio){zipRadio.checked=recommendZip;indivRadio.checked=!recommendZip;}
+  updateSsOutModeNote();
   // 品質バッジを計算・表示
   const pn=sortPages.filter(p=>!p.isDivider);
   // 各ページが無劣化可能かどうかをsrcPdfBytesベースで判定
@@ -2798,11 +2837,52 @@ function buildFileName(tmpl,seq,name){
 function loadPresetFile(){document.getElementById('presetFileInput').click();}
 function onPresetFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>document.getElementById('ssPresetArea').value=ev.target.result.trim();r.readAsText(f,'UTF-8');e.target.value='';}
 
+// JSZipをCDNから動的読み込み（ZIP一括ダウンロード用。未読み込みなら1回だけ取得）
+let jsZipLoadPromise=null;
+function ensureJSZip(){
+  if(window.JSZip)return Promise.resolve();
+  if(jsZipLoadPromise)return jsZipLoadPromise;
+  jsZipLoadPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=()=>res();
+    s.onerror=()=>{jsZipLoadPromise=null;rej(new Error('JSZipの読み込みに失敗しました'));};
+    document.head.appendChild(s);
+  });
+  return jsZipLoadPromise;
+}
+// 分割保存で生成されるファイル数（区切り名プリセット適用前でも算出可能）
+function countSortSections(){
+  let n=0,cur=0;
+  for(const item of sortPages){
+    if(item.isDivider){if(cur>0)n++;cur=0;}
+    else cur++;
+  }
+  if(cur>0)n++;
+  return n;
+}
+// 分割数がこれ以上だと、ブラウザの連続自動ダウンロード制限で
+// 一部ファイルが欠落するリスクがあるためZIP一括保存を既定で提案する
+const SS_ZIP_SUGGEST_THRESHOLD=8;
+function updateSsOutModeNote(){
+  const mode=document.querySelector('input[name="ssOutMode"]:checked')?.value;
+  const el=document.getElementById('ssOutModeNote');if(!el)return;
+  const n=countSortSections();
+  if(mode==='zip'){
+    el.textContent=`全${n}ファイルを1つのZIPにまとめてダウンロードします。`;
+  }else if(n>=SS_ZIP_SUGGEST_THRESHOLD){
+    el.textContent=`${n}ファイルに分割されます。分割数が多いと、ブラウザの仕様で一部ファイルが保存されないことがあります。ZIPでのまとめ保存を推奨します。`;
+  }else{
+    el.textContent=`${n}ファイルに分割されます。`;
+  }
+}
+
 async function doSortSplitExport(){
   // ★Bug1修正: closeSortSplitModal() を呼ぶ前に値を読み出す（閉じるとssFileNameがリセットされる）
   const tmpl=document.getElementById('ssFileName').value||`${currentBaseName}_{name}`;
   let seq=parseInt(document.getElementById('ssStartNum').value)||1;
   const presetLinesRaw=document.getElementById('ssPresetArea').value;
+  const outMode=document.querySelector('input[name="ssOutMode"]:checked')?.value||'individual';
   closeSortSplitModal();
   const sections=[];let cur=[];
   for(const item of sortPages){if(item.isDivider){if(cur.length>0)sections.push({pages:cur,name:item.name});cur=[];}else cur.push(item);}
@@ -2813,10 +2893,20 @@ async function doSortSplitExport(){
   for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
   const losslessOk=sections.some(s=>s.pages.some(sp=>sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes));
   const fmt=getOutFormat(),q=getJpegQuality();
+
+  let zip=null;
+  if(outMode==='zip'){
+    showProgress('ZIP機能を準備中…',0);
+    try{await ensureJSZip();}
+    catch(e){hideProgress();showToast('ZIP機能の読み込みに失敗しました。通信環境をご確認の上、個別ダウンロードをお試しください。');return;}
+    zip=new JSZip();
+  }
+
   showProgress('分割保存中…',0);
   try{
     const{PDFDocument}=PDFLib;
     clearSrcDocCache();
+    const usedNames=new Set();
     for(let si=0;si<sections.length;si++){
       const sec=sections[si];const newPdf=await PDFDocument.create();
       for(const sp of sec.pages){
@@ -2835,11 +2925,35 @@ async function doSortSplitExport(){
           newPdf.addPage([c.width,c.height]).drawImage(img,{x:0,y:0,width:c.width,height:c.height});
         }
       }
-      const bytes=await newPdf.save();downloadBytes(bytes,buildFileName(tmpl,seq,sec.name)+'.pdf','application/pdf');
-      seq++;showProgress('分割保存中…',(si+1)/sections.length);await new Promise(r=>setTimeout(r,80));
+      const bytes=await newPdf.save();
+      let fname=buildFileName(tmpl,seq,sec.name)+'.pdf';
+      if(zip){
+        // ZIP内でのファイル名重複を回避（同じ区切り名が複数ある場合など）
+        let uniqueName=fname,dupN=2;
+        while(usedNames.has(uniqueName)){uniqueName=fname.replace(/\.pdf$/i,`_${dupN}.pdf`);dupN++;}
+        usedNames.add(uniqueName);
+        zip.file(uniqueName,bytes);
+      }else{
+        downloadBytes(bytes,fname,'application/pdf');
+        const isLast=(si===sections.length-1);
+        if(!isLast&&(si+1)%5===0){
+          // 5件ごとに長めに待機（ブラウザの連続自動ダウンロード制限を避けるため）
+          showProgress('分割保存中…（ブラウザの制限を避けるため一時停止）',(si+1)/sections.length);
+          await new Promise(r=>setTimeout(r,1000));
+        }else{
+          await new Promise(r=>setTimeout(r,80));
+        }
+      }
+      seq++;showProgress('分割保存中…',(si+1)/sections.length*(zip?0.9:1));
+    }
+    if(zip){
+      const zipBytes=await zip.generateAsync({type:'uint8array',compression:'STORE'},meta=>{
+        showProgress(`ZIPを生成中…(${Math.round(meta.percent)}%)`,0.9+0.1*(meta.percent/100));
+      });
+      downloadBytes(zipBytes,`${currentBaseName||'分割保存'}.zip`,'application/zip');
     }
     clearSrcDocCache();
-    hideProgress();showToast(`${sections.length}ファイル保存しました${losslessOk?'（無劣化）':''}`);
+    hideProgress();showToast(`${sections.length}ファイル保存しました${zip?'（ZIP一括）':''}${losslessOk?'（無劣化）':''}`);
   }catch(err){clearSrcDocCache();hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
 
@@ -3249,6 +3363,64 @@ function ssApplyPreset(){
   document.getElementById('ssPresetArea').value=list[i].body;
   updateFnamePreview();
   showToast(`「${list[i].name}」を適用しました`);
+}
+
+// =====================================================
+// PWA インストールボタン
+// =====================================================
+let deferredInstallPrompt=null;
+const isIOSDevice=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!/crios/i.test(navigator.userAgent);
+function isPwaStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches
+    || ('standalone' in navigator && navigator.standalone===true);
+}
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+});
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;});
+
+function openPwaInstallModal(title,bodyHTML){
+  document.getElementById('pwaModalTitle').textContent=title;
+  document.getElementById('pwaModalBody').innerHTML=bodyHTML;
+  document.getElementById('pwaInstallModal').classList.add('open');
+}
+function closePwaInstallModal(){
+  document.getElementById('pwaInstallModal').classList.remove('open');
+}
+async function onPwaInstallClick(){
+  // ケース①：すでにインストール済み（スタンドアロン起動中）
+  if(isPwaStandalone()){
+    openPwaInstallModal('インストール済み','このアプリはすでにインストールされています。');
+    return;
+  }
+  // ケース②：Chrome/Edge → ネイティブインストールダイアログ
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const{outcome}=await deferredInstallPrompt.userChoice;
+    if(outcome==='accepted')deferredInstallPrompt=null;
+    return;
+  }
+  // ケース③：iOS Safari → 手順説明モーダル
+  if(isIOSDevice){
+    openPwaInstallModal('iOSへのインストール方法',
+      `<p>Safariでこのページを開いてください。</p>
+       <ol style="margin-top:8px;padding-left:20px">
+         <li>画面下部の <strong>共有ボタン（□↑）</strong> をタップ</li>
+         <li>「<strong>ホーム画面に追加</strong>」を選択</li>
+         <li>右上の「<strong>追加</strong>」をタップ</li>
+       </ol>
+       <p style="margin-top:10px;font-size:11px;color:var(--text3)">※ Chrome・Firefoxでは対応していません。</p>`);
+    return;
+  }
+  // ケース④：その他のブラウザ → 汎用手順説明モーダル
+  openPwaInstallModal('インストール方法',
+    `<ol style="padding-left:20px">
+       <li><strong>Chrome：</strong>アドレスバー右端の「⊕」または「⋮」→「アプリをインストール」</li>
+       <li><strong>Edge：</strong>「…」→「アプリ」→「このサイトをアプリとしてインストール」</li>
+       <li><strong>Safari（Mac）：</strong>メニュー File →「Dock に追加」</li>
+     </ol>
+     <p style="margin-top:10px;font-size:11px;color:var(--text3)">Firefox は PWA インストールに対応していません。</p>`);
 }
 
 // 起動時にロード
