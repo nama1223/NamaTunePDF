@@ -769,6 +769,9 @@ async function getSrcDocForPage(p){
 function clearSrcDocCache(){_srcDocCache.clear();}
 // 出力ファイル名のベース（拡張子・パスなし）
 let currentBaseName='出力';
+// 分割保存の「共通ファイル名」テンプレート。モーダルをキャンセルしても保持し、
+// 新規ファイルを開いた時だけリセットする。
+let splitFnameTemplate=null; // null = 未設定（初回オープン時に設定タブのデフォルトで初期化）
 
 const mainCanvas=document.getElementById('mainCanvas');
 const ctx=mainCanvas.getContext('2d');
@@ -987,7 +990,8 @@ async function loadFiles(files){
   const file=files[0];
   pages=[];guides=[];sortPages=[];sortSelected=new Set();
   originalPdfBytes=null;losslessAvailable=false;losslessLoadError=null;
-  currentBaseName=file.name.replace(/\.[^.]+$/,''); // 拡張子除いたファイル名をベースに
+  currentBaseName=file.name.replace(/\.[^.]+$/,'');
+  splitFnameTemplate=null; // 新規ファイルを開いたらファイル名テンプレートをリセット
   cfgUpdateSplitPreview();
   sortUndoStack=[];sortRedoStack=[];updateUndoRedoBadges();
   renderGuideList();
@@ -2144,7 +2148,9 @@ function buildSortGrid(){
 // sortPages の各インデックス → 出力ファイル名(拡張子なし) のMapを返す
 // 区切りの外にある先頭のページ群は最終セクションと同じ扱いで {seq}/{name} が付く
 function getSortSectionMap(){
-  const tmpl=document.getElementById('ssFileName')?.value||`{seq}) {file}_{name}`;
+  // splitFnameTemplate が設定されていればそれを使い、未設定なら設定タブのデフォルトにフォールバック
+  const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
+  const tmpl=splitFnameTemplate!==null?splitFnameTemplate:(cfgFn||`{seq}) {file}_{name}`);
   let seq=parseInt(document.getElementById('ssStartNum')?.value)||1;
   const presetLines=(document.getElementById('ssPresetArea')?.value||'').split(/\r?\n/).map(s=>s.trim());
   // doSortSplitExport と同じロジックでセクションを確定する
@@ -2806,13 +2812,16 @@ async function exportSortedPDF(){
 // 分割保存
 function openSortSplitModal(){
   const nd=sortPages.filter(p=>p.isDivider).length;if(!nd){showToast('区切りが1つもありません');return;}
-  // ファイル名欄: 設定タブのデフォルト > 元ファイル名ベース で初期化
-  const fnEl=document.getElementById('ssFileName');
-  const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
-  if(!fnEl.value||fnEl.dataset.auto==='1'){
-    fnEl.value=cfgFn||`{seq}) {file}_{name}`;
+  // splitFnameTemplate が未設定なら設定タブのデフォルトで初期化
+  if(splitFnameTemplate===null){
+    const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
+    splitFnameTemplate=cfgFn||`{seq}) {file}_{name}`;
   }
-  fnEl.dataset.auto='0';
+  // モーダルのテキストボックスに現在の値を反映
+  const fnEl=document.getElementById('ssFileName');
+  fnEl.value=splitFnameTemplate;
+  // 入力するたびに変数に保存（キャンセルしても維持）
+  fnEl.oninput=()=>{splitFnameTemplate=fnEl.value;updateFnamePreview();};
   updateFnamePreview();
   // 分割数に応じて保存方法（個別／ZIP）の初期選択を決める
   // （分割数が多いとブラウザの連続自動ダウンロード制限で一部欠落するリスクがあるためZIPを既定にする）
@@ -2843,12 +2852,10 @@ function openSortSplitModal(){
 }
 function closeSortSplitModal(){
   document.getElementById('sortSplitModal').classList.remove('open');
-  // 次回オープン時にファイル名を再生成するためリセット
-  const fnEl=document.getElementById('ssFileName');
-  if(fnEl){fnEl.value='';fnEl.dataset.auto='1';}
 }
 function updateFnamePreview(skipGridRefresh=false){
-  const tmpl=document.getElementById('ssFileName').value||`{seq}) {file}_{name}`;
+  const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
+  const tmpl=splitFnameTemplate!==null?splitFnameTemplate:(cfgFn||`{seq}) {file}_{name}`);
   const sn=parseInt(document.getElementById('ssStartNum').value)||1;
   const preset0=(document.getElementById('ssPresetArea').value.split(/\r?\n/)[0]||'').trim();
   const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
@@ -2923,7 +2930,8 @@ function updateSsOutModeNote(){
 
 async function doSortSplitExport(){
   // ★Bug1修正: closeSortSplitModal() を呼ぶ前に値を読み出す（閉じるとssFileNameがリセットされる）
-  const tmpl=document.getElementById('ssFileName').value||`${currentBaseName}_{name}`;
+  const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
+  const tmpl=splitFnameTemplate!==null?splitFnameTemplate:(cfgFn||`${currentBaseName}_{name}`);
   let seq=parseInt(document.getElementById('ssStartNum').value)||1;
   const presetLinesRaw=document.getElementById('ssPresetArea').value;
   const outMode=document.querySelector('input[name="ssOutMode"]:checked')?.value||'individual';
@@ -3136,6 +3144,7 @@ async function applySortPdfDrop(mode){
     losslessAvailable=losslessAvail;
     losslessLoadError=losslessErr;
     currentBaseName=file.name.replace(/\.[^.]+$/,'');
+    splitFnameTemplate=null; // ファイルを開き直したらファイル名テンプレートをリセット
     // 傾き補正タブの古いページ群と originalPdfBytes が矛盾しないようリセット
     pages=[];
     document.getElementById('hdrInfo').textContent=`${file.name}（${newEntries.length}p）`;
