@@ -167,6 +167,9 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 #sortDropIndicator{position:absolute;width:3px;background:var(--accent2);border-radius:2px;pointer-events:none;display:none;z-index:10;box-shadow:0 0 6px var(--accent)}
 #sortDropIndicator.active{display:block}
 .sort-card-num{font-size:10px;color:var(--text3);align-self:flex-start;font-variant-numeric:tabular-nums}
+.sort-card-numrow{display:flex;align-items:baseline;gap:4px;width:100%;min-width:0}
+.sort-card-fname{font-size:9px;color:var(--accent2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.popup-info-fname{color:var(--accent2);margin-left:10px;font-size:12px}
 .sort-canvas-wrap{width:110px;height:82px;background:var(--bg3);border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .sort-canvas-el{max-width:110px;max-height:82px;display:block;pointer-events:none}
 .sort-card-label{font-size:10px;color:var(--text2);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2137,10 +2140,40 @@ function buildSortGrid(){
   buildSortGridReal();
 }
 
+// 分割保存時のファイル名割り当てを事前計算する
+// sortPages の各インデックス → 出力ファイル名(拡張子なし) のMapを返す
+// 区切りの外にある先頭のページ群は最終セクションと同じ扱いで {seq}/{name} が付く
+function getSortSectionMap(){
+  const tmpl=document.getElementById('ssFileName')?.value||`{seq}) {file}_{name}`;
+  let seq=parseInt(document.getElementById('ssStartNum')?.value)||1;
+  const presetLines=(document.getElementById('ssPresetArea')?.value||'').split(/\r?\n/).map(s=>s.trim());
+  // doSortSplitExport と同じロジックでセクションを確定する
+  const sections=[];let cur=[];
+  sortPages.forEach((item,i)=>{
+    if(item.isDivider){
+      if(cur.length>0)sections.push({pages:[...cur],name:item.name});
+      cur=[];
+    }else cur.push(i);
+  });
+  if(cur.length>0)sections.push({pages:[...cur],name:'最終'});
+  // プリセット上書き
+  for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
+  const map=new Map();
+  sections.forEach(sec=>{
+    const fname=buildFileName(tmpl,seq,sec.name);
+    sec.pages.forEach(idx=>map.set(idx,fname));
+    seq++;
+  });
+  return map;
+}
+
 function buildSortGridReal(){
   const grid=document.getElementById('sortGrid');grid.innerHTML='';
   const ind=document.createElement('div');ind.id='sortDropIndicator';grid.appendChild(ind);
   sortSelected=new Set();sortLastClicked=null;let pageIdx=0;
+  // 区切り設定が存在する時だけファイル名マップを計算（区切りが無ければ全ページ同一ファイルなので非表示）
+  const hasDivider=sortPages.some(p=>p.isDivider);
+  const fnameMap=hasDivider?getSortSectionMap():new Map();
   sortPages.forEach((item,i)=>{
     if(item.isDivider){
       const div=document.createElement('div');div.className='sort-divider';div.id=`sc${i}`;
@@ -2153,7 +2186,8 @@ function buildSortGridReal(){
       const line1=document.createElement('div');line1.className='sort-div-line';
       const lbl=document.createElement('div');lbl.className='sort-div-label';
       lbl.contentEditable=true;lbl.textContent=item.name;
-      lbl.addEventListener('input',()=>{item.name=lbl.textContent;updateFnamePreview();});
+      lbl.addEventListener('input',()=>{item.name=lbl.textContent;updateFnamePreview(true);});
+      lbl.addEventListener('blur',()=>{if(sortPages.some(p=>p.isDivider))buildSortGridReal();});
       lbl.addEventListener('click',e=>e.stopPropagation());
       const line2=document.createElement('div');line2.className='sort-div-line';
       const del=document.createElement('button');del.className='sort-div-del';del.textContent='✕';
@@ -2192,13 +2226,21 @@ function buildSortGridReal(){
         if(sortMultiTouchMode)return; // 複数選択モード中は拡大表示しない
         const pagesOnly=sortPages.filter(p=>!p.isDivider);openPopupSort(pagesOnly.indexOf(item));
       });
+      const numrow=document.createElement('div');numrow.className='sort-card-numrow';
       const num=document.createElement('div');num.className='sort-card-num';num.textContent=`${pageIdx}`;
+      numrow.appendChild(num);
+      if(hasDivider){
+        const fname=fnameMap.get(i)||'';
+        const fnlbl=document.createElement('div');fnlbl.className='sort-card-fname';
+        fnlbl.textContent=fname;fnlbl.title=fname+'.pdf';
+        numrow.appendChild(fnlbl);
+      }
       const wrap=document.createElement('div');wrap.className='sort-canvas-wrap';
       const tc=document.createElement('canvas');tc.className='sort-canvas-el';drawSortThumb(tc,item.canvas,(((item.rot90||0)+(item.page?.rot90||0))%4+4)%4);wrap.appendChild(tc);
       const lbl=document.createElement('div');lbl.className='sort-card-label';lbl.textContent=item.label;
       const del=document.createElement('button');del.className='sort-del';del.textContent='✕';
       del.onclick=e=>{e.stopPropagation();sortPushUndo();sortPages.splice(i,1);buildSortGridReal();};
-      card.appendChild(del);card.appendChild(num);card.appendChild(wrap);card.appendChild(lbl);
+      card.appendChild(del);card.appendChild(numrow);card.appendChild(wrap);card.appendChild(lbl);
       grid.appendChild(card);
     }
   });
@@ -2805,13 +2847,15 @@ function closeSortSplitModal(){
   const fnEl=document.getElementById('ssFileName');
   if(fnEl){fnEl.value='';fnEl.dataset.auto='1';}
 }
-function updateFnamePreview(){
+function updateFnamePreview(skipGridRefresh=false){
   const tmpl=document.getElementById('ssFileName').value||`{seq}) {file}_{name}`;
   const sn=parseInt(document.getElementById('ssStartNum').value)||1;
   const preset0=(document.getElementById('ssPresetArea').value.split(/\r?\n/)[0]||'').trim();
   const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
   document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';
   cfgUpdateSplitPreview();
+  // ファイル名ラベルをグリッドに即時反映（区切りがあるときのみ。インライン編集中は再描画しない）
+  if(!skipGridRefresh&&sortPages.some(p=>p.isDivider))buildSortGridReal();
 }
 function cfgUpdateSplitPreview(){
   const el=document.getElementById('cfg_splitPreview');if(!el)return;
@@ -3149,7 +3193,18 @@ function renderPopup(){
     c.drawImage(rawSrc,-srcW*sc/2,-srcH*sc/2,srcW*sc,srcH*sc);
     c.restore();
   }
-  document.getElementById('popupInfo').textContent=`${sp.label||sp.srcName||popupIdx+1}（${popupIdx+1} / ${arr.length}）`;
+  const infoEl=document.getElementById('popupInfo');
+  infoEl.textContent=`${sp.label||sp.srcName||popupIdx+1}（${popupIdx+1} / ${arr.length}）`;
+  if(popupSrc==='sort'&&sortPages.some(p=>p.isDivider)){
+    const allSortIdx=sortPages.map((p,i)=>(!p.isDivider?i:-1)).filter(i=>i>=0);
+    const sortIdx=allSortIdx[popupIdx];
+    const fname=getSortSectionMap().get(sortIdx);
+    if(fname){
+      const span=document.createElement('span');
+      span.className='popup-info-fname';span.textContent=fname+'.pdf';
+      infoEl.appendChild(span);
+    }
+  }
   const prev=document.getElementById('popupNavPrev'),next=document.getElementById('popupNavNext');
   if(prev)prev.disabled=(popupIdx===0);
   if(next)next.disabled=(popupIdx===arr.length-1);
