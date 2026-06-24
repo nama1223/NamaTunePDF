@@ -576,11 +576,11 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <h3>✂ 区切りで分割保存</h3>
     <div class="modal-row">
       <label>共通ファイル名</label>
-      <input type="text" id="ssFileName" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
+      <input type="text" id="ssFileName" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
     </div>
     <div class="modal-row">
       <label>連番開始</label>
-      <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px" oninput="updateFnamePreview()">
+      <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
       <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{seq2}/{seq3}=ゼロ埋め(2/3桁)　{name}=区切り名　{file}=元ファイル名</span>
     </div>
     <div class="fname-preview" id="fnamePreview"></div>
@@ -591,7 +591,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
       </select>
       <button class="btn btn-mini" onclick="ssApplyPreset()">適用</button>
     </div>
-    <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章" oninput="updateFnamePreview()"></textarea>
+    <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章"></textarea>
     <div style="display:flex;gap:6px;margin-top:5px">
       <button class="btn" onclick="loadPresetFile()" style="font-size:11px">📂 テキストファイルから読込</button>
       <input type="file" id="presetFileInput" accept=".txt" style="display:none" onchange="onPresetFile(event)">
@@ -2820,8 +2820,8 @@ function openSortSplitModal(){
   // モーダルのテキストボックスに現在の値を反映
   const fnEl=document.getElementById('ssFileName');
   fnEl.value=splitFnameTemplate;
-  // 入力するたびに変数に保存（キャンセルしても維持）
-  fnEl.oninput=()=>{splitFnameTemplate=fnEl.value;updateFnamePreview();};
+  // 入力するたびに変数に保存（グリッド更新はモーダルを閉じる時にまとめて行う）
+  fnEl.oninput=()=>{splitFnameTemplate=fnEl.value;};
   updateFnamePreview();
   // 分割数に応じて保存方法（個別／ZIP）の初期選択を決める
   // （分割数が多いとブラウザの連続自動ダウンロード制限で一部欠落するリスクがあるためZIPを既定にする）
@@ -2852,6 +2852,10 @@ function openSortSplitModal(){
 }
 function closeSortSplitModal(){
   document.getElementById('sortSplitModal').classList.remove('open');
+  // モーダルの値を変数に確定してからグリッドのファイル名ラベルを更新
+  const fnEl=document.getElementById('ssFileName');
+  if(fnEl)splitFnameTemplate=fnEl.value;
+  updateFnamePreview();
 }
 function updateFnamePreview(skipGridRefresh=false){
   const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
