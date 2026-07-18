@@ -197,11 +197,20 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 .popup-row{display:flex;align-items:stretch;gap:6px}
 #popupCanvas{display:block;background:#fff;flex-shrink:0}
 .popup-info{color:rgba(255,255,255,.78);font-size:12px;text-align:center;padding:2px 0}
-.popup-nav-side{width:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+.popup-nav-col{display:flex;flex-direction:column;gap:6px;width:44px;flex-shrink:0}
+.popup-nav-side{flex:7 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);
   border-radius:var(--radius);font-size:20px;cursor:pointer;transition:background .15s}
 .popup-nav-side:hover{background:rgba(255,255,255,.26)}
 .popup-nav-side:disabled{opacity:.2;cursor:default}
+.popup-divider-btn{flex:3 1 0;min-height:32px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;background:rgba(255,255,255,.1);color:#fff;
+  border:1px solid rgba(255,255,255,.2);border-radius:var(--radius);font-size:10px;line-height:1.25;
+  cursor:pointer;transition:background .15s;padding:3px 2px;text-align:center}
+.popup-divider-btn:hover{background:rgba(255,255,255,.26)}
+.popup-divider-label{white-space:normal;word-break:keep-all}
+.popup-divider-count{font-size:9px;color:var(--amber);background:rgba(255,193,7,.15);
+  border-radius:3px;padding:1px 4px;white-space:nowrap}
 
 /* モーダル */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:.2s}
@@ -487,9 +496,15 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <div class="popup-bg" id="popupBg" onclick="if(event.target===this)closePopup()">
   <div class="popup-center">
     <div class="popup-row">
-      <button class="popup-nav-side" id="popupNavPrev" onclick="popupMove(-1)">&#x25C0;</button>
+      <div class="popup-nav-col">
+        <button class="popup-nav-side" id="popupNavPrev" onclick="popupMove(-1)">&#x25C0;</button>
+        <button class="popup-divider-btn" id="popupDividerPrev" onclick="popupAddDivider(-1)" title="表示中のページの手前に区切りを追加"></button>
+      </div>
       <canvas id="popupCanvas"></canvas>
-      <button class="popup-nav-side" id="popupNavNext" onclick="popupMove(+1)">&#x25B6;</button>
+      <div class="popup-nav-col">
+        <button class="popup-nav-side" id="popupNavNext" onclick="popupMove(+1)">&#x25B6;</button>
+        <button class="popup-divider-btn" id="popupDividerNext" onclick="popupAddDivider(+1)" title="表示中のページの後ろに区切りを追加"></button>
+      </div>
     </div>
     <div class="popup-info" id="popupInfo"></div>
   </div>
@@ -3221,6 +3236,42 @@ function renderPopup(){
   const prev=document.getElementById('popupNavPrev'),next=document.getElementById('popupNavNext');
   if(prev)prev.disabled=(popupIdx===0);
   if(next)next.disabled=(popupIdx===arr.length-1);
+  updatePopupDividerButtons();
+}
+
+// ポップアップの「区切り追加」ボタン（表示中ページの前後に隣接する区切りの本数を表示しつつ追加）
+function updatePopupDividerButtons(){
+  const prevBtn=document.getElementById('popupDividerPrev'),nextBtn=document.getElementById('popupDividerNext');
+  if(!prevBtn||!nextBtn)return;
+  if(popupSrc!=='sort'){prevBtn.style.display='none';nextBtn.style.display='none';return;}
+  prevBtn.style.display='';nextBtn.style.display='';
+  const pagesOnly=sortPages.filter(p=>!p.isDivider);
+  const item=pagesOnly[popupIdx];
+  const sortIdx=item?sortPages.indexOf(item):-1;
+  let before=0,after=0;
+  if(sortIdx>=0){
+    let j=sortIdx-1;while(j>=0&&sortPages[j].isDivider){before++;j--;}
+    let k=sortIdx+1;while(k<sortPages.length&&sortPages[k].isDivider){after++;k++;}
+  }
+  const label='｜区切り追加';
+  prevBtn.innerHTML=(before>0?`<span class="popup-divider-count">区切り：${before}</span>`:'')+`<span class="popup-divider-label">${label}</span>`;
+  nextBtn.innerHTML=(after>0?`<span class="popup-divider-count">区切り：${after}</span>`:'')+`<span class="popup-divider-label">${label}</span>`;
+}
+
+// ポップアップから区切りを追加（dir=-1: 表示中ページの手前 / dir=+1: 後ろ）
+function popupAddDivider(dir){
+  if(popupSrc!=='sort')return;
+  const pagesOnly=sortPages.filter(p=>!p.isDivider);
+  if(!pagesOnly.length)return;
+  const item=pagesOnly[popupIdx];
+  const sortIdx=sortPages.indexOf(item);
+  if(sortIdx<0)return;
+  sortPushUndo();
+  const insertAt=dir<0?sortIdx:sortIdx+1;
+  sortPages.splice(insertAt,0,{isDivider:true,name:`区切り${++dividerIdCnt}`});
+  buildSortGridReal();
+  renderPopup();
+  showToast(dir<0?'ページの手前に区切りを追加しました':'ページの後ろに区切りを追加しました');
 }
 
 // =====================================================
