@@ -456,6 +456,22 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
   </div>
 
   <div class="panel">
+    <div class="panel-title">PDFの保存先フォルダ</div>
+    <div id="cfg_dirNotSupported" style="display:none;font-size:11px;color:var(--text3);line-height:1.6">
+      お使いのブラウザはフォルダを指定しての保存（File System Access API）に対応していません。今まで通りブラウザの標準のダウンロード先に保存されます。
+    </div>
+    <div id="cfg_dirControls">
+      <div class="fname-preview" id="cfg_dirLabel">未選択（ブラウザの標準のダウンロード先に保存されます）</div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn primary" onclick="pickPdfSaveDir()">📁 フォルダを選択</button>
+        <button class="btn" id="cfg_btnReauth" onclick="reauthPdfSaveDir()" style="display:none">🔓 アクセスを許可</button>
+        <button class="btn danger" id="cfg_btnClearDir" onclick="clearPdfSaveDir()" disabled>クリア</button>
+      </div>
+    </div>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">指定すると、補正済みPDF・並べ替え済みPDF・分割保存（区切りごとのPDFやZIP）がこのフォルダへ直接保存されます。選択内容はこの端末のこのブラウザに記憶されますが、再読み込み後は初回のみ「アクセスを許可」のクリックが必要な場合があります。</p>
+  </div>
+
+  <div class="panel">
     <div class="panel-title">区切り名プリセットの管理</div>
     <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
       <select id="cfg_presetSelect" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
@@ -1568,7 +1584,7 @@ async function doSplitExport(){
     }
     const bytes=await newPdf.save();
     hideProgress();
-    downloadBytes(bytes,`${currentBaseName}_A4分割.pdf`,'application/pdf');
+    await downloadBytes(bytes,`${currentBaseName}_A4分割.pdf`,'application/pdf');
     if(after==='sort'){
       sortPages=halves.map(h=>({canvas:h.canvas,label:h.label}));
       sortSelected=new Set();buildSortGrid();switchTab('sort');
@@ -1592,7 +1608,7 @@ async function exportPDF(mode){
     }
     const bytes=await newPdf.save();
     hideProgress();
-    downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
+    await downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
     showToast('保存しました！');
   }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
@@ -1622,7 +1638,7 @@ async function exportPDFLossless(){
     const bytes=await newDoc.save();
     clearSrcDocCache();
     hideProgress();
-    downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
+    await downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
     showToast('保存しました！（無劣化モード）');
   }catch(err){clearSrcDocCache();hideProgress();showToast('無劣化エラー: '+err.message);console.error(err);}
 }
@@ -2819,7 +2835,7 @@ async function exportSortedPDF(){
     const isPageLossless=sp=>(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes)||(sp.isBlank&&sp.blankPtW);
     const anyLossless=pagesOnly.some(isPageLossless);
     const allLossless=pagesOnly.length>0&&pagesOnly.every(isPageLossless);
-    downloadBytes(bytes,`${currentBaseName}_並べ替え済み.pdf`,'application/pdf');
+    await downloadBytes(bytes,`${currentBaseName}_並べ替え済み.pdf`,'application/pdf');
     showToast(allLossless?'保存しました！（完全無劣化）':anyLossless?'保存しました！（一部無劣化）':'保存しました！');
   }catch(err){clearSrcDocCache();hideProgress();showToast('エラー: '+err.message);console.error(err);}
 }
@@ -3005,7 +3021,7 @@ async function doSortSplitExport(){
         usedNames.add(uniqueName);
         zip.file(uniqueName,bytes);
       }else{
-        downloadBytes(bytes,fname,'application/pdf');
+        await downloadBytes(bytes,fname,'application/pdf');
         const isLast=(si===sections.length-1);
         if(!isLast&&(si+1)%5===0){
           // 5件ごとに長めに待機（ブラウザの連続自動ダウンロード制限を避けるため）
@@ -3021,7 +3037,7 @@ async function doSortSplitExport(){
       const zipBytes=await zip.generateAsync({type:'uint8array',compression:'STORE'},meta=>{
         showProgress(`ZIPを生成中…(${Math.round(meta.percent)}%)`,0.9+0.1*(meta.percent/100));
       });
-      downloadBytes(zipBytes,`${currentBaseName||'分割保存'}.zip`,'application/zip');
+      await downloadBytes(zipBytes,`${currentBaseName||'分割保存'}.zip`,'application/zip');
     }
     clearSrcDocCache();
     hideProgress();showToast(`${sections.length}ファイル保存しました${zip?'（ZIP一括）':''}${losslessOk?'（無劣化）':''}`);
@@ -3281,11 +3297,136 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.id==='tab-'+name));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.toggle('active',el.id==='content-'+name));
   if(name==='sort')buildSortGrid();
-  if(name==='settings')cfgLoadPresetList();
+  if(name==='settings'){cfgLoadPresetList();updateDirUI();}
+}
+
+// =====================================================
+// PDF保存先フォルダ（File System Access API）
+// =====================================================
+const FS_DIR_SUPPORTED=(typeof window.showDirectoryPicker==='function');
+const FS_DB_NAME='NamaTunePDF_fs',FS_STORE_NAME='handles',FS_DIR_KEY='pdfSaveDir';
+let pdfSaveDirHandle=null;
+
+function fsIdbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(FS_DB_NAME,1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(FS_STORE_NAME))req.result.createObjectStore(FS_STORE_NAME);};
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+async function fsIdbSet(key,val){
+  const db=await fsIdbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(FS_STORE_NAME,'readwrite');
+    tx.objectStore(FS_STORE_NAME).put(val,key);
+    tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
+  });
+}
+async function fsIdbGet(key){
+  const db=await fsIdbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(FS_STORE_NAME,'readonly');
+    const req=tx.objectStore(FS_STORE_NAME).get(key);
+    req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);
+  });
+}
+async function fsIdbDel(key){
+  const db=await fsIdbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(FS_STORE_NAME,'readwrite');
+    tx.objectStore(FS_STORE_NAME).delete(key);
+    tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
+  });
+}
+// ファイルシステムで使用できない文字を置換（保存先フォルダへの書き込み用）
+function sanitizeFsName(name){return name.replace(/[\\/:*?"<>|]/g,'_');}
+
+// フォルダ選択（ユーザー操作起点で呼び出す）
+async function pickPdfSaveDir(){
+  if(!FS_DIR_SUPPORTED){showToast('このブラウザはフォルダ指定保存に対応していません');return;}
+  try{
+    const handle=await window.showDirectoryPicker({mode:'readwrite'});
+    pdfSaveDirHandle=handle;
+    try{await fsIdbSet(FS_DIR_KEY,handle);}catch(e){console.error(e);}
+    updateDirUI();
+    showToast('保存先フォルダを設定しました');
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    console.error(e);showToast('フォルダの選択に失敗しました');
+  }
+}
+// 再読み込み後などにアクセス許可を再取得（ユーザー操作起点で呼び出す）
+async function reauthPdfSaveDir(){
+  if(!pdfSaveDirHandle)return;
+  try{
+    const perm=await pdfSaveDirHandle.requestPermission({mode:'readwrite'});
+    showToast(perm==='granted'?'アクセスを許可しました':'アクセスが許可されませんでした');
+  }catch(e){console.error(e);showToast('アクセス許可の取得に失敗しました');}
+  updateDirUI();
+}
+async function clearPdfSaveDir(){
+  pdfSaveDirHandle=null;
+  try{await fsIdbDel(FS_DIR_KEY);}catch(e){console.error(e);}
+  updateDirUI();
+  showToast('保存先フォルダの指定を解除しました');
+}
+// 設定タブの表示を現在の状態に同期
+async function updateDirUI(){
+  const notSup=document.getElementById('cfg_dirNotSupported');
+  const controls=document.getElementById('cfg_dirControls');
+  if(!notSup||!controls)return;
+  if(!FS_DIR_SUPPORTED){notSup.style.display='';controls.style.display='none';return;}
+  notSup.style.display='none';controls.style.display='';
+  const label=document.getElementById('cfg_dirLabel');
+  const btnReauth=document.getElementById('cfg_btnReauth');
+  const btnClear=document.getElementById('cfg_btnClearDir');
+  if(!pdfSaveDirHandle){
+    label.textContent='未選択（ブラウザの標準のダウンロード先に保存されます）';
+    btnReauth.style.display='none';btnClear.disabled=true;
+    return;
+  }
+  btnClear.disabled=false;
+  let state='prompt';
+  try{state=await pdfSaveDirHandle.queryPermission({mode:'readwrite'});}catch(e){console.error(e);}
+  if(state==='granted'){
+    label.textContent=`選択中: ${pdfSaveDirHandle.name}/`;
+    btnReauth.style.display='none';
+  }else{
+    label.textContent=`選択中: ${pdfSaveDirHandle.name}/（アクセス許可が必要です）`;
+    btnReauth.style.display='';
+  }
+}
+// アプリ起動時、前回選択したフォルダをIndexedDBから復元（許可の再取得はユーザー操作を待つ）
+async function restorePdfSaveDir(){
+  if(!FS_DIR_SUPPORTED){updateDirUI();return;}
+  try{
+    const handle=await fsIdbGet(FS_DIR_KEY);
+    if(handle)pdfSaveDirHandle=handle;
+  }catch(e){console.error(e);}
+  updateDirUI();
 }
 
 function cropCanvas(src,x,y,w,h){const out=document.createElement('canvas');out.width=w;out.height=h;out.getContext('2d').drawImage(src,x,y,w,h,0,0,w,h);return out;}
-function downloadBytes(bytes,name,mime){const url=URL.createObjectURL(new Blob([bytes],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+// PDF/ZIPは保存先フォルダが設定・許可されていればそこへ直接書き込み、それ以外は従来通りブラウザダウンロード
+async function downloadBytes(bytes,name,mime){
+  if((mime==='application/pdf'||mime==='application/zip')&&pdfSaveDirHandle){
+    try{
+      let perm=await pdfSaveDirHandle.queryPermission({mode:'readwrite'});
+      if(perm!=='granted')perm=await pdfSaveDirHandle.requestPermission({mode:'readwrite'});
+      if(perm==='granted'){
+        const fileHandle=await pdfSaveDirHandle.getFileHandle(sanitizeFsName(name),{create:true});
+        const writable=await fileHandle.createWritable();
+        await writable.write(bytes);
+        await writable.close();
+        return;
+      }
+    }catch(e){
+      console.error('フォルダへの保存に失敗。ブラウザの標準ダウンロードにフォールバックします',e);
+    }
+  }
+  const url=URL.createObjectURL(new Blob([bytes],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
 
 // 進捗バー
 function showProgress(title,ratio){
@@ -3544,6 +3685,7 @@ async function onPwaInstallClick(){
 
 // 起動時にロード
 cfgLoad();
+restorePdfSaveDir();
 </script>
 
 <script>
