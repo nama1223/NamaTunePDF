@@ -264,7 +264,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
   <div class="tabbar-sep"></div>
   <div class="tabbar-right">
     <div class="hdr-info" id="hdrInfo">ファイルを開いてください</div>
-    <button class="btn primary" onclick="document.getElementById('fileInput').click()">📂 開く</button>
+    <button class="btn primary" id="btnOpenFile" onclick="document.getElementById('fileInput').click()">📂 開く</button>
     <input type="file" id="fileInput" accept=".pdf,image/*" multiple>
   </div>
 </div>
@@ -401,7 +401,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <div class="sort-layout">
   <div class="sort-toolbar">
     <span class="sort-info" id="sortInfo">ページなし</span>
-    <button class="btn" onclick="sortSelectAll()">全選択</button>
+    <button class="btn" id="btnSortSelectAll" onclick="sortSelectAll()">全選択</button>
     <button class="btn danger" onclick="sortDeleteSelected()" id="btnSortDelete" disabled>削除</button>
     <button class="btn" id="btnSortRotL" onclick="sortRotateSelected(-1)" disabled title="選択を左90°回転（無劣化）">↺90°</button>
     <button class="btn" id="btnSortRotR" onclick="sortRotateSelected(+1)" disabled title="選択を右90°回転（無劣化）">↻90°</button>
@@ -410,7 +410,7 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <button class="btn" id="btnSortRedo" onclick="sortRedo()" disabled title="やり直す (Ctrl+Y)">↪<span class="undo-badge" id="redoBadge"></span></button>
     <div style="flex:1"></div>
     <button class="btn" onclick="insertBlankPage()" id="btnInsertBlank" disabled title="選択ページの直前に同寸白紙を挿入（未選択時は最後尾に追加）">□ 白紙挿入</button>
-    <button class="btn" onclick="addDivider()">｜ 区切りを追加</button>
+    <button class="btn" id="btnSortAddDivider" onclick="addDivider()">｜ 区切りを追加</button>
     <button class="btn" onclick="openBulkDividerModal()" title="複数の区切りをまとめて追加">｜⋮ まとめて追加</button>
     <button class="btn green" id="btnSortExport" onclick="exportSortedPDF()" disabled>💾 この順で保存</button>
     <button class="btn" id="btnSortSplit" onclick="openSortSplitModal()" disabled>✂ 区切りで分割保存</button>
@@ -503,6 +503,15 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="panel-title">アプリ</div>
     <button class="btn primary" id="btnPwaInstall" style="width:100%" onclick="onPwaInstallClick()">📲 アプリとしてインストール</button>
     <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">ホーム画面やデスクトップに追加すると、ブラウザのアドレスバーなしで素早く起動できます。</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">案内ボタン</div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:12px;cursor:pointer">
+      <input type="checkbox" id="settings-tutorial-btn-cb" checked onchange="if(window.NamaTutorial)NamaTutorial.setButtonVisible(this.checked)">
+      <span>💬 案内ボタン（チュートリアル）を表示する</span>
+    </label>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">OFFにすると呼び出しボタンが出なくなります（この設定からいつでも戻せます）。</p>
   </div>
 
 <div style="width:95%; max-width:450px; margin:2.2em auto 0;">
@@ -3304,7 +3313,44 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.id==='tab-'+name));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.toggle('active',el.id==='content-'+name));
   if(name==='sort')buildSortGrid();
-  if(name==='settings'){cfgLoadPresetList();updateDirUI();}
+  if(name==='settings'){cfgLoadPresetList();updateDirUI(); if(typeof syncTutorialToggle==='function')syncTutorialToggle();}
+}
+
+/* ============ チュートリアル連携(橋渡し) ============ */
+var _tutoCorrectSaved = null;
+window.NamaTunePDFTutorialBridge = {
+  navigate: function(id){ switchTab(id); },
+  currentPage: function(){
+    var t = document.querySelector('.tab.active');
+    return t ? t.id.replace(/^tab-/, '') : 'correct';
+  },
+  snapshotKeys: function(){ return ['namatunepdf_config', 'namatunepdf_presets']; },
+  saveCorrectState: function(){
+    if (_tutoCorrectSaved) return;
+    _tutoCorrectSaved = {
+      angles: pages.map(function(p){ return p.angle; }),
+      guides: JSON.parse(JSON.stringify(guides)),
+      cropMode: cropMode
+    };
+  },
+  restoreCorrectState: function(){
+    var s = _tutoCorrectSaved;
+    if (!s) return;
+    _tutoCorrectSaved = null;
+    pages.forEach(function(p, i){ if (i < s.angles.length) p.angle = s.angles[i]; });
+    guides = s.guides;
+    if (cropMode !== s.cropMode && typeof toggleCropMode === 'function') toggleCropMode();
+    if (typeof renderGuideList === 'function') renderGuideList();
+    if (typeof renderPage === 'function') renderPage();
+    if (typeof updateAngleDisplay === 'function' && pages.length) updateAngleDisplay(pages[curPage].angle);
+    if (typeof updateThumbC === 'function' && pages.length) updateThumbC(curPage);
+  }
+};
+function syncTutorialToggle(){
+  var cb = document.getElementById('settings-tutorial-btn-cb');
+  if (cb && window.NamaTutorial && typeof window.NamaTutorial.isButtonVisible === 'function') {
+    cb.checked = window.NamaTutorial.isButtonVisible();
+  }
 }
 
 // =====================================================
@@ -3710,5 +3756,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<link rel="stylesheet" href="tutorial/nama-tutorial.css?v=23">
+<script src="tutorial/config.js?v=23"></script>
+<script src="tutorial/nama-tutorial.js?v=23"></script>
 </body>
 </html>
