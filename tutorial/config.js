@@ -26,7 +26,7 @@ window.NAMA_TUTORIAL_CONFIG = {
         { target: '.grid3', mode: 'free', pose: 'point', text: '−1°と＋1°で1°ずつ、真ん中の0で傾きをまっすぐにリセットできナマ。試しに押してみるナマ。' },
         { target: '.angle-row', pose: 'point', text: '両脇の↺と↻は90°回転ナマ。横向きにスキャンした楽譜を、一気に縦向きに直せナマ。' },
         { target: '.apply-col', pose: 'point', text: '「全ページに同じ角度」で、今の傾きを全部のページへ一気に写せナマ。同じ傾きでスキャンした時に便利ナマ。「このページをリセット」は、今のページだけ傾きを0に戻しナマ。' },
-        { target: '.guide-add-row', mode: 'tap', pose: 'point', text: '補助線ナマ。「水平線」「垂直線」を押すと、楽譜の上に線が出るナマ。線はドラッグで動かせるので、五線に重ねて傾きの目安にするナマ。試しに押してみるナマ。いらなくなったら、下の「すべて消す」で消せナマ。' },
+        { target: '.guide-add-row', mode: 'tap', pose: 'point', text: '補助線ナマ。「水平線」「垂直線」を押すと、楽譜の上に線が出るナマ。線はドラッグで動かせるので、五線に重ねて傾きの目安にするナマ。試しに押してみるナマ。補助線はあくまで画面上の目安で、書き出したPDFには残らナマ。いらなくなったら、下の「すべて消す」で消せナマ。' },
         { target: '#btnCropMode', mode: 'tap', pose: 'point', text: 'クロップナマ。「範囲選択」を押すと、楽譜の上で範囲を囲めるようになりナマ。余白を切り落として保存したい時に使うナマ。試しに押してみるナマ。' },
         { target: '#btnExportNormal', pose: 'point', prepare: 'restoreCorrectState', text: '直し終わったら、ここから保存ナマ。「補正済みPDF」を押すと、傾きや範囲を反映したPDFを書き出せナマ。形式や画質は、開いた画面で選べナマ。' },
         { target: '#btnExportSplit', pose: 'point', text: '「A3→A4分割保存」ナマ。A3の楽譜を、A4を2枚に分けて保存できナマ。見開きでスキャンした時に便利ナマ。' },
