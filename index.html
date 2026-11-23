@@ -258,13 +258,13 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 
 <div class="tabbar">
   <div class="logo">NamaTunePDF <span>v2.0</span></div>
-  <div class="tab active" id="tab-correct" onclick="switchTab('correct')">🎵 傾き補正</div>
-  <div class="tab" id="tab-sort" onclick="switchTab('sort')">🗂 並べ替え</div>
-  <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙ 設定</div>
+  <div class="tab active" id="tab-correct" onclick="switchTab('correct')" data-i18n="tabCorrect">🎵 傾き補正</div>
+  <div class="tab" id="tab-sort" onclick="switchTab('sort')" data-i18n="tabSort">🗂 並べ替え</div>
+  <div class="tab" id="tab-settings" onclick="switchTab('settings')" data-i18n="tabSettings">⚙ 設定</div>
   <div class="tabbar-sep"></div>
   <div class="tabbar-right">
-    <div class="hdr-info" id="hdrInfo">ファイルを開いてください</div>
-    <button class="btn primary" id="btnOpenFile" onclick="document.getElementById('fileInput').click()">📂 開く</button>
+    <div class="hdr-info" id="hdrInfo" data-i18n="hdrInfoDefault">ファイルを開いてください</div>
+    <button class="btn primary" id="btnOpenFile" onclick="document.getElementById('fileInput').click()" data-i18n="btnOpen">📂 開く</button>
     <input type="file" id="fileInput" accept=".pdf,image/*" multiple>
   </div>
 </div>
@@ -275,19 +275,19 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <aside class="ctrl">
   <div class="panel">
     <div class="panel-row-title">
-      <div class="panel-title" style="margin:0">表示</div>
+      <div class="panel-title" style="margin:0" data-i18n="panelView">表示</div>
       <div class="zoom-ctrl zoom-ctrl-compact">
         <button class="btn btn-mini" onclick="setZoom(zoom-0.1)">−</button>
         <div class="zoom-val" id="zoomVal">100%</div>
         <button class="btn btn-mini" onclick="setZoom(zoom+0.1)">+</button>
-        <button class="btn btn-mini" onclick="fitZoom()">合わせる</button>
+        <button class="btn btn-mini" onclick="fitZoom()" data-i18n="zoomFit">合わせる</button>
       </div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-row-title">
-      <div class="panel-title" style="margin:0">ページ</div>
+      <div class="panel-title" style="margin:0" data-i18n="panelPage">ページ</div>
       <div class="page-nav">
         <button onclick="gotoPage(curPage-1)" id="btnPrev">◀</button>
         <input type="number" class="page-input" id="pageInput" min="1" value="1" onchange="gotoPage(parseInt(this.value)-1)">
@@ -298,11 +298,11 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
   </div>
 
   <div class="panel">
-    <div class="panel-title">傾き補正</div>
+    <div class="panel-title" data-i18n="panelAngle">傾き補正</div>
     <div class="angle-row">
-      <button class="rot-btn rot-side" onclick="rotate90(-1)" title="左90°">↺</button>
+      <button class="rot-btn rot-side" onclick="rotate90(-1)" data-i18n-title="rotLeftTitle" title="左90°">↺</button>
       <div class="angle-display" id="angleDisplay">+0.00<small>°</small></div>
-      <button class="rot-btn rot-side" onclick="rotate90(+1)" title="右90°">↻</button>
+      <button class="rot-btn rot-side" onclick="rotate90(+1)" data-i18n-title="rotRightTitle" title="右90°">↻</button>
     </div>
     <input type="range" class="angle-slider" id="angleSlider" min="-10" max="10" step="0.01" value="0" oninput="setAngle(parseFloat(this.value))">
     <div class="grid3">
@@ -319,40 +319,40 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
       <button class="angle-btn" onclick="nudge(+0.01)">+0.01°</button>
     </div>
     <div class="apply-col">
-      <button class="btn" style="width:100%" onclick="applyToAllPages()">⟳ 全ページに同じ角度</button>
-      <button class="btn danger" style="width:100%" onclick="resetCurrentPage()">✕ このページをリセット</button>
+      <button class="btn" style="width:100%" onclick="applyToAllPages()" data-i18n="applyAllBtn">⟳ 全ページに同じ角度</button>
+      <button class="btn danger" style="width:100%" onclick="resetCurrentPage()" data-i18n="resetPageBtn">✕ このページをリセット</button>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-row-title">
-      <div class="panel-title" style="margin:0">補助線 <span class="panel-inline-hint">（線をドラッグで移動）</span></div>
+      <div class="panel-title" style="margin:0"><span data-i18n="panelGuides">補助線</span> <span class="panel-inline-hint" data-i18n="guidesHint">（線をドラッグで移動）</span></div>
     </div>
     <div class="guide-add-row">
-      <button class="btn" onclick="addGuide('h')">— 水平線</button>
-      <button class="btn" onclick="addGuide('v')">｜ 垂直線</button>
+      <button class="btn" onclick="addGuide('h')" data-i18n="guideH">— 水平線</button>
+      <button class="btn" onclick="addGuide('v')" data-i18n="guideV">｜ 垂直線</button>
     </div>
     <div class="guide-list" id="guideList"></div>
-    <button class="btn" onclick="clearGuides()" style="width:100%;margin-top:2px">すべて消す</button>
+    <button class="btn" onclick="clearGuides()" style="width:100%;margin-top:2px" data-i18n="clearAll">すべて消す</button>
   </div>
 
   <div class="panel" id="cropPanel">
-    <div class="panel-title">クロップ</div>
+    <div class="panel-title" data-i18n="panelCrop">クロップ</div>
     <div style="display:flex;gap:4px;margin-bottom:5px">
-      <button class="btn" id="btnCropMode" onclick="toggleCropMode()" style="flex:1">✂ 範囲選択</button>
-      <button class="btn danger" id="btnCropClear" onclick="clearCrop()" style="flex:1" disabled>解除</button>
+      <button class="btn" id="btnCropMode" onclick="toggleCropMode()" style="flex:1" data-i18n="cropMode">✂ 範囲選択</button>
+      <button class="btn danger" id="btnCropClear" onclick="clearCrop()" style="flex:1" disabled data-i18n="cropClear">解除</button>
     </div>
-    <div id="cropStatus" style="font-size:10px;color:var(--text3);margin-bottom:5px;min-height:14px">未設定（保存時は全面）</div>
+    <div id="cropStatus" style="font-size:10px;color:var(--text3);margin-bottom:5px;min-height:14px" data-i18n="cropUnset">未設定（保存時は全面）</div>
     <div id="cropDetails" style="display:none">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:3px">縦横比を固定：</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px" data-i18n="cropAspectLabel">縦横比を固定：</div>
       <div class="crop-aspect-row">
-        <button class="aspect-btn active" onclick="setAspect('free')" id="asp-free">自由</button>
-        <button class="aspect-btn" onclick="setAspect('silver')" id="asp-silver">用紙</button>
-        <button class="aspect-btn" onclick="setAspect('custom')" id="asp-custom">比率指定</button>
+        <button class="aspect-btn active" onclick="setAspect('free')" id="asp-free" data-i18n="aspFree">自由</button>
+        <button class="aspect-btn" onclick="setAspect('silver')" id="asp-silver" data-i18n="aspSilver">用紙</button>
+        <button class="aspect-btn" onclick="setAspect('custom')" id="asp-custom" data-i18n="aspCustom">比率指定</button>
         <input class="crop-num-input" type="number" id="cropAspW" value="1" min="0.1" step="0.1" placeholder="W" oninput="updateCustomAspect()" style="width:40px;display:none">
         <input class="crop-num-input" type="number" id="cropAspH" value="1" min="0.1" step="0.1" placeholder="H" oninput="updateCustomAspect()" style="width:40px;display:none">
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:3px">選択範囲（px）：</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:3px" data-i18n="cropRangeLabel">選択範囲（px）：</div>
       <div class="crop-wh-row">
         <input class="crop-num-input" type="number" id="cropX" placeholder="X" oninput="cropInputChanged()">
         <input class="crop-num-input" type="number" id="cropY" placeholder="Y" oninput="cropInputChanged()">
@@ -365,10 +365,10 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
   </div>
 
   <div class="panel">
-    <div class="panel-title">出力</div>
+    <div class="panel-title" data-i18n="panelOutput">出力</div>
     <div style="display:flex;flex-direction:column;gap:4px">
-      <button class="btn primary" id="btnExportNormal" onclick="openExportModal()" disabled>💾 補正済みPDF</button>
-      <button class="btn" id="btnExportSplit" onclick="openSplitModal()" disabled>✂️ A3→A4分割保存</button>
+      <button class="btn primary" id="btnExportNormal" onclick="openExportModal()" disabled data-i18n="btnExportNormal">💾 補正済みPDF</button>
+      <button class="btn" id="btnExportSplit" onclick="openSplitModal()" disabled data-i18n="btnExportSplit">✂️ A3→A4分割保存</button>
       <div id="qualityInfo" style="margin-top:4px"></div>
     </div>
   </div>
@@ -378,17 +378,17 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
   <div class="canvas-inner" id="canvasInner">
     <div class="canvas-hint" id="canvasHint">
       <div class="canvas-hint-icon">🎵</div>
-      <p>PDFまたは画像をここにドロップ<br>または右上の「開く」から選択</p>
+      <p data-i18n-html="canvasHintHtml">PDFまたは画像をここにドロップ<br>または右上の「開く」から選択</p>
     </div>
     <canvas id="mainCanvas"></canvas>
     <canvas id="cropOverlay"></canvas>
   </div>
-  <div class="drop-overlay" id="dropOverlay">ここにドロップ</div>
+  <div class="drop-overlay" id="dropOverlay" data-i18n="dropHere">ここにドロップ</div>
 </div>
 
 <aside class="thumbs">
   <div class="thumb-header">
-    <span>ページ一覧</span>
+    <span data-i18n="thumbsTitle">ページ一覧</span>
     <span id="thumbPageCount" style="font-size:10px;color:var(--text3)"></span>
   </div>
   <div class="thumb-list-c" id="thumbListC"></div>
@@ -400,21 +400,21 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <div class="tab-content" id="content-sort">
 <div class="sort-layout">
   <div class="sort-toolbar">
-    <span class="sort-info" id="sortInfo">ページなし</span>
-    <button class="btn" id="btnSortSelectAll" onclick="sortSelectAll()">全選択</button>
-    <button class="btn danger" onclick="sortDeleteSelected()" id="btnSortDelete" disabled>削除</button>
-    <button class="btn" id="btnSortRotL" onclick="sortRotateSelected(-1)" disabled title="選択を左90°回転（無劣化）">↺90°</button>
-    <button class="btn" id="btnSortRotR" onclick="sortRotateSelected(+1)" disabled title="選択を右90°回転（無劣化）">↻90°</button>
-    <button class="btn danger" id="btnSortExitMulti" onclick="exitMultiSelectMode()" style="display:none">✕ 選択モード解除</button>
-    <button class="btn" id="btnSortUndo" onclick="sortUndo()" disabled title="元に戻す (Ctrl+Z)">↩<span class="undo-badge" id="undoBadge"></span></button>
-    <button class="btn" id="btnSortRedo" onclick="sortRedo()" disabled title="やり直す (Ctrl+Y)">↪<span class="undo-badge" id="redoBadge"></span></button>
+    <span class="sort-info" id="sortInfo" data-i18n="sortInfoNone">ページなし</span>
+    <button class="btn" id="btnSortSelectAll" onclick="sortSelectAll()" data-i18n="btnSelectAll">全選択</button>
+    <button class="btn danger" onclick="sortDeleteSelected()" id="btnSortDelete" disabled data-i18n="btnDelete">削除</button>
+    <button class="btn" id="btnSortRotL" onclick="sortRotateSelected(-1)" disabled data-i18n-title="rotLTitle" title="選択を左90°回転（無劣化）">↺90°</button>
+    <button class="btn" id="btnSortRotR" onclick="sortRotateSelected(+1)" disabled data-i18n-title="rotRTitle" title="選択を右90°回転（無劣化）">↻90°</button>
+    <button class="btn danger" id="btnSortExitMulti" onclick="exitMultiSelectMode()" style="display:none" data-i18n="exitMulti">✕ 選択モード解除</button>
+    <button class="btn" id="btnSortUndo" onclick="sortUndo()" disabled data-i18n-title="undoTitle" title="元に戻す (Ctrl+Z)">↩<span class="undo-badge" id="undoBadge"></span></button>
+    <button class="btn" id="btnSortRedo" onclick="sortRedo()" disabled data-i18n-title="redoTitle" title="やり直す (Ctrl+Y)">↪<span class="undo-badge" id="redoBadge"></span></button>
     <div style="flex:1"></div>
-    <button class="btn" onclick="insertBlankPage()" id="btnInsertBlank" disabled title="選択ページの直前に同寸白紙を挿入（未選択時は最後尾に追加）">□ 白紙挿入</button>
-    <button class="btn" id="btnSortAddDivider" onclick="addDivider()">｜ 区切りを追加</button>
-    <button class="btn" onclick="openBulkDividerModal()" title="複数の区切りをまとめて追加">｜⋮ まとめて追加</button>
-    <button class="btn green" id="btnSortExport" onclick="exportSortedPDF()" disabled>💾 この順で保存</button>
-    <button class="btn" id="btnSortSplit" onclick="openSortSplitModal()" disabled>✂ 区切りで分割保存</button>
-    <button class="btn" id="btnReturnToCorrect" onclick="returnToCorrect()" disabled>↩ 補正タブに返す</button>
+    <button class="btn" onclick="insertBlankPage()" id="btnInsertBlank" disabled data-i18n-title="insertBlankTitle" title="選択ページの直前に同寸白紙を挿入（未選択時は最後尾に追加）" data-i18n="insertBlank">□ 白紙挿入</button>
+    <button class="btn" id="btnSortAddDivider" onclick="addDivider()" data-i18n="addDividerBtn">｜ 区切りを追加</button>
+    <button class="btn" onclick="openBulkDividerModal()" data-i18n-title="bulkAddTitle" title="複数の区切りをまとめて追加" data-i18n="bulkAddBtn">｜⋮ まとめて追加</button>
+    <button class="btn green" id="btnSortExport" onclick="exportSortedPDF()" disabled data-i18n="btnSortExport">💾 この順で保存</button>
+    <button class="btn" id="btnSortSplit" onclick="openSortSplitModal()" disabled data-i18n="btnSortSplit">✂ 区切りで分割保存</button>
+    <button class="btn" id="btnReturnToCorrect" onclick="returnToCorrect()" disabled data-i18n="btnReturn">↩ 補正タブに返す</button>
   </div>
   <div class="sort-grid" id="sortGrid"><div id="sortDropIndicator"></div></div>
 </div>
@@ -422,29 +422,37 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 
 <!-- 設定タブ -->
 <div class="tab-content" id="content-settings">
-<div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;max-width:640px">
+<div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
 
   <div class="panel">
-    <div class="panel-title">画質のデフォルト設定</div>
+    <div class="panel-title">言語 / Language</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn" id="langBtnJa" onclick="setLang('ja')" style="flex:1">日本語</button>
+      <button class="btn" id="langBtnEn" onclick="setLang('en')" style="flex:1">English</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" data-i18n="setQualityTitle">画質のデフォルト設定</div>
     <div class="modal-row">
-      <label>形式</label>
+      <label data-i18n="fmtLabel">形式</label>
       <select id="cfg_outFormat" onchange="cfgSave()" style="flex:1">
-        <option value="jpeg">JPEG（サイズ小）</option>
-        <option value="png">PNG（完全可逆）</option>
+        <option value="jpeg" data-i18n="optJpeg">JPEG（サイズ小）</option>
+        <option value="png" data-i18n="optPng">PNG（完全可逆）</option>
       </select>
     </div>
     <div class="modal-row" id="cfg_jpegQualityRow">
-      <label>JPEG品質</label>
+      <label data-i18n="jpegQ">JPEG品質</label>
       <input type="range" id="cfg_jpegQuality" min="50" max="100" value="92" step="1"
         style="flex:1;accent-color:var(--accent)"
         oninput="document.getElementById('cfg_jpegQualityVal').textContent=this.value+'%';cfgSave()">
       <span id="cfg_jpegQualityVal" style="font-size:12px;color:var(--text);min-width:36px;text-align:right">92%</span>
     </div>
-    <p style="font-size:10px;color:var(--text3);margin-top:4px">傾き補正・並べ替え保存のデフォルト値です。各保存モーダルで変更可能。</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="setQualityNote">傾き補正・並べ替え保存のデフォルト値です。各保存モーダルで変更可能。</p>
   </div>
 
   <div class="panel">
-    <div class="panel-title">分割保存のデフォルトファイル名</div>
+    <div class="panel-title" data-i18n="setSplitNameTitle">分割保存のデフォルトファイル名</div>
     <div class="modal-row">
       <input type="text" id="cfg_splitFileName"
         style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px"
@@ -452,74 +460,72 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
         oninput="cfgSave();cfgUpdateSplitPreview()">
     </div>
     <div class="fname-preview" id="cfg_splitPreview"></div>
-    <p style="font-size:10px;color:var(--text3);margin-top:4px">{seq}=連番　{seq2}/{seq3}=ゼロ埋め連番(2/3桁)　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="splitNameHelp">{seq}=連番　{seq2}/{seq3}=ゼロ埋め連番(2/3桁)　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成</p>
   </div>
 
   <div class="panel">
-    <div class="panel-title">PDFの保存先フォルダ</div>
-    <div id="cfg_dirNotSupported" style="display:none;font-size:11px;color:var(--text3);line-height:1.6">
-      お使いのブラウザはフォルダを指定しての保存（File System Access API）に対応していません。今まで通りブラウザの標準のダウンロード先に保存されます。
-    </div>
+    <div class="panel-title" data-i18n="setDirTitle">PDFの保存先フォルダ</div>
+    <div id="cfg_dirNotSupported" style="display:none;font-size:11px;color:var(--text3);line-height:1.6" data-i18n="dirNotSupported">お使いのブラウザはフォルダを指定しての保存（File System Access API）に対応していません。今まで通りブラウザの標準のダウンロード先に保存されます。</div>
     <div id="cfg_dirControls">
-      <div class="fname-preview" id="cfg_dirLabel">未選択（ブラウザの標準のダウンロード先に保存されます）</div>
+      <div class="fname-preview" id="cfg_dirLabel" data-i18n="dirNone">未選択（ブラウザの標準のダウンロード先に保存されます）</div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn primary" onclick="pickPdfSaveDir()">📁 フォルダを選択</button>
-        <button class="btn" id="cfg_btnReauth" onclick="reauthPdfSaveDir()" style="display:none">🔓 アクセスを許可</button>
-        <button class="btn danger" id="cfg_btnClearDir" onclick="clearPdfSaveDir()" disabled>クリア</button>
+        <button class="btn primary" onclick="pickPdfSaveDir()" data-i18n="btnPickDir">📁 フォルダを選択</button>
+        <button class="btn" id="cfg_btnReauth" onclick="reauthPdfSaveDir()" style="display:none" data-i18n="btnReauth">🔓 アクセスを許可</button>
+        <button class="btn danger" id="cfg_btnClearDir" onclick="clearPdfSaveDir()" disabled data-i18n="btnClear">クリア</button>
       </div>
     </div>
-    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">指定すると、補正済みPDF・並べ替え済みPDF・分割保存（区切りごとのPDFやZIP）がこのフォルダへ直接保存されます。選択内容はこの端末のこのブラウザに記憶されますが、再読み込み後は初回のみ「アクセスを許可」のクリックが必要な場合があります。</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6" data-i18n="setDirNote">指定すると、補正済みPDF・並べ替え済みPDF・分割保存（区切りごとのPDFやZIP）がこのフォルダへ直接保存されます。選択内容はこの端末のこのブラウザに記憶されますが、再読み込み後は初回のみ「アクセスを許可」のクリックが必要な場合があります。</p>
   </div>
 
   <div class="panel">
-    <div class="panel-title">区切り名プリセットの管理</div>
+    <div class="panel-title" data-i18n="setPresetTitle">区切り名プリセットの管理</div>
     <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
       <select id="cfg_presetSelect" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
-        <option value="">— 新規作成 —</option>
+        <option value="" data-i18n="presetNew">— 新規作成 —</option>
       </select>
-      <button class="btn" onclick="cfgLoadPreset()" title="選択したプリセットを読み込む">読込</button>
-      <button class="btn danger" id="cfg_btnDeletePreset" onclick="cfgDeletePreset()" title="選択したプリセットを削除" disabled>削除</button>
+      <button class="btn" onclick="cfgLoadPreset()" data-i18n-title="loadTitle" title="選択したプリセットを読み込む" data-i18n="btnLoad">読込</button>
+      <button class="btn danger" id="cfg_btnDeletePreset" onclick="cfgDeletePreset()" data-i18n-title="delPresetTitle" title="選択したプリセットを削除" disabled data-i18n="btnDelPreset">削除</button>
     </div>
     <div class="modal-row" style="margin-bottom:6px">
-      <label style="white-space:nowrap">プリセット名</label>
+      <label style="white-space:nowrap" data-i18n="presetNameLabel">プリセット名</label>
       <input type="text" id="cfg_presetName"
         style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px"
-        placeholder="例: パート名テンプレート" oninput="cfgOnPresetNameInput()">
+        data-i18n-ph="presetNamePh" placeholder="例: パート名テンプレート" oninput="cfgOnPresetNameInput()">
     </div>
     <textarea id="cfg_presetBody"
       style="width:100%;min-height:100px;resize:vertical;background:var(--bg);border:1px solid var(--border);
              border-radius:var(--radius);color:var(--text);padding:6px 8px;font-size:12px;font-family:inherit"
-      placeholder="Trumpet&#10;Horn&#10;Tuba&#10;（1行1区切り）"></textarea>
+      data-i18n-ph="presetBodyPh" placeholder="Trumpet&#10;Horn&#10;Tuba&#10;（1行1区切り）"></textarea>
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <button class="btn primary" id="cfg_btnSavePreset" onclick="cfgSavePreset()" disabled>💾 このアプリに保存</button>
-      <button class="btn" onclick="cfgExportPreset()">📤 テキストで書き出し</button>
-      <button class="btn" onclick="document.getElementById('cfg_importFile').click()">📂 テキストから読込</button>
+      <button class="btn primary" id="cfg_btnSavePreset" onclick="cfgSavePreset()" disabled data-i18n="btnSavePreset">💾 このアプリに保存</button>
+      <button class="btn" onclick="cfgExportPreset()" data-i18n="btnExportPreset">📤 テキストで書き出し</button>
+      <button class="btn" onclick="document.getElementById('cfg_importFile').click()" data-i18n="btnImportPreset">📂 テキストから読込</button>
       <input type="file" id="cfg_importFile" accept=".txt" style="display:none" onchange="cfgImportPreset(event)">
     </div>
-    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">「このアプリに保存」はこのブラウザ・端末内にのみ保存されます（LocalStorage）。アンインストールやブラウザのデータ消去で失われます。大切なプリセットは「テキストで書き出し」でバックアップしておくことをお勧めします。</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6" data-i18n="setPresetNote">「このアプリに保存」はこのブラウザ・端末内にのみ保存されます（LocalStorage）。アンインストールやブラウザのデータ消去で失われます。大切なプリセットは「テキストで書き出し」でバックアップしておくことをお勧めします。</p>
   </div>
 
   <div class="panel">
-    <div class="panel-title">アプリ</div>
-    <button class="btn primary" id="btnPwaInstall" style="width:100%" onclick="onPwaInstallClick()">📲 アプリとしてインストール</button>
-    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">ホーム画面やデスクトップに追加すると、ブラウザのアドレスバーなしで素早く起動できます。</p>
+    <div class="panel-title" data-i18n="setAppTitle">アプリ</div>
+    <button class="btn primary" id="btnPwaInstall" style="width:100%" onclick="onPwaInstallClick()" data-i18n="btnInstall">📲 アプリとしてインストール</button>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6" data-i18n="setAppNote">ホーム画面やデスクトップに追加すると、ブラウザのアドレスバーなしで素早く起動できます。</p>
   </div>
 
   <div class="panel">
-    <div class="panel-title">案内ボタン</div>
+    <div class="panel-title" data-i18n="setGuideTitle">案内ボタン</div>
     <label style="display:flex;gap:8px;align-items:center;font-size:12px;cursor:pointer">
       <input type="checkbox" id="settings-tutorial-btn-cb" checked onchange="if(window.NamaTutorial)NamaTutorial.setButtonVisible(this.checked)">
-      <span>💬 案内ボタン（チュートリアル）を表示する</span>
+      <span data-i18n="guideCbLabel">💬 案内ボタン（チュートリアル）を表示する</span>
     </label>
-    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">OFFにすると呼び出しボタンが出なくなります（この設定からいつでも戻せます）。</p>
+    <p style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6" data-i18n="setGuideNote">OFFにすると呼び出しボタンが出なくなります（この設定からいつでも戻せます）。</p>
   </div>
 
 <div style="width:95%; max-width:450px; margin:2.2em auto 0;">
   <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px;">
     <a href="/" target="_blank" rel="noopener" style="display:flex; align-items:center; opacity:0.85; margin-right:14px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"><img src="/NamaStudioLogoHalf.png" alt="Nama Studio" style="height:35px; width:auto; display:block;"></a>
-    <a href="https://www.amazon.jp/hz/wishlist/ls/21PS61YG1P32B?ref_=wl_share" target="_blank" rel="noreferrer noopener" style="display:flex; align-items:center; text-decoration:none; opacity:0.75;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'"><span style="display:inline-block; width:85px; height:35px; background-image:url('https://m.media-amazon.com/images/G/09/gno/sprites/nav-sprite-global-1x-reorg-privacy._CB546377955_.png'); background-position:-5px -85px; background-repeat:no-repeat; background-size:auto; flex-shrink:0; background-color:#000;"></span></a><span style="font-size:0.8rem; font-weight:bold; opacity:0.75;">ほしいものリスト</span>
+    <a href="https://www.amazon.jp/hz/wishlist/ls/21PS61YG1P32B?ref_=wl_share" target="_blank" rel="noreferrer noopener" style="display:flex; align-items:center; text-decoration:none; opacity:0.75;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'"><span style="display:inline-block; width:85px; height:35px; background-image:url('https://m.media-amazon.com/images/G/09/gno/sprites/nav-sprite-global-1x-reorg-privacy._CB546377955_.png'); background-position:-5px -85px; background-repeat:no-repeat; background-size:auto; flex-shrink:0; background-color:#000;"></span></a><span style="font-size:0.8rem; font-weight:bold; opacity:0.75;" data-i18n="wishlist">ほしいものリスト</span>
   </div>
-  <div style="font-size:0.72rem; opacity:0.65; margin-top:4px;">（nama1223.com が使えない時は <a href="https://nama1223.github.io/" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">https://nama1223.github.io</a> でも開けます）</div>
+  <div style="font-size:0.72rem; opacity:0.65; margin-top:4px;" data-i18n-html="footerFallbackHtml">（nama1223.com が使えない時は <a href="https://nama1223.github.io/" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">https://nama1223.github.io</a> でも開けます）</div>
 </div>
 </div>
 </div>
@@ -530,12 +536,12 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
     <div class="popup-row">
       <div class="popup-nav-col">
         <button class="popup-nav-side" id="popupNavPrev" onclick="popupMove(-1)">&#x25C0;</button>
-        <button class="popup-divider-btn" id="popupDividerPrev" onclick="popupAddDivider(-1)" title="表示中のページの手前に区切りを追加"></button>
+        <button class="popup-divider-btn" id="popupDividerPrev" onclick="popupAddDivider(-1)" data-i18n-title="popupPrevTitle" title="表示中のページの手前に区切りを追加"></button>
       </div>
       <canvas id="popupCanvas"></canvas>
       <div class="popup-nav-col">
         <button class="popup-nav-side" id="popupNavNext" onclick="popupMove(+1)">&#x25B6;</button>
-        <button class="popup-divider-btn" id="popupDividerNext" onclick="popupAddDivider(+1)" title="表示中のページの後ろに区切りを追加"></button>
+        <button class="popup-divider-btn" id="popupDividerNext" onclick="popupAddDivider(+1)" data-i18n-title="popupNextTitle" title="表示中のページの後ろに区切りを追加"></button>
       </div>
     </div>
     <div class="popup-info" id="popupInfo"></div>
@@ -545,35 +551,35 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <!-- 出力モーダル（補正済みPDF） -->
 <div class="modal-bg" id="exportModal">
   <div class="modal" style="width:400px">
-    <h3>💾 補正済みPDFを保存</h3>
+    <h3 data-i18n="exportTitle">💾 補正済みPDFを保存</h3>
     <div class="modal-row" style="align-items:flex-start">
-      <label style="padding-top:2px">無劣化</label>
+      <label style="padding-top:2px" data-i18n="losslessLabel">無劣化</label>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
           <input type="checkbox" id="losslessMode" onchange="updateExportModalUI()">
-          <span>完全無劣化モード（元PDF構造を保持）</span>
+          <span data-i18n="losslessCb">完全無劣化モード（元PDF構造を保持）</span>
         </label>
         <div id="losslessNote" style="font-size:10px;color:var(--text3);line-height:1.5"></div>
       </div>
     </div>
     <div id="exportFmtBlock">
       <div class="modal-row" id="exportFmtRow">
-        <label>形式</label>
+        <label data-i18n="fmtLabel">形式</label>
         <select id="outFormat" onchange="onOutFormatChange()" style="flex:1">
-          <option value="jpeg">JPEG（サイズ小）</option>
-          <option value="png">PNG（完全可逆）</option>
+          <option value="jpeg" data-i18n="optJpeg">JPEG（サイズ小）</option>
+          <option value="png" data-i18n="optPng">PNG（完全可逆）</option>
         </select>
       </div>
       <div class="modal-row" id="jpegQualityRow">
-        <label>品質</label>
+        <label data-i18n="qualityLabel">品質</label>
         <input type="range" id="jpegQuality" min="50" max="100" value="92" step="1" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('jpegQualityVal').textContent=this.value+'%'">
         <span id="jpegQualityVal" style="font-size:12px;color:var(--text);min-width:36px;text-align:right">92%</span>
       </div>
     </div>
-    <div class="modal-note" id="exportModeNote">変換のないページは元データのまま埋め込み（完全無劣化）。変換ありページにのみ上記設定が適用されます。</div>
+    <div class="modal-note" id="exportModeNote" data-i18n="exportNoteDefault">変換のないページは元データのまま埋め込み（完全無劣化）。変換ありページにのみ上記設定が適用されます。</div>
     <div class="modal-btns">
-      <button class="btn" onclick="closeExportModal()">キャンセル</button>
-      <button class="btn primary" onclick="doExportPDF()">保存</button>
+      <button class="btn" onclick="closeExportModal()" data-i18n="btnCancel">キャンセル</button>
+      <button class="btn primary" onclick="doExportPDF()" data-i18n="btnSave">保存</button>
     </div>
   </div>
 </div>
@@ -581,38 +587,38 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <!-- A3分割モーダル -->
 <div class="modal-bg" id="splitModal">
   <div class="modal">
-    <h3>✂️ A3→A4 左右分割で保存</h3>
+    <h3 data-i18n="splitTitle">✂️ A3→A4 左右分割で保存</h3>
     <div class="modal-row">
-      <label>ページ順</label>
-      <select id="splitDir"><option value="lr">左→右（左綴じ）</option><option value="rl">右→左（右綴じ）</option></select>
+      <label data-i18n="splitDirLabel">ページ順</label>
+      <select id="splitDir"><option value="lr" data-i18n="splitDirLr">左→右（左綴じ）</option><option value="rl" data-i18n="splitDirRl">右→左（右綴じ）</option></select>
     </div>
     <div class="modal-row">
-      <label>出力後の動作</label>
-      <select id="splitAfter"><option value="download">ダウンロードのみ</option><option value="sort">並べ替えタブに渡す</option></select>
+      <label data-i18n="splitAfterLabel">出力後の動作</label>
+      <select id="splitAfter"><option value="download" data-i18n="splitAfterDl">ダウンロードのみ</option><option value="sort" data-i18n="splitAfterSort">並べ替えタブに渡す</option></select>
     </div>
     <div class="modal-row">
-      <label>解像度</label>
+      <label data-i18n="splitResLabel">解像度</label>
       <select id="splitResMode" style="flex:1">
-        <option value="hires">高品質（推奨）</option>
-        <option value="original">元の解像度に合わせる</option>
+        <option value="hires" data-i18n="splitResHi">高品質（推奨）</option>
+        <option value="original" data-i18n="splitResOrig">元の解像度に合わせる</option>
       </select>
     </div>
     <div class="modal-row">
-      <label>形式</label>
+      <label data-i18n="fmtLabel">形式</label>
       <select id="splitFormat" onchange="onSplitFormatChange()" style="flex:1">
-        <option value="jpeg">JPEG（サイズ小）</option>
-        <option value="png">PNG（完全可逆）</option>
+        <option value="jpeg" data-i18n="optJpeg">JPEG（サイズ小）</option>
+        <option value="png" data-i18n="optPng">PNG（完全可逆）</option>
       </select>
     </div>
     <div class="modal-row" id="splitQualityRow">
-      <label>品質</label>
+      <label data-i18n="qualityLabel">品質</label>
       <input type="range" id="splitQuality" min="50" max="100" value="92" step="1" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('splitQualityVal').textContent=this.value+'%'">
       <span id="splitQualityVal" style="font-size:12px;color:var(--text);min-width:36px;text-align:right">92%</span>
     </div>
-    <div class="modal-note">各ページを左右に2分割し、それぞれ別ページとして出力します。傾き補正も反映されます。</div>
+    <div class="modal-note" data-i18n="splitNote">各ページを左右に2分割し、それぞれ別ページとして出力します。傾き補正も反映されます。</div>
     <div class="modal-btns">
-      <button class="btn" onclick="closeSplitModal()">キャンセル</button>
-      <button class="btn primary" onclick="doSplitExport()">実行</button>
+      <button class="btn" onclick="closeSplitModal()" data-i18n="btnCancel">キャンセル</button>
+      <button class="btn primary" onclick="doSplitExport()" data-i18n="btnRun">実行</button>
     </div>
   </div>
 </div>
@@ -620,47 +626,47 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <!-- 並べ替え分割保存モーダル -->
 <div class="modal-bg" id="sortSplitModal">
   <div class="modal" style="width:420px">
-    <h3>✂ 区切りで分割保存</h3>
+    <h3 data-i18n="ssTitle">✂ 区切りで分割保存</h3>
     <div class="modal-row">
-      <label>共通ファイル名</label>
+      <label data-i18n="ssFileLabel">共通ファイル名</label>
       <input type="text" id="ssFileName" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
     </div>
     <div class="modal-row">
-      <label>連番開始</label>
+      <label data-i18n="ssStartLabel">連番開始</label>
       <input type="number" id="ssStartNum" min="0" value="1" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
-      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2">{seq}=連番　{seq2}/{seq3}=ゼロ埋め(2/3桁)　{name}=区切り名　{file}=元ファイル名</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:6px;line-height:2" data-i18n="ssTokensNote">{seq}=連番　{seq2}/{seq3}=ゼロ埋め(2/3桁)　{name}=区切り名　{file}=元ファイル名</span>
     </div>
     <div class="fname-preview" id="fnamePreview"></div>
-    <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px">区切り名プリセット（改行区切り）</div>
+    <div style="margin-top:10px;font-size:10px;color:var(--text3);margin-bottom:4px" data-i18n="ssPresetLabel">区切り名プリセット（改行区切り）</div>
     <div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">
       <select id="ss_presetPicker" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:3px 6px;font-size:11px">
-        <option value="">— 保存済みプリセットを呼び出す —</option>
+        <option value="" data-i18n="ssPickerDefault">— 保存済みプリセットを呼び出す —</option>
       </select>
-      <button class="btn btn-mini" onclick="ssApplyPreset()">適用</button>
+      <button class="btn btn-mini" onclick="ssApplyPreset()" data-i18n="btnApply">適用</button>
     </div>
-    <textarea class="preset-area" id="ssPresetArea" placeholder="第1章&#10;第2章&#10;第3章"></textarea>
+    <textarea class="preset-area" id="ssPresetArea" data-i18n-ph="ssPresetPh" placeholder="第1章&#10;第2章&#10;第3章"></textarea>
     <div style="display:flex;gap:6px;margin-top:5px">
-      <button class="btn" onclick="loadPresetFile()" style="font-size:11px">📂 テキストファイルから読込</button>
+      <button class="btn" onclick="loadPresetFile()" style="font-size:11px" data-i18n="btnLoadTextFile">📂 テキストファイルから読込</button>
       <input type="file" id="presetFileInput" accept=".txt" style="display:none" onchange="onPresetFile(event)">
     </div>
     <div class="modal-row" style="margin-top:10px;align-items:flex-start">
-      <label style="padding-top:3px">保存方法</label>
+      <label style="padding-top:3px" data-i18n="ssModeLabel">保存方法</label>
       <div style="display:flex;flex-direction:column;gap:6px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
           <input type="radio" name="ssOutMode" value="individual" onchange="updateSsOutModeNote()" style="accent-color:var(--accent)">
-          個別ファイルとしてダウンロード
+          <span data-i18n="ssModeIndividual">個別ファイルとしてダウンロード</span>
         </label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
           <input type="radio" name="ssOutMode" value="zip" onchange="updateSsOutModeNote()" style="accent-color:var(--accent)">
-          ZIPにまとめて1つでダウンロード（分割数が多い時におすすめ）
+          <span data-i18n="ssModeZip">ZIPにまとめて1つでダウンロード（分割数が多い時におすすめ）</span>
         </label>
       </div>
     </div>
-    <div class="modal-note" id="ssOutModeNote">区切りごとに別ファイルとして保存されます。</div>
+    <div class="modal-note" id="ssOutModeNote" data-i18n="ssNoteDefault">区切りごとに別ファイルとして保存されます。</div>
     <div id="sortSplitQualityBadge" style="margin-top:8px"></div>
     <div class="modal-btns">
-      <button class="btn" onclick="closeSortSplitModal()">キャンセル</button>
-      <button class="btn primary" onclick="doSortSplitExport()">保存する</button>
+      <button class="btn" onclick="closeSortSplitModal()" data-i18n="btnCancel">キャンセル</button>
+      <button class="btn primary" onclick="doSortSplitExport()" data-i18n="btnSaveDo">保存する</button>
     </div>
   </div>
 </div>
@@ -668,44 +674,44 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <!-- 区切りをまとめて追加モーダル -->
 <div class="modal-bg" id="bulkDividerModal">
   <div class="modal" style="width:420px">
-    <h3>｜ 区切りをまとめて追加</h3>
+    <h3 data-i18n="bulkTitle">｜ 区切りをまとめて追加</h3>
     <div style="display:flex;flex-direction:column;gap:9px">
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
         <input type="radio" name="bulkDivMode" value="every" checked onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
-        全ページ間に追加（1ページ＝1ファイルにする）
+        <span data-i18n="bulkEvery">全ページ間に追加（1ページ＝1ファイルにする）</span>
       </label>
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
         <input type="radio" name="bulkDivMode" value="interval" onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
-        ページおきに区切る
+        <span data-i18n="bulkInterval">ページおきに区切る</span>
       </label>
       <div class="modal-row" id="bulkDivRowInterval" style="display:none;margin-left:24px">
         <input type="number" id="bulkDivIntervalN" min="1" value="2" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
-        <span style="font-size:11px;color:var(--text3)">ページごとに1本（既存の区切りでカウントをリセット）</span>
+        <span style="font-size:11px;color:var(--text3)" data-i18n="bulkIntervalNote">ページごとに1本（既存の区切りでカウントをリセット）</span>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
         <input type="radio" name="bulkDivMode" value="count" onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
-        末尾にまとめて追加
+        <span data-i18n="bulkCount">末尾にまとめて追加</span>
       </label>
       <div class="modal-row" id="bulkDivRowCount" style="display:none;margin-left:24px">
         <input type="number" id="bulkDivCountN" min="1" max="50" value="5" style="width:60px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:4px 7px;font-size:12px">
-        <span style="font-size:11px;color:var(--text3)">本追加（あとはドラッグで配置）</span>
+        <span style="font-size:11px;color:var(--text3)" data-i18n="bulkCountNote">本追加（あとはドラッグで配置）</span>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
         <input type="radio" name="bulkDivMode" value="bylist" onchange="updateBulkDividerModeUI()" style="accent-color:var(--accent)">
-        ページ数のリストから一括配置（パート譜向け）
+        <span data-i18n="bulkByList">ページ数のリストから一括配置（パート譜向け）</span>
       </label>
       <div id="bulkDivRowList" style="display:none;margin-left:24px">
-        <textarea class="preset-area" id="bulkDivListArea" style="height:90px" placeholder="Trumpet:4&#10;Horn:3&#10;Tuba:5&#10;（名前:ページ数。名前は省略可、数字だけでもOK）"></textarea>
+        <textarea class="preset-area" id="bulkDivListArea" style="height:90px" data-i18n-ph="bulkListPh" placeholder="Trumpet:4&#10;Horn:3&#10;Tuba:5&#10;（名前:ページ数。名前は省略可、数字だけでもOK）"></textarea>
         <div style="display:flex;gap:6px;margin-top:5px">
-          <button class="btn btn-mini" onclick="loadBulkDivListFile()" style="font-size:11px">📂 テキストファイルから読込</button>
+          <button class="btn btn-mini" onclick="loadBulkDivListFile()" style="font-size:11px" data-i18n="btnLoadTextFile">📂 テキストファイルから読込</button>
           <input type="file" id="bulkDivListFileInput" accept=".txt" style="display:none" onchange="onBulkDivListFile(event)">
         </div>
-        <p style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5">先頭から指定ページ数ずつ区切ります。合計が実際のページ数を超える場合はエラーになります。少ない場合は残りを最終セクションに含めます。<br>※実行すると、既存の区切りはすべてこのリストの内容で置き換わります。</p>
+        <p style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5" data-i18n-html="bulkListNoteHtml">先頭から指定ページ数ずつ区切ります。合計が実際のページ数を超える場合はエラーになります。少ない場合は残りを最終セクションに含めます。<br>※実行すると、既存の区切りはすべてこのリストの内容で置き換わります。</p>
       </div>
     </div>
     <div class="modal-btns">
-      <button class="btn" onclick="closeBulkDividerModal()">キャンセル</button>
-      <button class="btn primary" onclick="doBulkDividerAdd()">追加する</button>
+      <button class="btn" onclick="closeBulkDividerModal()" data-i18n="btnCancel">キャンセル</button>
+      <button class="btn primary" onclick="doBulkDividerAdd()" data-i18n="btnAddDo">追加する</button>
     </div>
   </div>
 </div>
@@ -713,10 +719,10 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <!-- PWAインストール案内モーダル -->
 <div class="modal-bg" id="pwaInstallModal">
   <div class="modal" style="width:380px">
-    <h3 id="pwaModalTitle">インストール方法</h3>
+    <h3 id="pwaModalTitle" data-i18n="pwaTitle">インストール方法</h3>
     <div id="pwaModalBody" style="font-size:13px;line-height:1.8;color:var(--text2);margin-top:10px"></div>
     <div class="modal-btns">
-      <button class="btn primary" onclick="closePwaInstallModal()">閉じる</button>
+      <button class="btn primary" onclick="closePwaInstallModal()" data-i18n="btnClose">閉じる</button>
     </div>
   </div>
 </div>
@@ -724,18 +730,18 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 <!-- 並べ替えタブへのPDFドロップモーダル -->
 <div class="modal-bg" id="sortPdfDropModal">
   <div class="modal" style="width:360px">
-    <h3>📄 PDFを並べ替えタブに追加</h3>
+    <h3 data-i18n="dropModalTitle">📄 PDFを並べ替えタブに追加</h3>
     <div style="font-size:12px;color:var(--text2);margin-bottom:14px" id="sortPdfDropInfo"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn danger" onclick="applySortPdfDrop('discard')">🗑 破棄して開き直す</button>
-      <button class="btn" onclick="applySortPdfDrop('prepend')">⬆ 先頭に挿入</button>
-      <button class="btn" onclick="applySortPdfDrop('append')">⬇ 最後尾に挿入</button>
-      <button class="btn" onclick="closeSortPdfDropModal()" style="margin-top:4px">キャンセル</button>
+      <button class="btn danger" onclick="applySortPdfDrop('discard')" data-i18n="dropDiscard">🗑 破棄して開き直す</button>
+      <button class="btn" onclick="applySortPdfDrop('prepend')" data-i18n="dropPrepend">⬆ 先頭に挿入</button>
+      <button class="btn" onclick="applySortPdfDrop('append')" data-i18n="dropAppend">⬇ 最後尾に挿入</button>
+      <button class="btn" onclick="closeSortPdfDropModal()" style="margin-top:4px" data-i18n="btnCancel">キャンセル</button>
     </div>
   </div>
 </div>
 
-<div id="progressWrap"><div class="prog-box"><div class="prog-title" id="progTitle">処理中...</div><div class="prog-bar-outer"><div class="prog-bar-inner" id="progBar"></div></div><div class="prog-pct" id="progPct">0%</div></div></div>
+<div id="progressWrap"><div class="prog-box"><div class="prog-title" id="progTitle" data-i18n="progDefault">処理中...</div><div class="prog-bar-outer"><div class="prog-bar-inner" id="progBar"></div></div><div class="prog-pct" id="progPct">0%</div></div></div>
 <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -788,6 +794,284 @@ aside.thumbs{width:156px;flex-shrink:0;background:var(--bg2);border-left:1px sol
 //   srcName
 // }
 // =====================================================
+// =====================================================
+// 多言語対応（日本語 / English）
+// =====================================================
+const STRINGS = {
+ja: {
+  tabCorrect: '🎵 傾き補正', tabSort: '🗂 並べ替え', tabSettings: '⚙ 設定',
+  hdrInfoDefault: 'ファイルを開いてください', btnOpen: '📂 開く',
+  panelView: '表示', zoomFit: '合わせる', panelPage: 'ページ',
+  applyAllBtn: '⟳ 全ページに同じ角度', resetPageBtn: '✕ このページをリセット',
+  panelAngle: '傾き補正', rotLeftTitle: '左90°', rotRightTitle: '右90°',
+  panelGuides: '補助線', guidesHint: '（線をドラッグで移動）', guideH: '— 水平線', guideV: '｜ 垂直線',
+  clearAll: 'すべて消す', guideNone: 'なし', guideHorizontal: '水平', guideVertical: '垂直',
+  panelCrop: 'クロップ', cropMode: '✂ 範囲選択', cropModeOff: '✕ 選択解除', cropClear: '解除',
+  cropUnset: '未設定（保存時は全面）', cropSetFmt: '設定済み：{0},{1}  {2}×{3}px',
+  cropAspectLabel: '縦横比を固定：', aspFree: '自由', aspSilver: '用紙', aspCustom: '比率指定', cropRangeLabel: '選択範囲（px）：',
+  panelOutput: '出力', btnExportNormal: '💾 補正済みPDF', btnExportSplit: '✂️ A3→A4分割保存',
+  canvasHintHtml: 'PDFまたは画像をここにドロップ<br>または右上の「開く」から選択',
+  dropHere: 'ここにドロップ', thumbsTitle: 'ページ一覧',
+  sortInfoNone: 'ページなし', sortInfoFmt: '{0}ページ{1}', sortInfoDiv: '　区切り×{0}',
+  btnSelectAll: '全選択', btnDelete: '削除',
+  rotLTitle: '選択を左90°回転（無劣化）', rotRTitle: '選択を右90°回転（無劣化）',
+  exitMulti: '✕ 選択モード解除', undoTitle: '元に戻す (Ctrl+Z)', redoTitle: 'やり直す (Ctrl+Y)',
+  insertBlank: '□ 白紙挿入', insertBlankTitle: '選択ページの直前に同寸白紙を挿入（未選択時は最後尾に追加）',
+  addDividerBtn: '｜ 区切りを追加', bulkAddBtn: '｜⋮ まとめて追加', bulkAddTitle: '複数の区切りをまとめて追加',
+  btnSortExport: '💾 この順で保存', btnSortSplit: '✂ 区切りで分割保存', btnReturn: '↩ 補正タブに返す',
+  sortEmptyHtml: 'PDFまたは画像をここにドロップ<br>または右上の「開く」から選択',
+  dividerName: '区切り{0}', blankLabel: '白紙', lastSection: '最終', chapter1: '第1章',
+  setQualityTitle: '画質のデフォルト設定', fmtLabel: '形式', optJpeg: 'JPEG（サイズ小）', optPng: 'PNG（完全可逆）',
+  jpegQ: 'JPEG品質', setQualityNote: '傾き補正・並べ替え保存のデフォルト値です。各保存モーダルで変更可能。',
+  setSplitNameTitle: '分割保存のデフォルトファイル名',
+  splitNameHelp: '{seq}=連番　{seq2}/{seq3}=ゼロ埋め連番(2/3桁)　{name}=区切り名　{file}=元ファイル名　空欄のまま開くと自動生成',
+  setDirTitle: 'PDFの保存先フォルダ',
+  dirNotSupported: 'お使いのブラウザはフォルダを指定しての保存（File System Access API）に対応していません。今まで通りブラウザの標準のダウンロード先に保存されます。',
+  dirNone: '未選択（ブラウザの標準のダウンロード先に保存されます）',
+  btnPickDir: '📁 フォルダを選択', btnReauth: '🔓 アクセスを許可', btnClear: 'クリア',
+  setDirNote: '指定すると、補正済みPDF・並べ替え済みPDF・分割保存（区切りごとのPDFやZIP）がこのフォルダへ直接保存されます。選択内容はこの端末のこのブラウザに記憶されますが、再読み込み後は初回のみ「アクセスを許可」のクリックが必要な場合があります。',
+  dirSelected: '選択中: {0}/', dirSelectedPerm: '選択中: {0}/（アクセス許可が必要です）',
+  setPresetTitle: '区切り名プリセットの管理', presetNew: '— 新規作成 —',
+  btnLoad: '読込', loadTitle: '選択したプリセットを読み込む', btnDelPreset: '削除', delPresetTitle: '選択したプリセットを削除',
+  presetNameLabel: 'プリセット名', presetNamePh: '例: パート名テンプレート', presetBodyPh: 'Trumpet\nHorn\nTuba\n（1行1区切り）',
+  btnSavePreset: '💾 このアプリに保存', btnExportPreset: '📤 テキストで書き出し', btnImportPreset: '📂 テキストから読込',
+  setPresetNote: '「このアプリに保存」はこのブラウザ・端末内にのみ保存されます（LocalStorage）。アンインストールやブラウザのデータ消去で失われます。大切なプリセットは「テキストで書き出し」でバックアップしておくことをお勧めします。',
+  setAppTitle: 'アプリ', btnInstall: '📲 アプリとしてインストール',
+  setAppNote: 'ホーム画面やデスクトップに追加すると、ブラウザのアドレスバーなしで素早く起動できます。',
+  setGuideTitle: '案内ボタン', guideCbLabel: '💬 案内ボタン（チュートリアル）を表示する',
+  setGuideNote: 'OFFにすると呼び出しボタンが出なくなります（この設定からいつでも戻せます）。',
+  wishlist: 'ほしいものリスト',
+  footerFallbackHtml: '（nama1223.com が使えない時は <a href="https://nama1223.github.io/" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">https://nama1223.github.io</a> でも開けます）',
+  exportTitle: '💾 補正済みPDFを保存', losslessLabel: '無劣化', losslessCb: '完全無劣化モード（元PDF構造を保持）',
+  qualityLabel: '品質',
+  exportNoteDefault: '変換のないページは元データのまま埋め込み（完全無劣化）。変換ありページにのみ上記設定が適用されます。',
+  exportNoteLossless: '元PDFの構造（ベクター文字、画像データ、メタデータ）をそのまま保持して出力します。',
+  exportNoteMixed: '対応可能ページは無劣化、それ以外のページは上記の画像形式で出力されます。',
+  losslessNoteOk: '✓ ベクター文字・元画像データを保持したまま、回転やクロップを反映できます',
+  losslessNotePartial: '一部のページは元PDF構造を保持して保存。それ以外のページは画像で出力されます',
+  losslessNoteNg: '× 無劣化保存不可：', losslessReasonLoad: '元PDFをpdf-libで読み込めませんでした（{0}）', losslessReasonNone: '画像入力または元PDFがありません',
+  btnCancel: 'キャンセル', btnSave: '保存', btnRun: '実行', btnSaveDo: '保存する', btnAddDo: '追加する', btnClose: '閉じる',
+  splitTitle: '✂️ A3→A4 左右分割で保存', splitDirLabel: 'ページ順', splitDirLr: '左→右（左綴じ）', splitDirRl: '右→左（右綴じ）',
+  splitAfterLabel: '出力後の動作', splitAfterDl: 'ダウンロードのみ', splitAfterSort: '並べ替えタブに渡す',
+  splitResLabel: '解像度', splitResHi: '高品質（推奨）', splitResOrig: '元の解像度に合わせる',
+  splitNote: '各ページを左右に2分割し、それぞれ別ページとして出力します。傾き補正も反映されます。',
+  ssTitle: '✂ 区切りで分割保存', ssFileLabel: '共通ファイル名', ssStartLabel: '連番開始',
+  ssTokensNote: '{seq}=連番　{seq2}/{seq3}=ゼロ埋め(2/3桁)　{name}=区切り名　{file}=元ファイル名',
+  ssPresetLabel: '区切り名プリセット（改行区切り）', ssPickerDefault: '— 保存済みプリセットを呼び出す —',
+  btnApply: '適用', ssPresetPh: '第1章\n第2章\n第3章', btnLoadTextFile: '📂 テキストファイルから読込',
+  ssModeLabel: '保存方法', ssModeIndividual: '個別ファイルとしてダウンロード',
+  ssModeZip: 'ZIPにまとめて1つでダウンロード（分割数が多い時におすすめ）',
+  ssNoteDefault: '区切りごとに別ファイルとして保存されます。',
+  ssNoteZip: '全{0}ファイルを1つのZIPにまとめてダウンロードします。',
+  ssNoteMany: '{0}ファイルに分割されます。分割数が多いと、ブラウザの仕様で一部ファイルが保存されないことがあります。ZIPでのまとめ保存を推奨します。',
+  ssNotePlain: '{0}ファイルに分割されます。',
+  bulkTitle: '｜ 区切りをまとめて追加', bulkEvery: '全ページ間に追加（1ページ＝1ファイルにする）',
+  bulkInterval: 'ページおきに区切る', bulkIntervalNote: 'ページごとに1本（既存の区切りでカウントをリセット）',
+  bulkCount: '末尾にまとめて追加', bulkCountNote: '本追加（あとはドラッグで配置）',
+  bulkByList: 'ページ数のリストから一括配置（パート譜向け）',
+  bulkListPh: 'Trumpet:4\nHorn:3\nTuba:5\n（名前:ページ数。名前は省略可、数字だけでもOK）',
+  bulkListNoteHtml: '先頭から指定ページ数ずつ区切ります。合計が実際のページ数を超える場合はエラーになります。少ない場合は残りを最終セクションに含めます。<br>※実行すると、既存の区切りはすべてこのリストの内容で置き換わります。',
+  pwaTitle: 'インストール方法', pwaInstalledTitle: 'インストール済み', pwaInstalledBody: 'このアプリはすでにインストールされています。',
+  pwaIosTitle: 'iOSへのインストール方法',
+  pwaIosBodyHtml: '<p>Safariでこのページを開いてください。</p><ol style="margin-top:8px;padding-left:20px"><li>画面下部の <strong>共有ボタン（□↑）</strong> をタップ</li><li>「<strong>ホーム画面に追加</strong>」を選択</li><li>右上の「<strong>追加</strong>」をタップ</li></ol><p style="margin-top:10px;font-size:11px;color:var(--text3)">※ Chrome・Firefoxでは対応していません。</p>',
+  pwaBodyHtml: '<ol style="padding-left:20px"><li><strong>Chrome：</strong>アドレスバー右端の「⊕」または「⋮」→「アプリをインストール」</li><li><strong>Edge：</strong>「…」→「アプリ」→「このサイトをアプリとしてインストール」</li><li><strong>Safari（Mac）：</strong>メニュー File →「Dock に追加」</li></ol><p style="margin-top:10px;font-size:11px;color:var(--text3)">Firefox は PWA インストールに対応していません。</p>',
+  dropModalTitle: '📄 PDFを並べ替えタブに追加', dropDiscard: '🗑 破棄して開き直す', dropPrepend: '⬆ 先頭に挿入', dropAppend: '⬇ 最後尾に挿入',
+  dropInfoSingle: '「{0}」（{1}KB）を追加', dropInfoMulti: '「{0}」他{1}ファイル（合計{2}KB）を追加',
+  progDefault: '処理中...',
+  qbDirect: '✓ 元データ直接利用（無劣化）', qbKeep: '✓ 元PDF構造を保持（無劣化保存可）',
+  qbVector: '△ ベクター/複合PDF（高解像度再描画で出力）', qbMixed: '△ 混在モード', qbCanvas: '△ Canvas経由（再圧縮あり）',
+  ssqAll: '✓ 完全無劣化で保存（元のPDF構造をそのまま保持）', ssqAllNote: '※ファイル構造の違いでサイズが数KB前後することがあります',
+  ssqPart: '△ 一部ページは無劣化、それ以外は画像で出力', ssqNone: '△ 無劣化保存不可（画像として出力）',
+  loading: '読み込み中…', loadErrorP: '読み込みエラー: ', pagesLoaded: '{0}ページ読み込みました',
+  parsing: 'PDFを解析中…', pdfjsLoading: 'pdf.jsで読み込み中…', expanding: '画像を展開中… ({0}/{1})',
+  rendering: 'ページをレンダリング中… ({0}/{1})', imgLoading: '画像を読み込み中…', imgLoadingN: '画像を読み込み中… ({0}/{1})',
+  dropToStart: 'PDFまたは画像をドロップして開始', appliedAll: '全ページに {0}° 適用', pageReset: 'ページ {0} をリセット',
+  processing: '処理中…', splitting: '分割中… ({0}/{1})', generating: 'PDF生成中…', generatingN: 'PDF生成中… ({0}/{1})',
+  pageProcessing: 'ページ {0}/{1} 処理中…', generatingLossless: '無劣化PDFを生成中…',
+  sentToSort: '並べ替えタブに渡しました', saved: '保存しました！', savedLossless: '保存しました！（無劣化モード）',
+  errorP: 'エラー: ', losslessErrorP: '無劣化エラー: ', cropCleared: 'ページ {0} のクロップ予定を解除',
+  noPages: 'ページがありません', dividersAddedAll: '全ページ間に区切りを追加しました',
+  dividersAddedInterval: '{0}ページおきに区切りを追加しました', dividersAddedTail: '末尾に区切りを{0}本追加しました',
+  listEmpty: 'リストが空です', formatError: '形式エラー: "{0}"（名前:ページ数 の形式で入力してください）', formatErrorShort: '形式エラー: "{0}"',
+  tooManyPages: '合計{0}ページ指定ですが、実際は{1}ページしかありません', dividersPlaced: '区切りを{0}本配置しました',
+  remainNote: '（残り{0}ページは最終セクション）', blankInserted: '白紙を {0} 枚目の直前に挿入しました', blankAddedEnd: '白紙を最後尾に追加しました',
+  undone: '元に戻しました', redone: 'やり直しました', multiMode: '複数選択モード（タップでトグル / 空白タップで解除）',
+  pageProgress: 'ページ {0}/{1}', savedFull: '保存しました！（完全無劣化）', savedPart: '保存しました！（一部無劣化）',
+  noDividers: '区切りが1つもありません', preparingZip: 'ZIP機能を準備中…',
+  zipLoadFailed: 'ZIP機能の読み込みに失敗しました。通信環境をご確認の上、個別ダウンロードをお試しください。',
+  splitSaving: '分割保存中…', splitSavingPause: '分割保存中…（ブラウザの制限を避けるため一時停止）',
+  zipGenerating: 'ZIPを生成中…({0}%)', filesSaved: '{0}ファイル保存しました', zipSuffix: '（ZIP一括）', losslessSuffix: '（無劣化）',
+  noReturnPages: '返すページがありません', returnedInfo: '返却済み（{0}p）', returnedToast: '{0}ページを補正タブに返しました',
+  pdfLoading: 'PDFを読み込み中…', pagesInsertedFirst: '先頭に{0}ページを挿入しました', pagesInsertedLast: '末尾に{0}ページを挿入しました',
+  dividerAddedBefore: 'ページの手前に区切りを追加しました', dividerAddedAfter: 'ページの後ろに区切りを追加しました',
+  dirNotSupportedToast: 'このブラウザはフォルダ指定保存に対応していません', dirSet: '保存先フォルダを設定しました',
+  dirPickFailed: 'フォルダの選択に失敗しました', dirPermGranted: 'アクセスを許可しました', dirPermDenied: 'アクセスが許可されませんでした',
+  dirPermFailed: 'アクセス許可の取得に失敗しました', dirCleared: '保存先フォルダの指定を解除しました',
+  presetNameRequired: 'プリセット名を入力してください', presetSaved: '「{0}」を保存しました', presetDeleted: '「{0}」を削除しました',
+  presetSelectRequired: 'プリセットを選択してください', presetApplied: '「{0}」を適用しました',
+  jszipFailed: 'JSZipの読み込みに失敗しました', hdrInfoFmt: '{0}（{1}p）', hdrInfoMulti: '{0} 他{1}ファイル（{2}p）',
+  exampleSuffix: '.pdf（例）', fileLabelDefault: 'ファイル名', rotR90: '右90°', rotL90: '左90°',
+  popupDividerLabel: '｜区切り追加', popupDividerCount: '区切り：{0}',
+  popupPrevTitle: '表示中のページの手前に区切りを追加', popupNextTitle: '表示中のページの後ろに区切りを追加',
+  pagesEmpty: 'ページが空です', popupInfoFmt: '{0}（{1} / {2}）',
+  defaultBaseName: '出力', suffixSplit: '_A4分割', suffixCorrected: '_補正済み', suffixSorted: '_並べ替え済み', splitZipBase: '分割保存'
+},
+en: {
+  tabCorrect: '🎵 Deskew', tabSort: '🗂 Reorder', tabSettings: '⚙ Settings',
+  hdrInfoDefault: 'Open a file to start', btnOpen: '📂 Open',
+  panelView: 'View', zoomFit: 'Fit', panelPage: 'Page',
+  applyAllBtn: '⟳ Apply to all pages', resetPageBtn: '✕ Reset this page',
+  panelAngle: 'Skew correction', rotLeftTitle: 'Rotate 90° left', rotRightTitle: 'Rotate 90° right',
+  panelGuides: 'Guides', guidesHint: '(drag lines to move)', guideH: '— Horizontal', guideV: '｜ Vertical',
+  clearAll: 'Clear all', guideNone: 'None', guideHorizontal: 'Horizontal', guideVertical: 'Vertical',
+  panelCrop: 'Crop', cropMode: '✂ Select area', cropModeOff: '✕ Deselect', cropClear: 'Clear',
+  cropUnset: 'Not set (full page on save)', cropSetFmt: 'Set: {0},{1}  {2}×{3}px',
+  cropAspectLabel: 'Lock aspect ratio:', aspFree: 'Free', aspSilver: 'Paper', aspCustom: 'Custom', cropRangeLabel: 'Selection (px):',
+  panelOutput: 'Output', btnExportNormal: '💾 Corrected PDF', btnExportSplit: '✂️ Split A3→A4',
+  canvasHintHtml: 'Drop a PDF or images here<br>or choose from "Open" at the top right',
+  dropHere: 'Drop here', thumbsTitle: 'Pages',
+  sortInfoNone: 'No pages', sortInfoFmt: '{0} pages{1}', sortInfoDiv: ' · Dividers ×{0}',
+  btnSelectAll: 'Select all', btnDelete: 'Delete',
+  rotLTitle: 'Rotate selection 90° left (lossless)', rotRTitle: 'Rotate selection 90° right (lossless)',
+  exitMulti: '✕ Exit select mode', undoTitle: 'Undo (Ctrl+Z)', redoTitle: 'Redo (Ctrl+Y)',
+  insertBlank: '□ Insert blank', insertBlankTitle: 'Insert a same-size blank page before the selected page (or at the end if none is selected)',
+  addDividerBtn: '｜ Add divider', bulkAddBtn: '｜⋮ Add in bulk', bulkAddTitle: 'Add multiple dividers at once',
+  btnSortExport: '💾 Save in this order', btnSortSplit: '✂ Save split by dividers', btnReturn: '↩ Send back to Deskew',
+  sortEmptyHtml: 'Drop a PDF or images here<br>or choose from "Open" at the top right',
+  dividerName: 'Divider {0}', blankLabel: 'Blank', lastSection: 'Last', chapter1: 'Chapter 1',
+  setQualityTitle: 'Default quality settings', fmtLabel: 'Format', optJpeg: 'JPEG (smaller)', optPng: 'PNG (lossless)',
+  jpegQ: 'JPEG quality', setQualityNote: 'Defaults for Deskew and Reorder saves. You can change them in each save dialog.',
+  setSplitNameTitle: 'Default file name for split saves',
+  splitNameHelp: '{seq} = number, {seq2}/{seq3} = zero-padded number (2/3 digits), {name} = divider name, {file} = source file name. Left empty, a name is generated automatically.',
+  setDirTitle: 'PDF save folder',
+  dirNotSupported: 'Your browser does not support choosing a save folder (File System Access API). Files will be saved to the browser\u2019s standard download location, as before.',
+  dirNone: 'Not selected (saves to the browser\u2019s standard download location)',
+  btnPickDir: '📁 Choose folder', btnReauth: '🔓 Allow access', btnClear: 'Clear',
+  setDirNote: 'When set, corrected PDFs, reordered PDFs, and split saves (per-divider PDFs or a ZIP) are saved directly into this folder. The choice is remembered by this browser on this device, but after a reload you may need to click "Allow access" once.',
+  dirSelected: 'Selected: {0}/', dirSelectedPerm: 'Selected: {0}/ (access permission needed)',
+  setPresetTitle: 'Divider-name presets', presetNew: '— New preset —',
+  btnLoad: 'Load', loadTitle: 'Load the selected preset', btnDelPreset: 'Delete', delPresetTitle: 'Delete the selected preset',
+  presetNameLabel: 'Preset name', presetNamePh: 'e.g. Part-name template', presetBodyPh: 'Trumpet\nHorn\nTuba\n(one divider per line)',
+  btnSavePreset: '💾 Save in this app', btnExportPreset: '📤 Export as text', btnImportPreset: '📂 Import from text',
+  setPresetNote: '"Save in this app" stores presets only in this browser on this device (localStorage). They are lost if you uninstall the app or clear browser data. Back up important presets with "Export as text".',
+  setAppTitle: 'App', btnInstall: '📲 Install as an app',
+  setAppNote: 'Add it to your home screen or desktop to launch it quickly, without the browser address bar.',
+  setGuideTitle: 'Guide button', guideCbLabel: '💬 Show the guide (tutorial) button',
+  setGuideNote: 'Turn it off to hide the floating button (you can turn it back on here anytime).',
+  wishlist: 'Wishlist',
+  footerFallbackHtml: '(If nama1223.com is unavailable, you can also open it at <a href="https://nama1223.github.io/" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">https://nama1223.github.io</a>)',
+  exportTitle: '💾 Save corrected PDF', losslessLabel: 'Lossless', losslessCb: 'Fully lossless mode (keep the original PDF structure)',
+  qualityLabel: 'Quality',
+  exportNoteDefault: 'Pages without changes are embedded with their original data (fully lossless). The settings above apply only to changed pages.',
+  exportNoteLossless: 'Outputs the PDF keeping its original structure (vector text, image data, metadata) as-is.',
+  exportNoteMixed: 'Pages that support it are output losslessly; the rest use the image format above.',
+  losslessNoteOk: '✓ Keeps vector text and original image data while applying rotation and crops',
+  losslessNotePartial: 'Some pages keep the original PDF structure; the rest are output as images',
+  losslessNoteNg: '× Lossless save unavailable: ', losslessReasonLoad: 'the original PDF could not be read with pdf-lib ({0})', losslessReasonNone: 'image input, or no original PDF',
+  btnCancel: 'Cancel', btnSave: 'Save', btnRun: 'Run', btnSaveDo: 'Save', btnAddDo: 'Add', btnClose: 'Close',
+  splitTitle: '✂️ Split A3→A4 into left/right pages', splitDirLabel: 'Page order', splitDirLr: 'Left → Right (left-bound)', splitDirRl: 'Right → Left (right-bound)',
+  splitAfterLabel: 'After output', splitAfterDl: 'Download only', splitAfterSort: 'Send to Reorder tab',
+  splitResLabel: 'Resolution', splitResHi: 'High quality (recommended)', splitResOrig: 'Match original resolution',
+  splitNote: 'Splits each page into left and right halves and outputs them as separate pages. Skew corrections are applied too.',
+  ssTitle: '✂ Save split by dividers', ssFileLabel: 'Common file name', ssStartLabel: 'Start number',
+  ssTokensNote: '{seq} = number, {seq2}/{seq3} = zero-padded (2/3 digits), {name} = divider name, {file} = source file name',
+  ssPresetLabel: 'Divider-name presets (one per line)', ssPickerDefault: '— Load a saved preset —',
+  btnApply: 'Apply', ssPresetPh: 'Chapter 1\nChapter 2\nChapter 3', btnLoadTextFile: '📂 Load from a text file',
+  ssModeLabel: 'Save method', ssModeIndividual: 'Download as individual files',
+  ssModeZip: 'Download as one ZIP (recommended for many files)',
+  ssNoteDefault: 'Each divider section is saved as a separate file.',
+  ssNoteZip: 'All {0} files will be downloaded as one ZIP.',
+  ssNoteMany: 'The output is split into {0} files. With many files, the browser may fail to save some of them. Saving as one ZIP is recommended.',
+  ssNotePlain: 'The output is split into {0} files.',
+  bulkTitle: '｜ Add dividers in bulk', bulkEvery: 'Between every page (one page per file)',
+  bulkInterval: 'Every N pages', bulkIntervalNote: 'pages each (count resets at existing dividers)',
+  bulkCount: 'Add a batch at the end', bulkCountNote: 'dividers (drag them into place afterwards)',
+  bulkByList: 'Place from a page-count list (for part scores)',
+  bulkListPh: 'Trumpet:4\nHorn:3\nTuba:5\n(Name:pages. The name is optional; numbers alone are fine)',
+  bulkListNoteHtml: 'Divides from the start by the given page counts. If the total exceeds the actual page count, it is an error. If it is less, the rest joins the last section.<br>* Running this replaces all existing dividers with this list.',
+  pwaTitle: 'How to install', pwaInstalledTitle: 'Already installed', pwaInstalledBody: 'This app is already installed.',
+  pwaIosTitle: 'How to install on iOS',
+  pwaIosBodyHtml: '<p>Open this page in Safari.</p><ol style="margin-top:8px;padding-left:20px"><li>Tap the <strong>Share button (□↑)</strong> at the bottom</li><li>Choose "<strong>Add to Home Screen</strong>"</li><li>Tap "<strong>Add</strong>" at the top right</li></ol><p style="margin-top:10px;font-size:11px;color:var(--text3)">* Not supported in Chrome or Firefox.</p>',
+  pwaBodyHtml: '<ol style="padding-left:20px"><li><strong>Chrome:</strong> the "⊕" at the right end of the address bar, or "⋮" → "Install app"</li><li><strong>Edge:</strong> "…" → "Apps" → "Install this site as an app"</li><li><strong>Safari (Mac):</strong> menu File → "Add to Dock"</li></ol><p style="margin-top:10px;font-size:11px;color:var(--text3)">Firefox does not support PWA installation.</p>',
+  dropModalTitle: '📄 Add PDF to the Reorder tab', dropDiscard: '🗑 Discard and reopen', dropPrepend: '⬆ Insert at the start', dropAppend: '⬇ Insert at the end',
+  dropInfoSingle: 'Add "{0}" ({1} KB)', dropInfoMulti: 'Add "{0}" and {1} more file(s) ({2} KB total)',
+  progDefault: 'Processing...',
+  qbDirect: '✓ Uses original data directly (lossless)', qbKeep: '✓ Keeps the original PDF structure (lossless save available)',
+  qbVector: '△ Vector/mixed PDF (output with high-resolution re-rendering)', qbMixed: '△ Mixed mode', qbCanvas: '△ Via canvas (recompressed)',
+  ssqAll: '✓ Fully lossless save (keeps the original PDF structure as-is)', ssqAllNote: '* File size may differ by a few KB due to structure differences',
+  ssqPart: '△ Some pages are lossless; the rest are output as images', ssqNone: '△ Lossless save unavailable (output as images)',
+  loading: 'Loading…', loadErrorP: 'Load error: ', pagesLoaded: 'Loaded {0} pages',
+  parsing: 'Parsing PDF…', pdfjsLoading: 'Loading with pdf.js…', expanding: 'Extracting images… ({0}/{1})',
+  rendering: 'Rendering pages… ({0}/{1})', imgLoading: 'Loading images…', imgLoadingN: 'Loading images… ({0}/{1})',
+  dropToStart: 'Drop a PDF or images to start', appliedAll: 'Applied {0}° to all pages', pageReset: 'Reset page {0}',
+  processing: 'Processing…', splitting: 'Splitting… ({0}/{1})', generating: 'Generating PDF…', generatingN: 'Generating PDF… ({0}/{1})',
+  pageProcessing: 'Processing page {0}/{1}…', generatingLossless: 'Generating lossless PDF…',
+  sentToSort: 'Sent to the Reorder tab', saved: 'Saved!', savedLossless: 'Saved! (lossless mode)',
+  errorP: 'Error: ', losslessErrorP: 'Lossless error: ', cropCleared: 'Cleared the crop on page {0}',
+  noPages: 'There are no pages', dividersAddedAll: 'Added dividers between every page',
+  dividersAddedInterval: 'Added dividers every {0} pages', dividersAddedTail: 'Added {0} dividers at the end',
+  listEmpty: 'The list is empty', formatError: 'Format error: "{0}" (use the form Name:pages)', formatErrorShort: 'Format error: "{0}"',
+  tooManyPages: 'The list totals {0} pages, but there are only {1} pages', dividersPlaced: 'Placed {0} dividers',
+  remainNote: ' (the remaining {0} pages join the last section)', blankInserted: 'Inserted a blank page before page {0}', blankAddedEnd: 'Added a blank page at the end',
+  undone: 'Undone', redone: 'Redone', multiMode: 'Multi-select mode (tap to toggle / tap empty space to exit)',
+  pageProgress: 'Page {0}/{1}', savedFull: 'Saved! (fully lossless)', savedPart: 'Saved! (partly lossless)',
+  noDividers: 'There are no dividers', preparingZip: 'Preparing ZIP…',
+  zipLoadFailed: 'Failed to load the ZIP feature. Check your connection and try individual downloads.',
+  splitSaving: 'Saving split files…', splitSavingPause: 'Saving split files… (pausing to avoid browser limits)',
+  zipGenerating: 'Generating ZIP… ({0}%)', filesSaved: 'Saved {0} files', zipSuffix: ' (one ZIP)', losslessSuffix: ' (lossless)',
+  noReturnPages: 'There are no pages to send back', returnedInfo: 'Sent back ({0}p)', returnedToast: 'Sent {0} pages back to the Deskew tab',
+  pdfLoading: 'Loading PDF…', pagesInsertedFirst: 'Inserted {0} pages at the start', pagesInsertedLast: 'Inserted {0} pages at the end',
+  dividerAddedBefore: 'Added a divider before the page', dividerAddedAfter: 'Added a divider after the page',
+  dirNotSupportedToast: 'This browser does not support choosing a save folder', dirSet: 'Save folder set',
+  dirPickFailed: 'Failed to choose a folder', dirPermGranted: 'Access granted', dirPermDenied: 'Access was not granted',
+  dirPermFailed: 'Failed to get access permission', dirCleared: 'Save folder cleared',
+  presetNameRequired: 'Enter a preset name', presetSaved: 'Saved "{0}"', presetDeleted: 'Deleted "{0}"',
+  presetSelectRequired: 'Select a preset', presetApplied: 'Applied "{0}"',
+  jszipFailed: 'Failed to load JSZip', hdrInfoFmt: '{0} ({1}p)', hdrInfoMulti: '{0} and {1} more ({2}p)',
+  exampleSuffix: '.pdf (example)', fileLabelDefault: 'file', rotR90: 'R 90°', rotL90: 'L 90°',
+  popupDividerLabel: '｜ Add divider', popupDividerCount: 'Dividers: {0}',
+  popupPrevTitle: 'Add a divider before the displayed page', popupNextTitle: 'Add a divider after the displayed page',
+  pagesEmpty: 'There are no pages to save', popupInfoFmt: '{0} ({1} / {2})',
+  defaultBaseName: 'output', suffixSplit: '_split-A4', suffixCorrected: '_corrected', suffixSorted: '_reordered', splitZipBase: 'split'
+}
+};
+let lang = (function () {
+  try {
+    const s = localStorage.getItem('namatunepdf_lang');
+    if (s === 'ja' || s === 'en') return s;
+  } catch (_) {}
+  return (navigator.language || 'ja').toLowerCase().startsWith('en') ? 'en' : 'ja';
+})();
+function tr(k) { const t = STRINGS[lang] || STRINGS.ja; return (k in t) ? t[k] : (STRINGS.ja[k] || k); }
+function trf(k, ...a) { return tr(k).replace(/\{(\d+)\}/g, (m, n) => (a[+n] !== undefined ? a[+n] : m)); }
+function setLang(l) {
+  if (l !== 'ja' && l !== 'en') return;
+  lang = l;
+  try { localStorage.setItem('namatunepdf_lang', l); } catch (_) {}
+  applyLang();
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = tr(el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = tr(el.getAttribute('data-i18n-title')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = tr(el.getAttribute('data-i18n-ph')); });
+  const lj = document.getElementById('langBtnJa'), le = document.getElementById('langBtnEn');
+  if (lj && le) { lj.classList.toggle('primary', lang === 'ja'); le.classList.toggle('primary', lang === 'en'); }
+  const cb = document.getElementById('btnCropMode');
+  if (cb && typeof cropMode !== 'undefined') cb.textContent = cropMode ? tr('cropModeOff') : tr('cropMode');
+  const hi = document.getElementById('hdrInfo');
+  if (hi && !pages.length && !sortPages.length) hi.textContent = tr('hdrInfoDefault');
+  if (typeof renderGuideList === 'function') renderGuideList();
+  if (typeof updateCropStatus === 'function') updateCropStatus(pages.length ? pages[curPage] : null);
+  if (typeof updateQualityBadge === 'function' && pages.length) updateQualityBadge();
+  if (typeof buildSortGrid === 'function' && document.getElementById('tab-sort').classList.contains('active')) buildSortGrid();
+  if (typeof updateSortToolbar === 'function') updateSortToolbar();
+  if (typeof updateDirUI === 'function') updateDirUI();
+  if (typeof cfgLoadPresetList === 'function') cfgLoadPresetList();
+  if (typeof cfgUpdateSplitPreview === 'function') cfgUpdateSplitPreview();
+}
+
 let pages=[], curPage=0, zoom=1.0;
 let guides=[], guideDrag=null, guideIdCnt=0;
 const GUIDE_COLORS=['#4af','#f4a','#af4','#fa4','#a4f'];
@@ -815,7 +1099,7 @@ async function getSrcDocForPage(p){
 }
 function clearSrcDocCache(){_srcDocCache.clear();}
 // 出力ファイル名のベース（拡張子・パスなし）
-let currentBaseName='出力';
+let currentBaseName=tr('defaultBaseName');
 // 分割保存の「共通ファイル名」テンプレート。モーダルをキャンセルしても保持し、
 // 新規ファイルを開いた時だけリセットする。
 let splitFnameTemplate=null; // null = 未設定（初回オープン時に設定タブのデフォルトで初期化）
@@ -1006,17 +1290,24 @@ async function parsePDFImages(arrayBuffer){
 // =====================================================
 // ファイル読み込み
 // =====================================================
+function isPdfFile(f){return !!f&&(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));}
+function sortFilesByName(files){return Array.from(files).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));}
+function sortDropInfoText(files){
+  const sorted=sortFilesByName(files);
+  if(sorted.length===1)return trf('dropInfoSingle',sorted[0].name,Math.round(sorted[0].size/1024));
+  const totalKB=Math.round(sorted.reduce((s,f)=>s+f.size,0)/1024);
+  return trf('dropInfoMulti',sorted[0].name,sorted.length-1,totalKB);
+}
 document.getElementById('fileInput').addEventListener('change',e=>{
   const files=e.target.files;
   if(!files||!files.length)return;
-  const file=files[0];
   const onSort=document.getElementById('tab-sort').classList.contains('active');
   const hasContent=sortPages.length>0||pages.length>0;
-  const isPdf=file&&(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf'));
-  // 並べ替えタブ + 既存コンテンツあり + 単一PDF → ドロップと同じモーダル
-  if(onSort&&hasContent&&isPdf&&files.length===1){
-    pendingSortDropFile=file;
-    document.getElementById('sortPdfDropInfo').textContent=`「${file.name}」（${Math.round(file.size/1024)}KB）を追加`;
+  const allPdf=Array.from(files).every(isPdfFile);
+  // 並べ替えタブ + 既存コンテンツあり + 全てPDF → ドロップと同じモーダル
+  if(onSort&&hasContent&&allPdf){
+    pendingSortDropFiles=Array.from(files);
+    document.getElementById('sortPdfDropInfo').textContent=sortDropInfoText(files);
     document.getElementById('sortPdfDropModal').classList.add('open');
     e.target.value='';
     return;
@@ -1034,40 +1325,60 @@ canvasArea.addEventListener('drop',e=>{
 
 async function loadFiles(files){
   if(!files||files.length===0)return;
-  const file=files[0];
+  // 複数ファイルはドロップ順ではなくファイル名順（自然順）に統一する
+  const sorted=sortFilesByName(files);
+  const first=sorted[0];
   pages=[];guides=[];sortPages=[];sortSelected=new Set();
   originalPdfBytes=null;losslessAvailable=false;losslessLoadError=null;
-  currentBaseName=file.name.replace(/\.[^.]+$/,'');
+  currentBaseName=first.name.replace(/\.[^.]+$/,'');
   splitFnameTemplate=null; // 新規ファイルを開いたらファイル名テンプレートをリセット
   cfgUpdateSplitPreview();
   sortUndoStack=[];sortRedoStack=[];updateUndoRedoBadges();
   renderGuideList();
   document.getElementById('canvasHint').style.display='none';
-  showToast('読み込み中…');
+  showToast(tr('loading'));
   try{
-    if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){
-      await loadPDF(file);
+    if(sorted.every(f=>!isPdfFile(f))){
+      await loadImages(sorted);
     }else{
-      await loadImages(files);
+      for(const f of sorted){
+        const before=pages.length;
+        if(isPdfFile(f)){
+          await loadPDF(f);
+        }else{
+          await loadImages([f]);
+        }
+        // 複数ファイル時はPDF由来ページの srcName にファイル名を付けて区別する（単独時は従来通り）
+        if(sorted.length>1){
+          for(let j=before;j<pages.length;j++){
+            if(/^P\d+$/.test(pages[j].srcName||''))pages[j].srcName=`${f.name} P${j-before+1}`;
+          }
+        }
+      }
     }
+    // 合計ページ数でラベルを揃え直す（loadPDF/loadImages はファイル単位で書くため）
+    document.getElementById('pageTotalLabel').textContent=`/ ${pages.length}`;
+    document.getElementById('thumbPageCount').textContent=`${pages.length}p`;
     buildThumbsC();
     gotoPage(0);
     ['btnExportNormal','btnExportSplit'].forEach(id=>document.getElementById(id).disabled=false);
-    document.getElementById('hdrInfo').textContent=`${file.name}（${pages.length}p）`;
+    document.getElementById('hdrInfo').textContent=sorted.length>1
+      ? trf('hdrInfoMulti',first.name,sorted.length-1,pages.length)
+      : trf('hdrInfoFmt',first.name,pages.length);
     updateQualityBadge();
     canvasArea.classList.add('hand-mode');
     // 並べ替えタブが表示中なら一覧を再構築
     if(document.getElementById('tab-sort').classList.contains('active'))buildSortGrid();
-    showToast(`${pages.length}ページ読み込みました`);
+    showToast(trf('pagesLoaded',pages.length));
   }catch(err){
     hideProgress();
-    showToast('読み込みエラー: '+err.message);
+    showToast(tr('loadErrorP')+err.message);
     console.error(err);
   }
 }
 
 async function loadPDF(file){
-  showProgress('PDFを解析中…',0);
+  showProgress(tr('parsing'),0);
   const buf=await file.arrayBuffer();
 
   // 無劣化モード用：pdf-lib で読み込みを試行
@@ -1096,7 +1407,7 @@ async function loadPDF(file){
 
   if(images.length===0){
     // フォールバック: pdf.jsを動的ロード
-    showProgress('pdf.jsで読み込み中…',0);
+    showProgress(tr('pdfjsLoading'),0);
     await loadPDFWithPdfJs(buf);
     return;
   }
@@ -1105,7 +1416,7 @@ async function loadPDF(file){
   document.getElementById('thumbPageCount').textContent=`${images.length}p`;
 
   for(let i=0;i<images.length;i++){
-    showProgress(`画像を展開中… (${i+1}/${images.length})`, (i+1)/images.length);
+    showProgress(trf('expanding',i+1,images.length), (i+1)/images.length);
     const img=images[i];
     // プレビュー用canvas生成（巨大画像はクランプ）
     const previewCanvas=await jpegBytesToCanvas(img.jpegBytes);
@@ -1149,7 +1460,7 @@ async function loadPDFWithPdfJs(buf){
   document.getElementById('pageTotalLabel').textContent=`/ ${n}`;
   document.getElementById('thumbPageCount').textContent=`${n}p`;
   for(let i=1;i<=n;i++){
-    showProgress(`ページをレンダリング中… (${i}/${n})`, i/n);
+    showProgress(trf('rendering',i,n), i/n);
     const pg=await pdfDoc.getPage(i);
     // ページの /Rotate（0/90/180/270）を絶対表示角として rot90 の初期値に使う。
     // レンダリング自体は rotation:0 を明示して常に「無回転」状態で行う
@@ -1215,14 +1526,14 @@ async function loadImages(files){
   const n=sorted.length;
   document.getElementById('pageTotalLabel').textContent=`/ ${n}`;
   document.getElementById('thumbPageCount').textContent=`${n}p`;
-  showProgress('画像を読み込み中…',0);
+  showProgress(tr('imgLoading'),0);
   for(let i=0;i<n;i++){
     const c=await imgToCanvas(sorted[i]);
     pages.push({sourceType:'image',canvas:c,jpegBytes:null,
       origWidth:c.width,origHeight:c.height,
       angle:0,rot90:0,cropRect:null,cropAspect:'free',srcName:sorted[i].name,
       losslessCapable:false});
-    showProgress(`画像を読み込み中… (${i+1}/${n})`, (i+1)/n);
+    showProgress(trf('imgLoadingN',i+1,n), (i+1)/n);
     await new Promise(r=>setTimeout(r,0));
   }
   hideProgress();
@@ -1251,15 +1562,15 @@ function updateQualityBadge(){
   const allLossless=pages.length>0&&pages.every(p=>p.losslessCapable);
   const el=document.getElementById('qualityInfo');
   if(allJpeg){
-    el.innerHTML='<span class="quality-badge quality-lossless">✓ 元データ直接利用（無劣化）</span>';
+    el.innerHTML='<span class="quality-badge quality-lossless">'+tr('qbDirect')+'</span>';
   }else if(allLossless){
-    el.innerHTML='<span class="quality-badge quality-lossless">✓ 元PDF構造を保持（無劣化保存可）</span>';
+    el.innerHTML='<span class="quality-badge quality-lossless">'+tr('qbKeep')+'</span>';
   }else if(hasPdfjs&&pages.every(p=>p.sourceType==='pdf-pdfjs')){
-    el.innerHTML='<span class="quality-badge quality-lossy">△ ベクター/複合PDF（高解像度再描画で出力）</span>';
+    el.innerHTML='<span class="quality-badge quality-lossy">'+tr('qbVector')+'</span>';
   }else if(pages.some(p=>p.sourceType==='pdf-jpeg')){
-    el.innerHTML='<span class="quality-badge quality-lossy">△ 混在モード</span>';
+    el.innerHTML='<span class="quality-badge quality-lossy">'+tr('qbMixed')+'</span>';
   }else{
-    el.innerHTML='<span class="quality-badge quality-lossy">△ Canvas経由（再圧縮あり）</span>';
+    el.innerHTML='<span class="quality-badge quality-lossy">'+tr('qbCanvas')+'</span>';
   }
 }
 
@@ -1307,14 +1618,14 @@ function applyToAllPages(){
   if(pages.length===0)return;
   const a=pages[curPage].angle;
   pages.forEach((p,i)=>{p.angle=a;updateThumbC(i);});
-  showToast(`全ページに ${a.toFixed(2)}° 適用`);
+  showToast(trf('appliedAll',a.toFixed(2)));
 }
 function resetCurrentPage(){
   if(pages.length===0)return;
   const p=pages[curPage];
   p.angle=0;p.rot90=0;p.cropRect=null;
   setAngle(0);syncCropUIToPage(p);updateThumbC(curPage);
-  showToast(`ページ ${curPage+1} をリセット`);
+  showToast(trf('pageReset',curPage+1));
 }
 
 // =====================================================
@@ -1505,14 +1816,14 @@ function openExportModal(){
     cb.disabled=false;cb.checked=true;
     const allCapable=pages.every(p=>p.losslessCapable);
     note.innerHTML=allCapable
-      ? '✓ ベクター文字・元画像データを保持したまま、回転やクロップを反映できます'
-      : '一部のページは元PDF構造を保持して保存。それ以外のページは画像で出力されます';
+      ? tr('losslessNoteOk')
+      : tr('losslessNotePartial');
     note.style.color=allCapable?'var(--green)':'var(--amber)';
   }else{
     cb.disabled=true;cb.checked=false;
-    note.innerHTML='× 無劣化保存不可：'+(losslessLoadError
-      ? '元PDFをpdf-libで読み込めませんでした（'+escapeHtml(losslessLoadError)+'）'
-      : '画像入力または元PDFがありません');
+    note.innerHTML=tr('losslessNoteNg')+(losslessLoadError
+      ? trf('losslessReasonLoad',escapeHtml(losslessLoadError))
+      : tr('losslessReasonNone'));
     note.style.color='var(--amber)';
   }
   updateExportModalUI();
@@ -1536,9 +1847,9 @@ function updateExportModalUI(){
   if(qrow)qrow.style.display=((lossless&&!hasFallback)||isPng)?'none':'flex';
   const noteEl=document.getElementById('exportModeNote');
   if(noteEl){
-    if(lossless&&!hasFallback)noteEl.textContent='元PDFの構造（ベクター文字、画像データ、メタデータ）をそのまま保持して出力します。';
-    else if(lossless)noteEl.textContent='対応可能ページは無劣化、それ以外のページは上記の画像形式で出力されます。';
-    else noteEl.textContent='変換のないページは元データのまま埋め込み（完全無劣化）。変換ありページにのみ上記設定が適用されます。';
+    if(lossless&&!hasFallback)noteEl.textContent=tr('exportNoteLossless');
+    else if(lossless)noteEl.textContent=tr('exportNoteMixed');
+    else noteEl.textContent=tr('exportNoteDefault');
   }
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -1572,12 +1883,12 @@ async function doSplitExport(){
   const after=document.getElementById('splitAfter').value;
   const fmt=getSplitFormat(),q=getSplitQuality();
   const useOrigRes=(document.getElementById('splitResMode')?.value==='original');
-  showProgress('処理中…',0);
+  showProgress(tr('processing'),0);
   await new Promise(r=>setTimeout(r,50));
   try{
     const halves=[];
     for(let i=0;i<pages.length;i++){
-      showProgress(`分割中… (${i+1}/${pages.length})`,i/pages.length);
+      showProgress(trf('splitting',i+1,pages.length),i/pages.length);
       const final=await buildOutputCanvas(pages[i],useOrigRes);
       const hw=Math.floor(final.width/2);
       const left=cropCanvas(final,0,0,hw,final.height);
@@ -1589,7 +1900,7 @@ async function doSplitExport(){
     const{PDFDocument}=PDFLib;
     const newPdf=await PDFDocument.create();
     for(let i=0;i<halves.length;i++){
-      showProgress(`PDF生成中… (${i+1}/${halves.length})`,(i+1)/halves.length);
+      showProgress(trf('generatingN',i+1,halves.length),(i+1)/halves.length);
       const{canvas:c}=halves[i];
       const imgBytes=await canvasToImageBytes(c,fmt,q);
       let img;
@@ -1600,33 +1911,33 @@ async function doSplitExport(){
     }
     const bytes=await newPdf.save();
     hideProgress();
-    await downloadBytes(bytes,`${currentBaseName}_A4分割.pdf`,'application/pdf');
+    await downloadBytes(bytes,`${currentBaseName}${tr('suffixSplit')}.pdf`,'application/pdf');
     if(after==='sort'){
       sortPages=halves.map(h=>({canvas:h.canvas,label:h.label}));
       sortSelected=new Set();buildSortGrid();switchTab('sort');
-      showToast('並べ替えタブに渡しました');
+      showToast(tr('sentToSort'));
     }else{
-      showToast('保存しました！');
+      showToast(tr('saved'));
     }
-  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+  }catch(err){hideProgress();showToast(tr('errorP')+err.message);console.error(err);}
 }
 
 async function exportPDF(mode){
   if(pages.length===0)return;
   const fmt=getOutFormat(),q=getJpegQuality();
-  showProgress('PDF生成中…',0);await new Promise(r=>setTimeout(r,50));
+  showProgress(tr('generating'),0);await new Promise(r=>setTimeout(r,50));
   try{
     const{PDFDocument}=PDFLib;const newPdf=await PDFDocument.create();
     for(let i=0;i<pages.length;i++){
-      showProgress(`ページ ${i+1}/${pages.length} 処理中…`,i/pages.length);
+      showProgress(trf('pageProcessing',i+1,pages.length),i/pages.length);
       await addPageToPdf(newPdf,pages[i],fmt,q);
       await new Promise(r=>setTimeout(r,0));
     }
     const bytes=await newPdf.save();
     hideProgress();
-    await downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
-    showToast('保存しました！');
-  }catch(err){hideProgress();showToast('エラー: '+err.message);console.error(err);}
+    await downloadBytes(bytes,`${currentBaseName}${tr('suffixCorrected')}.pdf`,'application/pdf');
+    showToast(tr('saved'));
+  }catch(err){hideProgress();showToast(tr('errorP')+err.message);console.error(err);}
 }
 
 // =====================================================
@@ -1635,14 +1946,14 @@ async function exportPDF(mode){
 async function exportPDFLossless(){
   if(pages.length===0)return;
   const fmt=getOutFormat(),q=getJpegQuality();
-  showProgress('無劣化PDFを生成中…',0);
+  showProgress(tr('generatingLossless'),0);
   await new Promise(r=>setTimeout(r,50));
   try{
     const{PDFDocument}=PDFLib;
     clearSrcDocCache();
     const newDoc=await PDFDocument.create();
     for(let i=0;i<pages.length;i++){
-      showProgress(`ページ ${i+1}/${pages.length} 処理中…`,i/pages.length);
+      showProgress(trf('pageProcessing',i+1,pages.length),i/pages.length);
       const p=pages[i];
       if(p.losslessCapable&&p.srcPdfBytes&&p.pdfLibPageIndex!=null&&p.pdfLibPageIndex>=0){
         await addPageLossless(newDoc,null,null,p);
@@ -1654,9 +1965,9 @@ async function exportPDFLossless(){
     const bytes=await newDoc.save();
     clearSrcDocCache();
     hideProgress();
-    await downloadBytes(bytes,`${currentBaseName}_補正済み.pdf`,'application/pdf');
-    showToast('保存しました！（無劣化モード）');
-  }catch(err){clearSrcDocCache();hideProgress();showToast('無劣化エラー: '+err.message);console.error(err);}
+    await downloadBytes(bytes,`${currentBaseName}${tr('suffixCorrected')}.pdf`,'application/pdf');
+    showToast(tr('savedLossless'));
+  }catch(err){clearSrcDocCache();hideProgress();showToast(tr('losslessErrorP')+err.message);console.error(err);}
 }
 
 // 1ページを無劣化で出力PDFに追加
@@ -1801,8 +2112,8 @@ function clearGuides(){guides=[];renderGuideList();renderPage();}
 function removeGuide(id){guides=guides.filter(g=>g.id!==id);renderGuideList();renderPage();}
 function renderGuideList(){
   const el=document.getElementById('guideList');
-  if(!guides.length){el.innerHTML='<div style="color:var(--text3);font-size:10px;padding:2px 0">なし</div>';return;}
-  el.innerHTML=guides.map(g=>`<div class="guide-item"><div class="guide-color" style="background:${g.color}"></div><div class="guide-pos">${g.type==='h'?'水平':'垂直'} ${(g.pos*100).toFixed(1)}%</div><button class="guide-del" onclick="removeGuide(${g.id})">✕</button></div>`).join('');
+  if(!guides.length){el.innerHTML='<div style="color:var(--text3);font-size:10px;padding:2px 0">'+tr('guideNone')+'</div>';return;}
+  el.innerHTML=guides.map(g=>`<div class="guide-item"><div class="guide-color" style="background:${g.color}"></div><div class="guide-pos">${g.type==='h'?tr('guideHorizontal'):tr('guideVertical')} ${(g.pos*100).toFixed(1)}%</div><button class="guide-del" onclick="removeGuide(${g.id})">✕</button></div>`).join('');
 }
 function drawGuides(){
   const dpr=window.devicePixelRatio||1;
@@ -1908,14 +2219,14 @@ function toggleCropMode(){
   canvasArea.style.cursor='';
   handDragging=false;
   if(cropMode){
-    ov.classList.add('active');btn.textContent='✕ 選択解除';btn.style.borderColor='var(--accent2)';
+    ov.classList.add('active');btn.textContent=tr('cropModeOff');btn.style.borderColor='var(--accent2)';
     canvasArea.classList.remove('hand-mode');
     if(det)det.style.display='block';
     // renderPage()でインラインstyleが先に'none'にセットされている場合があるので上書き
     ov.style.pointerEvents='all';
     ov.style.cursor='crosshair';
   }else{
-    ov.classList.remove('active');btn.textContent='✂ 範囲選択';btn.style.borderColor='';
+    ov.classList.remove('active');btn.textContent=tr('cropMode');btn.style.borderColor='';
     canvasArea.classList.add('hand-mode');
     cropOvCtx.clearRect(0,0,cropOvCanvas.width,cropOvCanvas.height);
     if(det)det.style.display='none';
@@ -1970,7 +2281,7 @@ function clearCrop(){
   ['cropX','cropY','cropW','cropH'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnCropClear').disabled=true;
   updateCropStatus(p);updateThumbC(curPage);renderPage();
-  showToast(`ページ ${curPage+1} のクロップ予定を解除`);
+  showToast(trf('cropCleared',curPage+1));
 }
 function syncCropUIToPage(p){
   if(p.cropRect){cropRect={...p.cropRect};document.getElementById('btnCropClear').disabled=false;}
@@ -1984,9 +2295,9 @@ function updateCropStatus(p){
   const el=document.getElementById('cropStatus');
   if(p&&p.cropRect){
     const cr=p.cropRect;
-    el.textContent=`設定済み：${cr.x},${cr.y}  ${cr.w}×${cr.h}px`;el.style.color='var(--amber)';
+    el.textContent=trf('cropSetFmt',cr.x,cr.y,cr.w,cr.h);el.style.color='var(--amber)';
   }else{
-    el.textContent='未設定（保存時は全面）';el.style.color='var(--text3)';
+    el.textContent=tr('cropUnset');el.style.color='var(--text3)';
   }
 }
 function drawCropOverlay(){
@@ -2148,7 +2459,7 @@ function buildThumbsC(){
 function dotClass(p){return 'thumb-dot-c'+(p.angle!==0||p.rot90!==0||p.cropRect?' edited':'');}
 function thumbLabelC(p){
   const pts=[];if(p.angle!==0)pts.push(`${p.angle>=0?'+':''}${p.angle.toFixed(2)}°`);
-  if(p.rot90!==0)pts.push(['','右90°','180°','左90°'][p.rot90]);return pts.join(' ')||'—';
+  if(p.rot90!==0)pts.push(['',tr('rotR90'),'180°',tr('rotL90')][p.rot90]);return pts.join(' ')||'—';
 }
 function drawThumbC(tc,p){
   const s=p.canvas;const sw=(p.rot90===1||p.rot90===3);
@@ -2185,7 +2496,7 @@ function buildSortGrid(){
   }
   sortSelected=new Set();
   if(sortPages.length===0){
-    document.getElementById('sortGrid').innerHTML='<div style="text-align:center;padding:40px 20px;pointer-events:none"><div style="font-size:44px;opacity:.2;margin-bottom:8px">🎵</div><p style="color:var(--text3);font-size:13px;line-height:1.7">PDFまたは画像をここにドロップ<br>または右上の「開く」から選択</p></div><div id="sortDropIndicator"></div>';
+    document.getElementById('sortGrid').innerHTML='<div style="text-align:center;padding:40px 20px;pointer-events:none"><div style="font-size:44px;opacity:.2;margin-bottom:8px">🎵</div><p style="color:var(--text3);font-size:13px;line-height:1.7">'+tr('sortEmptyHtml')+'</p></div><div id="sortDropIndicator"></div>';
     updateSortToolbar();return;
   }
   buildSortGridReal();
@@ -2208,7 +2519,7 @@ function getSortSectionMap(){
       cur=[];
     }else cur.push(i);
   });
-  if(cur.length>0)sections.push({pages:[...cur],name:'最終'});
+  if(cur.length>0)sections.push({pages:[...cur],name:tr('lastSection')});
   // プリセット上書き
   for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
   const map=new Map();
@@ -2363,7 +2674,7 @@ async function withSortRot(sp,fn){
 function updateSortToolbar(){
   const pn=sortPages.filter(p=>!p.isDivider).length;
   const nd=sortPages.filter(p=>p.isDivider).length;
-  document.getElementById('sortInfo').textContent=pn?`${pn}ページ${nd>0?'　区切り×'+nd:''}`:'ページなし';
+  document.getElementById('sortInfo').textContent=pn?trf('sortInfoFmt',pn,nd>0?trf('sortInfoDiv',nd):''):tr('sortInfoNone');
   document.getElementById('btnSortDelete').disabled=sortSelected.size===0;
   document.getElementById('btnSortRotL').disabled=sortSelected.size===0;
   document.getElementById('btnSortRotR').disabled=sortSelected.size===0;
@@ -2372,11 +2683,11 @@ function updateSortToolbar(){
   document.getElementById('btnSortSplit').disabled=nd===0;
   document.getElementById('btnReturnToCorrect').disabled=pn===0;
 }
-function addDivider(){sortPushUndo();sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});buildSortGridReal();}
+function addDivider(){sortPushUndo();sortPages.push({isDivider:true,name:trf('dividerName',++dividerIdCnt)});buildSortGridReal();}
 
 // ===== 区切りをまとめて追加 =====
 function openBulkDividerModal(){
-  if(!sortPages.filter(p=>!p.isDivider).length){showToast('ページがありません');return;}
+  if(!sortPages.filter(p=>!p.isDivider).length){showToast(tr('noPages'));return;}
   document.getElementById('bulkDividerModal').classList.add('open');
   updateBulkDividerModeUI();
 }
@@ -2397,7 +2708,7 @@ function onBulkDivListFile(e){
 function doBulkDividerAdd(){
   const mode=document.querySelector('input[name="bulkDivMode"]:checked')?.value;
   const pagesOnly=sortPages.filter(p=>!p.isDivider);
-  if(!pagesOnly.length){showToast('ページがありません');return;}
+  if(!pagesOnly.length){showToast(tr('noPages'));return;}
 
   if(mode==='every'){
     sortPushUndo();
@@ -2405,11 +2716,11 @@ function doBulkDividerAdd(){
     for(let i=0;i<sortPages.length;i++){
       const cur=sortPages[i],nxt=sortPages[i+1];
       next.push(cur);
-      if(!cur.isDivider&&nxt&&!nxt.isDivider)next.push({isDivider:true,name:`区切り${++dividerIdCnt}`});
+      if(!cur.isDivider&&nxt&&!nxt.isDivider)next.push({isDivider:true,name:trf('dividerName',++dividerIdCnt)});
     }
     sortPages=next;
     buildSortGridReal();closeBulkDividerModal();
-    showToast('全ページ間に区切りを追加しました');
+    showToast(tr('dividersAddedAll'));
 
   }else if(mode==='interval'){
     const n=Math.max(1,parseInt(document.getElementById('bulkDivIntervalN').value)||1);
@@ -2421,48 +2732,48 @@ function doBulkDividerAdd(){
       if(item.isDivider){cnt=0;continue;}
       cnt++;
       const nxt=sortPages[i+1];
-      if(cnt>=n&&nxt&&!nxt.isDivider){next.push({isDivider:true,name:`区切り${++dividerIdCnt}`});cnt=0;}
+      if(cnt>=n&&nxt&&!nxt.isDivider){next.push({isDivider:true,name:trf('dividerName',++dividerIdCnt)});cnt=0;}
     }
     sortPages=next;
     buildSortGridReal();closeBulkDividerModal();
-    showToast(`${n}ページおきに区切りを追加しました`);
+    showToast(trf('dividersAddedInterval',n));
 
   }else if(mode==='count'){
     const n=Math.max(1,Math.min(50,parseInt(document.getElementById('bulkDivCountN').value)||1));
     sortPushUndo();
-    for(let i=0;i<n;i++)sortPages.push({isDivider:true,name:`区切り${++dividerIdCnt}`});
+    for(let i=0;i<n;i++)sortPages.push({isDivider:true,name:trf('dividerName',++dividerIdCnt)});
     buildSortGridReal();closeBulkDividerModal();
-    showToast(`末尾に区切りを${n}本追加しました`);
+    showToast(trf('dividersAddedTail',n));
 
   }else if(mode==='bylist'){
     const text=document.getElementById('bulkDivListArea').value;
     const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    if(!lines.length){showToast('リストが空です');return;}
+    if(!lines.length){showToast(tr('listEmpty'));return;}
     const sections=[];
     for(const line of lines){
       const m=line.match(/^(?:(.*):)?\s*(\d+)\s*$/);
-      if(!m){showToast(`形式エラー: "${line}"（名前:ページ数 の形式で入力してください）`);return;}
+      if(!m){showToast(trf('formatError',line));return;}
       const name=(m[1]||'').trim();
       const cnt=parseInt(m[2]);
-      if(!cnt||cnt<=0){showToast(`形式エラー: "${line}"`);return;}
+      if(!cnt||cnt<=0){showToast(trf('formatErrorShort',line));return;}
       sections.push({name,cnt});
     }
     const totalNeeded=sections.reduce((a,s)=>a+s.cnt,0);
     if(totalNeeded>pagesOnly.length){
-      showToast(`合計${totalNeeded}ページ指定ですが、実際は${pagesOnly.length}ページしかありません`);
+      showToast(trf('tooManyPages',totalNeeded,pagesOnly.length));
       return;
     }
     sortPushUndo();
     const next=[];let idx=0;
     sections.forEach(s=>{
       for(let k=0;k<s.cnt;k++)next.push(pagesOnly[idx++]);
-      next.push({isDivider:true,name:s.name||`区切り${++dividerIdCnt}`});
+      next.push({isDivider:true,name:s.name||trf('dividerName',++dividerIdCnt)});
     });
     while(idx<pagesOnly.length)next.push(pagesOnly[idx++]); // 余りは最終セクションへ
     sortPages=next;
     buildSortGridReal();closeBulkDividerModal();
     const remain=pagesOnly.length-totalNeeded;
-    showToast(`区切りを${sections.length}本配置しました${remain>0?`（残り${remain}ページは最終セクション）`:''}`);
+    showToast(trf('dividersPlaced',sections.length)+(remain>0?trf('remainNote',remain):''));
   }
 }
 
@@ -2504,14 +2815,14 @@ async function insertBlankPage(){
   blank.width=Math.round(blankPtW*sc);blank.height=Math.round(blankPtH*sc);
   const ctx=blank.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,blank.width,blank.height);
 
-  const sp={canvas:blank,label:'白紙',isBlank:true,blankPtW,blankPtH,rot90:0};
+  const sp={canvas:blank,label:tr('blankLabel'),isBlank:true,blankPtW,blankPtH,rot90:0};
   sortPushUndo();
   if(selNonDiv.length>0){
     sortPages.splice(refIdx,0,sp);
-    showToast(`白紙を ${refIdx+1} 枚目の直前に挿入しました`);
+    showToast(trf('blankInserted',refIdx+1));
   }else{
     sortPages.push(sp);
-    showToast('白紙を最後尾に追加しました');
+    showToast(tr('blankAddedEnd'));
   }
   buildSortGridReal();
 }
@@ -2533,7 +2844,7 @@ function sortDeleteSelected(){
 let sortDropTarget=null;
 let sortLastClicked=null;
 let sortDragGroup=null;
-let pendingSortDropFile=null;
+let pendingSortDropFiles=null;
 
 // アンドゥ・リドゥ（sortPages の配列スナップショット）
 let sortUndoStack=[];
@@ -2551,14 +2862,14 @@ function sortUndo(){
   sortRedoStack.push(sortPages.map(sp=>({...sp})));
   sortPages=sortUndoStack.pop();
   buildSortGridReal();updateUndoRedoBadges();
-  showToast('元に戻しました');
+  showToast(tr('undone'));
 }
 function sortRedo(){
   if(!sortRedoStack.length)return;
   sortUndoStack.push(sortPages.map(sp=>({...sp})));
   sortPages=sortRedoStack.pop();
   buildSortGridReal();updateUndoRedoBadges();
-  showToast('やり直しました');
+  showToast(tr('redone'));
 }
 function updateUndoRedoBadges(){
   const ub=document.getElementById('undoBadge');
@@ -2581,7 +2892,7 @@ function enterMultiSelectMode(){
   if(sortMultiTouchMode)return;
   sortMultiTouchMode=true;
   document.getElementById('btnSortExitMulti').style.display='';
-  showToast('複数選択モード（タップでトグル / 空白タップで解除）');
+  showToast(tr('multiMode'));
 }
 function exitMultiSelectMode(){
   sortMultiTouchMode=false;
@@ -2792,16 +3103,18 @@ function onSortDragEnd(){
     // ファイルドロップ
     if(e.dataTransfer.types.includes('Files')){
       e.preventDefault();
-      const file=e.dataTransfer.files[0];
-      if(file&&(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf'))){
+      const dropped=Array.from(e.dataTransfer.files||[]);
+      if(dropped.length&&dropped.every(isPdfFile)){
         // 何も読み込まれていない場合は素直に読み込む
         if(sortPages.length===0&&pages.length===0){
-          loadFiles([file]);
+          loadFiles(dropped);
         }else{
-          pendingSortDropFile=file;
-          document.getElementById('sortPdfDropInfo').textContent=`「${file.name}」（${Math.round(file.size/1024)}KB）を追加`;
+          pendingSortDropFiles=dropped;
+          document.getElementById('sortPdfDropInfo').textContent=sortDropInfoText(dropped);
           document.getElementById('sortPdfDropModal').classList.add('open');
         }
+      }else if(dropped.length&&sortPages.length===0&&pages.length===0){
+        loadFiles(dropped);
       }
       return;
     }
@@ -2822,13 +3135,13 @@ function onSortDragEnd(){
 
 async function exportSortedPDF(){
   const pagesOnly=sortPages.filter(p=>!p.isDivider);if(!pagesOnly.length)return;
-  showProgress('PDF生成中…',0);await new Promise(r=>setTimeout(r,50));
+  showProgress(tr('generating'),0);await new Promise(r=>setTimeout(r,50));
   try{
     const{PDFDocument}=PDFLib;
     clearSrcDocCache();
     const newPdf=await PDFDocument.create();
     for(let i=0;i<pagesOnly.length;i++){
-      showProgress(`ページ ${i+1}/${pagesOnly.length}`,(i+1)/pagesOnly.length);
+      showProgress(trf('pageProgress',i+1,pagesOnly.length),(i+1)/pagesOnly.length);
       const sp=pagesOnly[i];
       if(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes&&sp.page.pdfLibPageIndex!=null){
         await withSortRot(sp,()=>addPageLossless(newPdf,null,null,sp.page));
@@ -2851,14 +3164,14 @@ async function exportSortedPDF(){
     const isPageLossless=sp=>(sp.page&&sp.page.losslessCapable&&sp.page.srcPdfBytes)||(sp.isBlank&&sp.blankPtW);
     const anyLossless=pagesOnly.some(isPageLossless);
     const allLossless=pagesOnly.length>0&&pagesOnly.every(isPageLossless);
-    await downloadBytes(bytes,`${currentBaseName}_並べ替え済み.pdf`,'application/pdf');
-    showToast(allLossless?'保存しました！（完全無劣化）':anyLossless?'保存しました！（一部無劣化）':'保存しました！');
-  }catch(err){clearSrcDocCache();hideProgress();showToast('エラー: '+err.message);console.error(err);}
+    await downloadBytes(bytes,`${currentBaseName}${tr('suffixSorted')}.pdf`,'application/pdf');
+    showToast(allLossless?tr('savedFull'):anyLossless?tr('savedPart'):tr('saved'));
+  }catch(err){clearSrcDocCache();hideProgress();showToast(tr('errorP')+err.message);console.error(err);}
 }
 
 // 分割保存
 function openSortSplitModal(){
-  const nd=sortPages.filter(p=>p.isDivider).length;if(!nd){showToast('区切りが1つもありません');return;}
+  const nd=sortPages.filter(p=>p.isDivider).length;if(!nd){showToast(tr('noDividers'));return;}
   // splitFnameTemplate が未設定なら設定タブのデフォルトで初期化
   if(splitFnameTemplate===null){
     const cfgFn=(document.getElementById('cfg_splitFileName')?.value||'').trim();
@@ -2888,11 +3201,11 @@ function openSortSplitModal(){
   const qEl=document.getElementById('sortSplitQualityBadge');
   if(qEl){
     if(allLossless){
-      qEl.innerHTML='<span class="quality-badge quality-lossless">✓ 完全無劣化で保存（元のPDF構造をそのまま保持）</span><div style="font-size:10px;color:var(--text3);margin-top:3px">※ファイル構造の違いでサイズが数KB前後することがあります</div>';
+      qEl.innerHTML='<span class="quality-badge quality-lossless">'+tr('ssqAll')+'</span><div style="font-size:10px;color:var(--text3);margin-top:3px">'+tr('ssqAllNote')+'</div>';
     }else if(canLossless){
-      qEl.innerHTML='<span class="quality-badge quality-lossy">△ 一部ページは無劣化、それ以外は画像で出力</span>';
+      qEl.innerHTML='<span class="quality-badge quality-lossy">'+tr('ssqPart')+'</span>';
     }else{
-      qEl.innerHTML='<span class="quality-badge quality-lossy">△ 無劣化保存不可（画像として出力）</span>';
+      qEl.innerHTML='<span class="quality-badge quality-lossy">'+tr('ssqNone')+'</span>';
     }
   }
   document.getElementById('sortSplitModal').classList.add('open');
@@ -2909,8 +3222,8 @@ function updateFnamePreview(skipGridRefresh=false){
   const tmpl=splitFnameTemplate!==null?splitFnameTemplate:(cfgFn||`{seq}) {file}_{name}`);
   const sn=parseInt(document.getElementById('ssStartNum').value)||1;
   const preset0=(document.getElementById('ssPresetArea').value.split(/\r?\n/)[0]||'').trim();
-  const fn=preset0||sortPages.find(p=>p.isDivider)?.name||'第1章';
-  document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+'.pdf（例）';
+  const fn=preset0||sortPages.find(p=>p.isDivider)?.name||tr('chapter1');
+  document.getElementById('fnamePreview').textContent=buildFileName(tmpl,sn,fn)+tr('exampleSuffix');
   cfgUpdateSplitPreview();
   // ファイル名ラベルをグリッドに即時反映（区切りがあるときのみ。インライン編集中は再描画しない）
   if(!skipGridRefresh&&sortPages.some(p=>p.isDivider))buildSortGridReal();
@@ -2918,7 +3231,7 @@ function updateFnamePreview(skipGridRefresh=false){
 function cfgUpdateSplitPreview(){
   const el=document.getElementById('cfg_splitPreview');if(!el)return;
   const tmpl=(document.getElementById('cfg_splitFileName')?.value||'').trim()||`{seq}) {file}_{name}`;
-  const fileLabel=currentBaseName||'ファイル名';
+  const fileLabel=currentBaseName||tr('fileLabelDefault');
   const fn='Trumpet';
   const result=tmpl
     .replace(/\{seq3\}/g,'001')
@@ -2926,7 +3239,7 @@ function cfgUpdateSplitPreview(){
     .replace(/\{seq\}/g,'1')
     .replace(/\{name\}/g,fn)
     .replace(/\{file\}/g,fileLabel);
-  el.textContent=result+'.pdf（例）';
+  el.textContent=result+tr('exampleSuffix');
 }
 function buildFileName(tmpl,seq,name){
   return tmpl
@@ -2948,7 +3261,7 @@ function ensureJSZip(){
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
     s.onload=()=>res();
-    s.onerror=()=>{jsZipLoadPromise=null;rej(new Error('JSZipの読み込みに失敗しました'));};
+    s.onerror=()=>{jsZipLoadPromise=null;rej(new Error(tr('jszipFailed')));};
     document.head.appendChild(s);
   });
   return jsZipLoadPromise;
@@ -2971,11 +3284,11 @@ function updateSsOutModeNote(){
   const el=document.getElementById('ssOutModeNote');if(!el)return;
   const n=countSortSections();
   if(mode==='zip'){
-    el.textContent=`全${n}ファイルを1つのZIPにまとめてダウンロードします。`;
+    el.textContent=trf('ssNoteZip',n);
   }else if(n>=SS_ZIP_SUGGEST_THRESHOLD){
-    el.textContent=`${n}ファイルに分割されます。分割数が多いと、ブラウザの仕様で一部ファイルが保存されないことがあります。ZIPでのまとめ保存を推奨します。`;
+    el.textContent=trf('ssNoteMany',n);
   }else{
-    el.textContent=`${n}ファイルに分割されます。`;
+    el.textContent=trf('ssNotePlain',n);
   }
 }
 
@@ -2989,8 +3302,8 @@ async function doSortSplitExport(){
   closeSortSplitModal();
   const sections=[];let cur=[];
   for(const item of sortPages){if(item.isDivider){if(cur.length>0)sections.push({pages:cur,name:item.name});cur=[];}else cur.push(item);}
-  if(cur.length>0)sections.push({pages:cur,name:'最終'});
-  if(!sections.length){showToast('ページが空です');return;}
+  if(cur.length>0)sections.push({pages:cur,name:tr('lastSection')});
+  if(!sections.length){showToast(tr('pagesEmpty'));return;}
   // 区切り名プリセット（改行区切り）: i行目があればsections[i].nameを上書き
   const presetLines=presetLinesRaw.split(/\r?\n/).map(s=>s.trim());
   for(let i=0;i<sections.length;i++){if(presetLines[i])sections[i].name=presetLines[i];}
@@ -2999,13 +3312,13 @@ async function doSortSplitExport(){
 
   let zip=null;
   if(outMode==='zip'){
-    showProgress('ZIP機能を準備中…',0);
+    showProgress(tr('preparingZip'),0);
     try{await ensureJSZip();}
-    catch(e){hideProgress();showToast('ZIP機能の読み込みに失敗しました。通信環境をご確認の上、個別ダウンロードをお試しください。');return;}
+    catch(e){hideProgress();showToast(tr('zipLoadFailed'));return;}
     zip=new JSZip();
   }
 
-  showProgress('分割保存中…',0);
+  showProgress(tr('splitSaving'),0);
   try{
     const{PDFDocument}=PDFLib;
     clearSrcDocCache();
@@ -3041,28 +3354,28 @@ async function doSortSplitExport(){
         const isLast=(si===sections.length-1);
         if(!isLast&&(si+1)%5===0){
           // 5件ごとに長めに待機（ブラウザの連続自動ダウンロード制限を避けるため）
-          showProgress('分割保存中…（ブラウザの制限を避けるため一時停止）',(si+1)/sections.length);
+          showProgress(tr('splitSavingPause'),(si+1)/sections.length);
           await new Promise(r=>setTimeout(r,1000));
         }else{
           await new Promise(r=>setTimeout(r,80));
         }
       }
-      seq++;showProgress('分割保存中…',(si+1)/sections.length*(zip?0.9:1));
+      seq++;showProgress(tr('splitSaving'),(si+1)/sections.length*(zip?0.9:1));
     }
     if(zip){
       const zipBytes=await zip.generateAsync({type:'uint8array',compression:'STORE'},meta=>{
-        showProgress(`ZIPを生成中…(${Math.round(meta.percent)}%)`,0.9+0.1*(meta.percent/100));
+        showProgress(trf('zipGenerating',Math.round(meta.percent)),0.9+0.1*(meta.percent/100));
       });
-      await downloadBytes(zipBytes,`${currentBaseName||'分割保存'}.zip`,'application/zip');
+      await downloadBytes(zipBytes,`${currentBaseName||tr('splitZipBase')}.zip`,'application/zip');
     }
     clearSrcDocCache();
-    hideProgress();showToast(`${sections.length}ファイル保存しました${zip?'（ZIP一括）':''}${losslessOk?'（無劣化）':''}`);
-  }catch(err){clearSrcDocCache();hideProgress();showToast('エラー: '+err.message);console.error(err);}
+    hideProgress();showToast(trf('filesSaved',sections.length)+(zip?tr('zipSuffix'):'')+(losslessOk?tr('losslessSuffix'):''));
+  }catch(err){clearSrcDocCache();hideProgress();showToast(tr('errorP')+err.message);console.error(err);}
 }
 
 // 返却
 function returnToCorrect(){
-  const pn=sortPages.filter(p=>!p.isDivider);if(!pn.length){showToast('返すページがありません');return;}
+  const pn=sortPages.filter(p=>!p.isDivider);if(!pn.length){showToast(tr('noReturnPages'));return;}
   pages=pn.map((sp,i)=>{
     // 元PDFページへの参照を保持していれば、無劣化情報を引き継ぐ
     if(sp.page){
@@ -3076,10 +3389,10 @@ function returnToCorrect(){
   sortPages=[];sortSelected=new Set();
   document.getElementById('pageTotalLabel').textContent=`/ ${pages.length}`;
   document.getElementById('thumbPageCount').textContent=`${pages.length}p`;
-  document.getElementById('hdrInfo').textContent=`返却済み（${pages.length}p）`;
+  document.getElementById('hdrInfo').textContent=trf('returnedInfo',pages.length);
   ['btnExportNormal','btnExportSplit'].forEach(id=>document.getElementById(id).disabled=false);
   buildThumbsC();gotoPage(0);updateQualityBadge();switchTab('correct');
-  showToast(`${pages.length}ページを補正タブに返しました`);
+  showToast(trf('returnedToast',pages.length));
 }
 
 // =====================================================
@@ -3114,7 +3427,7 @@ async function loadPDFForSort(file){
 
   if(images.length>0){
     for(let i=0;i<images.length;i++){
-      showProgress(`読み込み中… (${i+1}/${images.length})`,(i+1)/images.length);
+      showProgress(trf('imgLoadingN',i+1,images.length),(i+1)/images.length);
       const canvas=await jpegBytesToCanvas(images[i].jpegBytes);
       // PDFページの /Rotate（CubePDF Utility等で回転指定のみ書き換えられたPDFに対応）
       const initRot90=Math.round((images[i].pageRotate||0)/90)%4;
@@ -3135,7 +3448,7 @@ async function loadPDFForSort(file){
       await new Promise(r=>setTimeout(r,0));
     }
   }else{
-    showProgress('pdf.jsで読み込み中…',0);
+    showProgress(tr('pdfjsLoading'),0);
     if(!window.pdfjsLib){
       await new Promise((res,rej)=>{
         const s=document.createElement('script');
@@ -3147,7 +3460,7 @@ async function loadPDFForSort(file){
     const pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
     const n=pdfDoc.numPages;
     for(let i=1;i<=n;i++){
-      showProgress(`ページをレンダリング中… (${i}/${n})`,i/n);
+      showProgress(trf('rendering',i,n),i/n);
       const pg=await pdfDoc.getPage(i);
       // /Rotate を絶対表示角として rot90 の初期値に使い、レンダリングは無回転で統一
       const baseRotate=((pg.rotate%360)+360)%360;
@@ -3182,38 +3495,52 @@ async function loadPDFForSort(file){
 
 async function applySortPdfDrop(mode){
   closeSortPdfDropModal();
-  if(!pendingSortDropFile)return;
-  const file=pendingSortDropFile;pendingSortDropFile=null;
-  showProgress('PDFを読み込み中…',0);
-  let result;
-  try{result=await loadPDFForSort(file);}
-  catch(err){hideProgress();showToast('読み込みエラー: '+err.message);return;}
-  const{entries:newEntries,pdfBytes,losslessAvail,losslessErr}=result;
+  if(!pendingSortDropFiles||!pendingSortDropFiles.length)return;
+  const files=sortFilesByName(pendingSortDropFiles);pendingSortDropFiles=null;
+  showProgress(tr('pdfLoading'),0);
+  const blocks=[];
+  try{
+    for(const f of files){
+      const r=await loadPDFForSort(f);
+      blocks.push({file:f,entries:r.entries,pdfBytes:r.pdfBytes,losslessAvail:r.losslessAvail,losslessErr:r.losslessErr});
+    }
+  }
+  catch(err){hideProgress();showToast(tr('loadErrorP')+err.message);return;}
+  hideProgress();
+  const totalPages=blocks.reduce((s,b)=>s+b.entries.length,0);
+  const mkDiv=f=>{const d={isDivider:true,name:f.name.replace(/\.pdf$/i,'')};dividerIdCnt++;return d;};
   if(mode==='discard'){
-    // ★Bug4修正: discard 時は originalPdfBytes 等を新ファイルで差し替え
-    originalPdfBytes=pdfBytes;
-    losslessAvailable=losslessAvail;
-    losslessLoadError=losslessErr;
-    currentBaseName=file.name.replace(/\.[^.]+$/,'');
+    // ★Bug4修正: discard 時は originalPdfBytes 等を新しい内容で差し替え
+    originalPdfBytes=blocks[0].pdfBytes;
+    losslessAvailable=blocks.every(b=>b.losslessAvail);
+    losslessLoadError=(blocks.find(b=>b.losslessErr)||{}).losslessErr||null;
+    currentBaseName=blocks[0].file.name.replace(/\.[^.]+$/,'');
     splitFnameTemplate=null; // ファイルを開き直したらファイル名テンプレートをリセット
     // 傾き補正タブの古いページ群と originalPdfBytes が矛盾しないようリセット
     pages=[];
-    document.getElementById('hdrInfo').textContent=`${file.name}（${newEntries.length}p）`;
-    document.getElementById('pageTotalLabel').textContent=`/ ${newEntries.length}`;
-    document.getElementById('thumbPageCount').textContent=`${newEntries.length}p`;
+    document.getElementById('hdrInfo').textContent=files.length>1
+      ? trf('hdrInfoMulti',blocks[0].file.name,files.length-1,totalPages)
+      : trf('hdrInfoFmt',blocks[0].file.name,totalPages);
+    document.getElementById('pageTotalLabel').textContent=`/ ${totalPages}`;
+    document.getElementById('thumbPageCount').textContent=`${totalPages}p`;
     sortPushUndo();
-    sortPages=newEntries;buildSortGridReal();
-    showToast(`${newEntries.length}ページを読み込みました`);
+    // 複数ファイルはファイル名の区切りを挟んで連結する
+    const joined=[];
+    blocks.forEach((b,bi)=>{if(bi>0)joined.push(mkDiv(b.file));joined.push(...b.entries);});
+    sortPages=joined;buildSortGridReal();
+    showToast(trf('pagesLoaded',totalPages));
   }else if(mode==='prepend'){
     sortPushUndo();
-    const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
-    sortPages=[...newEntries,div,...sortPages];buildSortGridReal();
-    showToast(`先頭に${newEntries.length}ページを挿入しました`);
+    const block=[];
+    blocks.forEach(b=>{block.push(...b.entries,mkDiv(b.file));});
+    sortPages=[...block,...sortPages];buildSortGridReal();
+    showToast(trf('pagesInsertedFirst',totalPages));
   }else if(mode==='append'){
     sortPushUndo();
-    const div={isDivider:true,name:file.name.replace(/\.pdf$/i,'')};dividerIdCnt++;
-    sortPages=[...sortPages,div,...newEntries];buildSortGridReal();
-    showToast(`末尾に${newEntries.length}ページを挿入しました`);
+    const block=[];
+    blocks.forEach(b=>{block.push(mkDiv(b.file),...b.entries);});
+    sortPages=[...sortPages,...block];buildSortGridReal();
+    showToast(trf('pagesInsertedLast',totalPages));
   }
 }
 
@@ -3254,7 +3581,7 @@ function renderPopup(){
     c.restore();
   }
   const infoEl=document.getElementById('popupInfo');
-  infoEl.textContent=`${sp.label||sp.srcName||popupIdx+1}（${popupIdx+1} / ${arr.length}）`;
+  infoEl.textContent=trf('popupInfoFmt',sp.label||sp.srcName||popupIdx+1,popupIdx+1,arr.length);
   if(popupSrc==='sort'&&sortPages.some(p=>p.isDivider)){
     const allSortIdx=sortPages.map((p,i)=>(!p.isDivider?i:-1)).filter(i=>i>=0);
     const sortIdx=allSortIdx[popupIdx];
@@ -3285,9 +3612,9 @@ function updatePopupDividerButtons(){
     let j=sortIdx-1;while(j>=0&&sortPages[j].isDivider){before++;j--;}
     let k=sortIdx+1;while(k<sortPages.length&&sortPages[k].isDivider){after++;k++;}
   }
-  const label='｜区切り追加';
-  prevBtn.innerHTML=(before>0?`<span class="popup-divider-count">区切り：${before}</span>`:'')+`<span class="popup-divider-label">${label}</span>`;
-  nextBtn.innerHTML=(after>0?`<span class="popup-divider-count">区切り：${after}</span>`:'')+`<span class="popup-divider-label">${label}</span>`;
+  const label=tr('popupDividerLabel');
+  prevBtn.innerHTML=(before>0?`<span class="popup-divider-count">${trf('popupDividerCount',before)}</span>`:'')+`<span class="popup-divider-label">${label}</span>`;
+  nextBtn.innerHTML=(after>0?`<span class="popup-divider-count">${trf('popupDividerCount',after)}</span>`:'')+`<span class="popup-divider-label">${label}</span>`;
 }
 
 // ポップアップから区切りを追加（dir=-1: 表示中ページの手前 / dir=+1: 後ろ）
@@ -3300,10 +3627,10 @@ function popupAddDivider(dir){
   if(sortIdx<0)return;
   sortPushUndo();
   const insertAt=dir<0?sortIdx:sortIdx+1;
-  sortPages.splice(insertAt,0,{isDivider:true,name:`区切り${++dividerIdCnt}`});
+  sortPages.splice(insertAt,0,{isDivider:true,name:trf('dividerName',++dividerIdCnt)});
   buildSortGridReal();
   renderPopup();
-  showToast(dir<0?'ページの手前に区切りを追加しました':'ページの後ろに区切りを追加しました');
+  showToast(dir<0?tr('dividerAddedBefore'):tr('dividerAddedAfter'));
 }
 
 // =====================================================
@@ -3319,6 +3646,7 @@ function switchTab(name){
 /* ============ チュートリアル連携(橋渡し) ============ */
 var _tutoCorrectSaved = null;
 window.NamaTunePDFTutorialBridge = {
+  language: function(){ return lang; },
   navigate: function(id){ switchTab(id); },
   currentPage: function(){
     var t = document.querySelector('.tab.active');
@@ -3397,16 +3725,16 @@ function sanitizeFsName(name){return name.replace(/[\\/:*?"<>|]/g,'_');}
 
 // フォルダ選択（ユーザー操作起点で呼び出す）
 async function pickPdfSaveDir(){
-  if(!FS_DIR_SUPPORTED){showToast('このブラウザはフォルダ指定保存に対応していません');return;}
+  if(!FS_DIR_SUPPORTED){showToast(tr('dirNotSupportedToast'));return;}
   try{
     const handle=await window.showDirectoryPicker({mode:'readwrite'});
     pdfSaveDirHandle=handle;
     try{await fsIdbSet(FS_DIR_KEY,handle);}catch(e){console.error(e);}
     updateDirUI();
-    showToast('保存先フォルダを設定しました');
+    showToast(tr('dirSet'));
   }catch(e){
     if(e&&e.name==='AbortError')return;
-    console.error(e);showToast('フォルダの選択に失敗しました');
+    console.error(e);showToast(tr('dirPickFailed'));
   }
 }
 // 再読み込み後などにアクセス許可を再取得（ユーザー操作起点で呼び出す）
@@ -3414,15 +3742,15 @@ async function reauthPdfSaveDir(){
   if(!pdfSaveDirHandle)return;
   try{
     const perm=await pdfSaveDirHandle.requestPermission({mode:'readwrite'});
-    showToast(perm==='granted'?'アクセスを許可しました':'アクセスが許可されませんでした');
-  }catch(e){console.error(e);showToast('アクセス許可の取得に失敗しました');}
+    showToast(perm==='granted'?tr('dirPermGranted'):tr('dirPermDenied'));
+  }catch(e){console.error(e);showToast(tr('dirPermFailed'));}
   updateDirUI();
 }
 async function clearPdfSaveDir(){
   pdfSaveDirHandle=null;
   try{await fsIdbDel(FS_DIR_KEY);}catch(e){console.error(e);}
   updateDirUI();
-  showToast('保存先フォルダの指定を解除しました');
+  showToast(tr('dirCleared'));
 }
 // 設定タブの表示を現在の状態に同期
 async function updateDirUI(){
@@ -3435,7 +3763,7 @@ async function updateDirUI(){
   const btnReauth=document.getElementById('cfg_btnReauth');
   const btnClear=document.getElementById('cfg_btnClearDir');
   if(!pdfSaveDirHandle){
-    label.textContent='未選択（ブラウザの標準のダウンロード先に保存されます）';
+    label.textContent=tr('dirNone');
     btnReauth.style.display='none';btnClear.disabled=true;
     return;
   }
@@ -3443,10 +3771,10 @@ async function updateDirUI(){
   let state='prompt';
   try{state=await pdfSaveDirHandle.queryPermission({mode:'readwrite'});}catch(e){console.error(e);}
   if(state==='granted'){
-    label.textContent=`選択中: ${pdfSaveDirHandle.name}/`;
+    label.textContent=trf('dirSelected',pdfSaveDirHandle.name);
     btnReauth.style.display='none';
   }else{
-    label.textContent=`選択中: ${pdfSaveDirHandle.name}/（アクセス許可が必要です）`;
+    label.textContent=trf('dirSelectedPerm',pdfSaveDirHandle.name);
     btnReauth.style.display='';
   }
 }
@@ -3527,7 +3855,7 @@ document.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('resize',()=>{if(pages.length>0)renderPage();});
-showToast('PDFまたは画像をドロップして開始');
+showToast(tr('dropToStart'));
 
 // =====================================================
 // 設定タブ
@@ -3588,7 +3916,7 @@ function cfgLoadPresetList(){
   // 設定タブのセレクト
   const sel=document.getElementById('cfg_presetSelect');
   if(sel){
-    sel.innerHTML='<option value="">— 新規作成 —</option>';
+    sel.innerHTML='<option value="">'+tr('presetNew')+'</option>';
     list.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;sel.appendChild(o);});
     sel.onchange=()=>{
       const i=parseInt(sel.value);
@@ -3605,7 +3933,7 @@ function cfgLoadPresetList(){
   // 分割保存モーダルのセレクト
   const ss=document.getElementById('ss_presetPicker');
   if(ss){
-    ss.innerHTML='<option value="">— 保存済みプリセットを呼び出す —</option>';
+    ss.innerHTML='<option value="">'+tr('ssPickerDefault')+'</option>';
     list.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;ss.appendChild(o);});
   }
 }
@@ -3624,7 +3952,7 @@ function cfgOnPresetNameInput(){
 }
 function cfgSavePreset(){
   const name=document.getElementById('cfg_presetName').value.trim();
-  if(!name){showToast('プリセット名を入力してください');return;}
+  if(!name){showToast(tr('presetNameRequired'));return;}
   const body=document.getElementById('cfg_presetBody').value;
   const list=cfgGetPresets();
   // 同名なら上書き
@@ -3633,7 +3961,7 @@ function cfgSavePreset(){
   else list.push({name,body});
   cfgSetPresets(list);
   cfgLoadPresetList();
-  showToast(`「${name}」を保存しました`);
+  showToast(trf('presetSaved',name));
 }
 function cfgDeletePreset(){
   const sel=document.getElementById('cfg_presetSelect');
@@ -3647,7 +3975,7 @@ function cfgDeletePreset(){
   document.getElementById('cfg_presetBody').value='';
   document.getElementById('cfg_btnSavePreset').disabled=true;
   cfgLoadPresetList();
-  showToast(`「${name}」を削除しました`);
+  showToast(trf('presetDeleted',name));
 }
 function cfgExportPreset(){
   const name=document.getElementById('cfg_presetName').value.trim()||'preset';
@@ -3670,12 +3998,12 @@ function cfgImportPreset(e){
 function ssApplyPreset(){
   const ss=document.getElementById('ss_presetPicker');
   const i=parseInt(ss?.value);
-  if(isNaN(i)){showToast('プリセットを選択してください');return;}
+  if(isNaN(i)){showToast(tr('presetSelectRequired'));return;}
   const list=cfgGetPresets();
   if(!list[i])return;
   document.getElementById('ssPresetArea').value=list[i].body;
   updateFnamePreview();
-  showToast(`「${list[i].name}」を適用しました`);
+  showToast(trf('presetApplied',list[i].name));
 }
 
 // =====================================================
@@ -3704,7 +4032,7 @@ function closePwaInstallModal(){
 async function onPwaInstallClick(){
   // ケース①：すでにインストール済み（スタンドアロン起動中）
   if(isPwaStandalone()){
-    openPwaInstallModal('インストール済み','このアプリはすでにインストールされています。');
+    openPwaInstallModal(tr('pwaInstalledTitle'),tr('pwaInstalledBody'));
     return;
   }
   // ケース②：Chrome/Edge → ネイティブインストールダイアログ
@@ -3716,29 +4044,17 @@ async function onPwaInstallClick(){
   }
   // ケース③：iOS Safari → 手順説明モーダル
   if(isIOSDevice){
-    openPwaInstallModal('iOSへのインストール方法',
-      `<p>Safariでこのページを開いてください。</p>
-       <ol style="margin-top:8px;padding-left:20px">
-         <li>画面下部の <strong>共有ボタン（□↑）</strong> をタップ</li>
-         <li>「<strong>ホーム画面に追加</strong>」を選択</li>
-         <li>右上の「<strong>追加</strong>」をタップ</li>
-       </ol>
-       <p style="margin-top:10px;font-size:11px;color:var(--text3)">※ Chrome・Firefoxでは対応していません。</p>`);
+    openPwaInstallModal(tr('pwaIosTitle'),tr('pwaIosBodyHtml'));
     return;
   }
   // ケース④：その他のブラウザ → 汎用手順説明モーダル
-  openPwaInstallModal('インストール方法',
-    `<ol style="padding-left:20px">
-       <li><strong>Chrome：</strong>アドレスバー右端の「⊕」または「⋮」→「アプリをインストール」</li>
-       <li><strong>Edge：</strong>「…」→「アプリ」→「このサイトをアプリとしてインストール」</li>
-       <li><strong>Safari（Mac）：</strong>メニュー File →「Dock に追加」</li>
-     </ol>
-     <p style="margin-top:10px;font-size:11px;color:var(--text3)">Firefox は PWA インストールに対応していません。</p>`);
+  openPwaInstallModal(tr('pwaTitle'),tr('pwaBodyHtml'));
 }
 
 // 起動時にロード
 cfgLoad();
 restorePdfSaveDir();
+applyLang();
 </script>
 
 <script>
