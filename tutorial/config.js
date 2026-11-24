@@ -11,7 +11,7 @@ window.NAMA_TUTORIAL_CONFIG = {
       steps: [
         { pose: 'wave', text: 'やあやあ！我こそは生物[ナマモノ] ナマ。NamaTunePDFの案内役を仰せつかってナマ。この案内はいつでも✕ボタンでやめられて、やめた後も{{btnPos}}のボタンから見直せナマ。' },
         { target: '.tabbar', pose: 'point', text: '画面の上は3つのタブに分かれてナマ。「傾き補正」で傾きを直して、「並べ替え」で順番を整えて、「設定」で保存の決まりを決めるナマ。' },
-        { target: '#btnOpenFile', pose: 'point', text: '楽譜を開くのは右上の「開く」からナマ。PDFでも画像でも開けて、複数まとめても開けナマ。画面へ直接ドロップしても開けナマ。' },
+        { target: '#btnOpenFile', pose: 'point', text: '楽譜を開くのは右上の「開く」からナマ。PDFでも画像でも開けて、複数をまとめて開くと、ファイル名の順に並んで読み込まれナマ。画面へ直接ドロップしても開けナマ。' },
         { target: '#canvasArea', pose: 'point', text: '開いた楽譜はここに大きく出るナマ。ページをめくると、ここが切り替わりナマ。' },
         { target: '#nt-btn', pose: 'thumbs_up', text: 'この案内は、{{btnPos}}のこのボタンからいつでも開き直せナマ。新しい章が増えると赤い印が付きナマ。' }
       ]
@@ -38,6 +38,7 @@ window.NAMA_TUTORIAL_CONFIG = {
       steps: [
         { pose: 'wave', text: '並べ替えの章ナマ。ページの順番を入れ替えたり、区切りを入れたり、要らないページを消したりできナマ。楽譜を開いてから進むと、実際のページで試せナマ。ここでの並べ替えは、保存するまで元のファイルには反映されないナマ。' },
         { target: '#sortGrid', pose: 'point', text: 'ページはここに並ぶナマ。ドラッグで掴んで、好きな順番へ並べ替えられナマ。' },
+        { target: '#sortGrid', pose: 'point', text: 'ここへPDFを落として、ページを足すこともできナマ。すでにページがある時は、捨てて入れ直すか、前か後ろに足すかを選べナマ。複数をまとめて落とすと、ファイル名の順に、ファイルの境目に区切りを入れてつながりナマ。' },
         { target: '#btnSortSelectAll', mode: 'tap', pose: 'point', text: '「全選択」ナマ。押すと全部のページが選ばれて、もう一度押すと選択が外れナマ。試しに押してみるナマ。' },
         { target: '#btnSortAddDivider', pose: 'point', text: '「区切りを追加」で、ここに区切りの目印が入りナマ。区切りは、後で分けて保存する時の境目になりナマ。まとめて追加したい時は、横の「まとめて追加」からナマ。' },
         { target: ['#btnSortRotL', '#btnSortRotR'], pose: 'point', text: '選んだページは、ここで90°回せナマ。横向きのページだけ縦向きに直したい時に便利ナマ。' },
@@ -52,6 +53,7 @@ window.NAMA_TUTORIAL_CONFIG = {
       id: 'settings', page: 'settings', title: '設定', desc: '保存の形式・品質・保存先・プリセット', icon: 'yay', since: 1, keepChanges: true,
       steps: [
         { pose: 'wave', text: '設定の章ナマ。保存の決まりをここで決めるナマ。この章で変えた内容は、そのまま残りナマ。' },
+        { target: ['#langBtnJa', '#langBtnEn'], pose: 'point', text: '言語の切り替えナマ。設定の一番上で、日本語と英語を切り替えられナマ。画面の文字が全部その言語になり、次に開いた時もそのままの言語で始まりナマ。' },
         { target: '#cfg_outFormat', mode: 'free', pose: 'point', text: '保存の形式ナマ。「JPEG」は小さく、「PNG」は画質を落とさず残せナマ。傾き補正・並べ替え保存の両方に効きナマ。試しに変えてみるナマ。' },
         { target: '#cfg_jpegQuality', mode: 'free', pose: 'point', text: 'JPEGの品質ナマ。数字が大きいほどきれいに残るけれど、ファイルも大きくなるナマ。試しに動かしてみるナマ。' },
         { target: '#cfg_splitFileName', mode: 'free', pose: 'point', text: '分割保存のファイル名ナマ。{seq}は連番、{name}は区切り名、{file}は元のファイル名に置き換わりナマ。試しに入れてみるナマ。' },
@@ -71,7 +73,7 @@ window.NAMA_TUTORIAL_CONFIG = {
       steps: [
         { pose: 'wave', text: 'Hello, hello! It is I, Nama, the living [Nama] creature, nama. I will be your guide for NamaTunePDF, nama. You can stop this guide anytime with the ✕ button, and open it again later from the button at the {{btnPos}}, nama.' },
         { target: '.tabbar', pose: 'point', text: 'The top of the screen has three tabs, nama. Fix tilt in "Deskew", put pages in order in "Reorder", and set the save rules in "Settings", nama.' },
-        { target: '#btnOpenFile', pose: 'point', text: 'Open your sheet music from "Open" at the top right, nama. It takes PDFs and images, several files at once too, nama. You can also drop files straight onto the screen, nama.' },
+        { target: '#btnOpenFile', pose: 'point', text: 'Open your sheet music from "Open" at the top right, nama. It takes PDFs and images, and when you open several files at once, they load in filename order, nama. You can also drop files straight onto the screen, nama.' },
         { target: '#canvasArea', pose: 'point', text: 'The opened sheet music shows up big here, nama. Turn a page and this view switches with it, nama.' },
         { target: '#nt-btn', pose: 'thumbs_up', text: 'You can reopen this guide anytime from this button at the {{btnPos}}, nama. When a new chapter is added, it gets a red mark, nama.' }
       ]
@@ -98,6 +100,7 @@ window.NAMA_TUTORIAL_CONFIG = {
       steps: [
         { pose: 'wave', text: 'The Reorder chapter, nama. Swap the order of pages, add dividers, and delete pages you do not need, nama. Open a score first and you can try with real pages, nama. Reordering here does not touch your original file until you save, nama.' },
         { target: '#sortGrid', pose: 'point', text: 'The pages line up here, nama. Drag them to rearrange into any order you like, nama.' },
+        { target: '#sortGrid', pose: 'point', text: 'You can also drop PDFs here to add pages, nama. When pages are already here, you choose whether to discard them and start over, or add the new pages before or after, nama. Drop several files at once and they join in filename order, with a divider at each file boundary, nama.' },
         { target: '#btnSortSelectAll', mode: 'tap', pose: 'point', text: '"Select all", nama. Press it and every page is selected; press it again and the selection clears, nama. Try pressing it, nama.' },
         { target: '#btnSortAddDivider', pose: 'point', text: '"Add divider" puts a divider mark here, nama. Dividers become the split points when you save pages in separate files later, nama. To add many at once, use "Add in bulk" next to it, nama.' },
         { target: ['#btnSortRotL', '#btnSortRotR'], pose: 'point', text: 'Selected pages can be rotated 90° here, nama. Handy when only the sideways pages need to stand upright, nama.' },
@@ -112,6 +115,7 @@ window.NAMA_TUTORIAL_CONFIG = {
       id: 'settings', page: 'settings', title: 'Settings', desc: 'Format, quality, save folder, and presets', icon: 'yay', since: 1, keepChanges: true,
       steps: [
         { pose: 'wave', text: 'The Settings chapter, nama. The save rules are decided here, nama. Changes you make in this chapter stay as they are, nama.' },
+        { target: ['#langBtnJa', '#langBtnEn'], pose: 'point', text: 'The language switch, nama. At the very top of Settings, you can switch between Japanese and English, nama. Every label on the screen changes to that language, and the app starts in the same language next time, nama.' },
         { target: '#cfg_outFormat', mode: 'free', pose: 'point', text: 'The save format, nama. "JPEG" stays small, and "PNG" keeps the quality untouched, nama. It applies to both Deskew and Reorder saves, nama. Try changing it, nama.' },
         { target: '#cfg_jpegQuality', mode: 'free', pose: 'point', text: 'JPEG quality, nama. A bigger number looks cleaner, but the file grows too, nama. Try sliding it, nama.' },
         { target: '#cfg_splitFileName', mode: 'free', pose: 'point', text: 'The file name for split saves, nama. {seq} becomes the number, {name} the divider name, and {file} the original file name, nama. Try typing in it, nama.' },
